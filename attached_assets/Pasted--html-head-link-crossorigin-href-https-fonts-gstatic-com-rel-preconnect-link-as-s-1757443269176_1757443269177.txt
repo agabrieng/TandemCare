@@ -1,0 +1,183 @@
+<html><head>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<title>Stitch Design</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<meta charset="utf-8"/>
+</head>
+<body class="bg-[#111a22]">
+<div class="relative flex size-full min-h-screen flex-col dark group/design-root" style='font-family: Inter, "Noto Sans", sans-serif;'>
+<div class="flex flex-1">
+<aside class="flex w-64 flex-col bg-[#192633] p-6">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-white text-3xl"> child_care </span>
+<h1 class="text-white text-xl font-bold">Finanças Kids</h1>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 rounded-md bg-[#1173d4] px-3 py-2 text-white" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#92adc9] hover:bg-[#233648] hover:text-white" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-sm font-medium">Transações</span>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#92adc9] hover:bg-[#233648] hover:text-white" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-sm font-medium">Orçamento</span>
+</a>
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#92adc9] hover:bg-[#233648] hover:text-white" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-sm font-medium">Relatórios</span>
+</a>
+</nav>
+<div class="mt-auto">
+<a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#92adc9] hover:bg-[#233648] hover:text-white" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Configurações</span>
+</a>
+<div class="mt-4 flex items-center gap-4 rounded-md bg-[#233648] p-3">
+<img alt="User avatar" class="h-10 w-10 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ1P2S2x_4oh23dfK3bTYQvCZPf_c-6hJ21NPNsi2cBwR6s1rBLCDfqJh946rsiKHG3wlb2UcCoC9WPMhIlv-eqKSO6m8DgSVu2oWedeK4fpmJcw_xLVfRrfjehtr_uUMuoraZ4-wMLTb3GETM2DmAac4dfqJV3w4yXe5zaTNVBKQVTe35BO7vp6Uds-oOPPq8UBkqS1uTs4Jw9yO2F1jqKM9nXTcKzCXRRiD_kDZ_BhqobakKjwjHZYxU-BC81kVh3W6X8PM1bAo"/>
+<div>
+<p class="text-sm font-semibold text-white">Carlos Silva</p>
+<p class="text-xs text-[#92adc9]">Pai</p>
+</div>
+<button class="ml-auto text-[#92adc9] hover:text-white">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</div>
+</aside>
+<main class="flex-1 p-8">
+<header class="flex items-center justify-between">
+<h1 class="text-3xl font-bold text-white">Painel Financeiro</h1>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 rounded-md bg-[#1173d4] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-600">
+<span class="material-symbols-outlined">add</span>
+                Adicionar Transação
+              </button>
+<button class="flex items-center gap-2 rounded-md bg-[#233648] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#324d67]">
+<span class="material-symbols-outlined">trending_up</span>
+                Ver Saldos Futuros
+              </button>
+</div>
+</header>
+<section class="mt-8">
+<h2 class="text-xl font-semibold text-white">Resumo das Contribuições</h2>
+<div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+<div class="rounded-md bg-[#192633] p-6">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-[#92adc9]">Contribuição do Pai</p>
+<span class="material-symbols-outlined text-green-400">arrow_upward</span>
+</div>
+<p class="mt-2 text-3xl font-bold text-white">R$ 1.500,00</p>
+</div>
+<div class="rounded-md bg-[#192633] p-6">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-[#92adc9]">Contribuição da Mãe</p>
+<span class="material-symbols-outlined text-green-400">arrow_upward</span>
+</div>
+<p class="mt-2 text-3xl font-bold text-white">R$ 1.200,00</p>
+</div>
+</div>
+</section>
+<div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
+<section class="lg:col-span-2">
+<h2 class="text-xl font-semibold text-white">Histórico de Transações</h2>
+<div class="mt-4 border-b border-[#324d67]">
+<nav class="-mb-px flex space-x-6">
+<a class="shrink-0 border-b-2 border-[#1173d4] px-1 pb-4 text-sm font-medium text-[#1173d4]" href="#"> Todas </a>
+<a class="shrink-0 border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-[#92adc9] hover:border-gray-500 hover:text-white" href="#"> Educação </a>
+<a class="shrink-0 border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-[#92adc9] hover:border-gray-500 hover:text-white" href="#"> Saúde </a>
+<a class="shrink-0 border-b-2 border-transparent px-1 pb-4 text-sm font-medium text-[#92adc9] hover:border-gray-500 hover:text-white" href="#"> Lazer </a>
+</nav>
+</div>
+<div class="mt-4 overflow-hidden rounded-md bg-[#192633]">
+<table class="min-w-full divide-y divide-[#324d67]">
+<thead class="bg-[#233648]">
+<tr>
+<th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white" scope="col">Data</th>
+<th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white" scope="col">Descrição</th>
+<th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white" scope="col">Categoria</th>
+<th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white" scope="col">Valor</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#324d67]">
+<tr>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-[#92adc9]">15/07/2024</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-white">Mensalidade escolar</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm">
+<span class="inline-flex items-center rounded-full bg-blue-900/50 px-2.5 py-0.5 text-xs font-medium text-blue-300">Educação</span>
+</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">R$ 800,00</td>
+</tr>
+<tr>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-[#92adc9]">10/07/2024</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-white">Consulta pediátrica</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm">
+<span class="inline-flex items-center rounded-full bg-green-900/50 px-2.5 py-0.5 text-xs font-medium text-green-300">Saúde</span>
+</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">R$ 250,00</td>
+</tr>
+<tr>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-[#92adc9]">05/07/2024</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-white">Aula de música</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm">
+<span class="inline-flex items-center rounded-full bg-blue-900/50 px-2.5 py-0.5 text-xs font-medium text-blue-300">Educação</span>
+</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">R$ 150,00</td>
+</tr>
+<tr>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-[#92adc9]">01/07/2024</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-white">Passeio ao parque</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm">
+<span class="inline-flex items-center rounded-full bg-yellow-900/50 px-2.5 py-0.5 text-xs font-medium text-yellow-300">Lazer</span>
+</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">R$ 50,00</td>
+</tr>
+<tr>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-[#92adc9]">25/06/2024</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm text-white">Material escolar</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm">
+<span class="inline-flex items-center rounded-full bg-blue-900/50 px-2.5 py-0.5 text-xs font-medium text-blue-300">Educação</span>
+</td>
+<td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">R$ 200,00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section>
+<h2 class="text-xl font-semibold text-white">Despesas por Categoria</h2>
+<div class="mt-4 rounded-md bg-[#192633] p-6">
+<div class="flex items-baseline justify-between">
+<p class="text-sm font-medium text-[#92adc9]">Total de Despesas</p>
+<p class="text-sm font-medium text-[#92adc9]">Julho 2024</p>
+</div>
+<p class="mt-2 text-3xl font-bold text-white">R$ 1.450,00</p>
+<div class="mt-6 h-48">
+<div class="flex h-full items-end justify-around">
+<div class="flex flex-col items-center">
+<div class="w-8 rounded-t-md bg-blue-500" style="height: 65%;"></div>
+<p class="mt-2 text-xs text-[#92adc9]">Educação</p>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 rounded-t-md bg-green-500" style="height: 25%;"></div>
+<p class="mt-2 text-xs text-[#92adc9]">Saúde</p>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 rounded-t-md bg-yellow-500" style="height: 10%;"></div>
+<p class="mt-2 text-xs text-[#92adc9]">Lazer</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>
