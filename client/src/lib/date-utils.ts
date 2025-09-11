@@ -32,15 +32,10 @@ export function dateStringToBrazilTimezone(dateString: string): Date {
  */
 export function formatDateForBrazil(dateString: string): string {
   try {
-    // Debug log
-    console.log('formatDateForBrazil input:', { dateString, type: typeof dateString });
-    
     // Para datas no formato YYYY-MM-DD (apenas data, sem horário)
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [year, month, day] = dateString.split('-');
-      const result = `${day}/${month}/${year}`;
-      console.log('formatDateForBrazil YYYY-MM-DD path:', { year, month, day, result });
-      return result;
+      return `${day}/${month}/${year}`;
     }
     
     // Para timestamps ISO com horário, usa timezone brasileiro

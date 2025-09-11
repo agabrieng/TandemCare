@@ -247,12 +247,7 @@ export class DatabaseStorage implements IStorage {
     });
 
     // Normalize expenseDate to YYYY-MM-DD string to avoid timezone issues
-    return expensesList.map(expense => ({
-      ...expense,
-      expenseDate: expense.expenseDate && typeof expense.expenseDate === 'object'
-        ? new Date(expense.expenseDate).toISOString().slice(0, 10)
-        : String(expense.expenseDate)
-    }));
+    return expensesList.map(expense => this.normalizeExpense(expense));
   }
 
   async createExpense(expense: InsertExpense): Promise<Expense> {
