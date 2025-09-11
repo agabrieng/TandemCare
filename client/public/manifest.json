@@ -1,8 +1,8 @@
 {
-  "name": "Finanças Kids",
-  "short_name": "Finanças Kids",
-  "description": "Aplicativo para gerenciamento de gastos com crianças para pais divorciados",
-  "theme_color": "#3b82f6",
+  "name": "Tandem - Finanças em Sintonia",
+  "short_name": "Tandem",
+  "description": "Aplicativo para gerenciamento colaborativo de gastos com crianças para pais divorciados. Finanças em sintonia, foco nos filhos.",
+  "theme_color": "#570DF8",
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -21,9 +21,45 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "categories": ["finance", "utilities"],
+  "categories": ["finance", "utilities", "family"],
   "lang": "pt-BR",
-  "dir": "ltr"
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "shortcuts": [
+    {
+      "name": "Adicionar Despesa",
+      "short_name": "Nova Despesa",
+      "description": "Cadastrar nova despesa rapidamente",
+      "url": "/expenses?action=add",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ver Relatórios",
+      "short_name": "Relatórios",
+      "description": "Visualizar relatórios financeiros",
+      "url": "/reports",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }
