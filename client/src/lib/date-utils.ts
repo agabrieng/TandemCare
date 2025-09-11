@@ -1,26 +1,22 @@
-import { format, parseISO, addHours } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-// Timezone do Brasil (UTC-3)
-const BRAZIL_TIMEZONE_OFFSET = -3;
+// Brazil timezone: America/Sao_Paulo (handles DST automatically)
+const BRAZIL_TIMEZONE = 'America/Sao_Paulo';
 
 /**
- * Converte uma data string para timezone do Brasil
- * @param dateString - Data no formato YYYY-MM-DD ou ISO string
+ * Converte uma data string para timezone do Brasil e a formata para exibição
+ * @param dateString - Data no formato YYYY-MM-DD, ISO string ou timestamp
  * @returns Data ajustada para timezone do Brasil
  */
 export function dateStringToBrazilTimezone(dateString: string): Date {
   try {
-    // Se a string está no formato YYYY-MM-DD, assumimos que é local do usuário
+    // Se a string está no formato YYYY-MM-DD, assumimos que é uma data pura
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      // Cria a data como local (assumindo Brasil timezone)
+      // Para datas YYYY-MM-DD, interpretamos como meia-noite no timezone do Brasil
       const [year, month, day] = dateString.split('-').map(Number);
       return new Date(year, month - 1, day);
     }
     
-    // Para strings ISO, parseia e ajusta para timezone do Brasil
-    const date = parseISO(dateString);
-    return date;
+    // Para strings ISO com tempo, parseia normalmente
+    return new Date(dateString);
   } catch (error) {
     console.warn('Erro ao converter data:', error);
     return new Date();
@@ -29,13 +25,27 @@ export function dateStringToBrazilTimezone(dateString: string): Date {
 
 /**
  * Formata uma data para exibição no Brasil
+ * Para datas YYYY-MM-DD: reformata diretamente sem conversão de timezone
+ * Para ISO timestamps: formata no timezone brasileiro
  * @param dateString - Data string a ser formatada
  * @returns Data formatada em dd/MM/yyyy
  */
 export function formatDateForBrazil(dateString: string): string {
   try {
-    const date = dateStringToBrazilTimezone(dateString);
-    return format(date, 'dd/MM/yyyy', { locale: ptBR });
+    // Para datas no formato YYYY-MM-DD (apenas data, sem horário)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    
+    // Para timestamps ISO com horário, usa timezone brasileiro
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: BRAZIL_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(date);
   } catch (error) {
     console.warn('Erro ao formatar data:', error);
     return dateString;
@@ -44,45 +54,30 @@ export function formatDateForBrazil(dateString: string): string {
 
 /**
  * Obtém a data atual no timezone do Brasil no formato YYYY-MM-DD
- * @returns Data atual formatada para input type="date"
+ * @returns Data atual formatada para input type="date" no timezone brasileiro
  */
 export function getTodayInBrazilTimezone(): string {
-  const now = new Date();
-  // Ajusta para timezone do Brasil (UTC-3)
-  const brazilDate = new Date(now.getTime() + (BRAZIL_TIMEZONE_OFFSET * 60 * 60 * 1000));
-  return format(brazilDate, 'yyyy-MM-dd');
+  try {
+    // Usa Intl.DateTimeFormat para obter a data atual no timezone brasileiro
+    const now = new Date();
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: BRAZIL_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now);
+  } catch (error) {
+    console.warn('Erro ao obter data atual:', error);
+    return new Date().toISOString().split('T')[0]; // Fallback
+  }
 }
 
 /**
  * Converte data local do Brasil para formato ISO que será salvo no banco
  * @param localDateString - Data no formato YYYY-MM-DD do input
- * @returns Data formatada para armazenamento
+ * @returns Data formatada para armazenamento (YYYY-MM-DD)
  */
 export function brazilDateToStorage(localDateString: string): string {
-  // Como o input type="date" já retorna YYYY-MM-DD no timezone local,
-  // só precisamos garantir que ela seja tratada como date local
+  // O input type="date" já retorna YYYY-MM-DD que é o formato correto para armazenamento
   return localDateString;
-}
-
-/**
- * Cria filtros de data considerando timezone do Brasil
- * @param startDate - Data de início (YYYY-MM-DD)
- * @param endDate - Data de fim (YYYY-MM-DD)
- */
-export function createBrazilDateFilters(startDate?: string, endDate?: string) {
-  const filters: { startDate?: Date; endDate?: Date } = {};
-  
-  if (startDate) {
-    // Para início do dia no Brasil
-    const [year, month, day] = startDate.split('-').map(Number);
-    filters.startDate = new Date(year, month - 1, day, 0, 0, 0);
-  }
-  
-  if (endDate) {
-    // Para fim do dia no Brasil
-    const [year, month, day] = endDate.split('-').map(Number);
-    filters.endDate = new Date(year, month - 1, day, 23, 59, 59);
-  }
-  
-  return filters;
 }

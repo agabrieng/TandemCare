@@ -50,8 +50,8 @@ export interface IStorage {
     childId?: string;
     category?: string;
     status?: string;
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: string;
+    endDate?: string;
   }): Promise<ExpenseWithDetails[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense>;
@@ -187,8 +187,8 @@ export class DatabaseStorage implements IStorage {
       childId?: string;
       category?: string;
       status?: string;
-      startDate?: Date;
-      endDate?: Date;
+      startDate?: string;
+      endDate?: string;
     }
   ): Promise<ExpenseWithDetails[]> {
     const conditions = [eq(expenses.userId, userId)];
@@ -203,16 +203,12 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(expenses.status, filters.status));
     }
     if (filters?.startDate) {
-      // Convert date to Brazil timezone (UTC-3) for filtering
-      const brazilStartDate = new Date(filters.startDate.getTime() + (filters.startDate.getTimezoneOffset() * 60000));
-      const startDateString = brazilStartDate.toISOString().split('T')[0];
-      conditions.push(gte(expenses.expenseDate, startDateString));
+      // Compare YYYY-MM-DD strings directly
+      conditions.push(gte(expenses.expenseDate, filters.startDate));
     }
     if (filters?.endDate) {
-      // Convert date to Brazil timezone (UTC-3) for filtering
-      const brazilEndDate = new Date(filters.endDate.getTime() + (filters.endDate.getTimezoneOffset() * 60000));
-      const endDateString = brazilEndDate.toISOString().split('T')[0];
-      conditions.push(lte(expenses.expenseDate, endDateString));
+      // Compare YYYY-MM-DD strings directly
+      conditions.push(lte(expenses.expenseDate, filters.endDate));
     }
 
     return await db.query.expenses.findMany({

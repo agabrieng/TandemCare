@@ -110,8 +110,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (childId) filters.childId = childId;
       if (category) filters.category = category;
       if (status) filters.status = status;
-      if (startDate) filters.startDate = new Date(startDate as string);
-      if (endDate) filters.endDate = new Date(endDate as string);
+      if (startDate) filters.startDate = startDate as string;
+      if (endDate) filters.endDate = endDate as string;
       
       const expenses = await storage.getExpenses(userId, filters);
       res.json(expenses);
