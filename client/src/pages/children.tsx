@@ -137,13 +137,19 @@ export default function Children() {
       
       // Handle profile photo upload
       if (uploadedPhoto) {
-        const photoResponse = await apiRequest('POST', '/api/profile-photos', {
-          photoURL: uploadedPhoto.uploadURL,
-          fileName: uploadedPhoto.fileName,
-          fileType: uploadedPhoto.fileType,
-        });
-        const photoData = await photoResponse.json();
-        childData.profileImageUrl = photoData.objectPath;
+        if (uploadedPhoto.objectPath) {
+          // Photo was already processed during upload
+          childData.profileImageUrl = uploadedPhoto.objectPath;
+        } else {
+          // Fallback: process photo if not already done
+          const photoResponse = await apiRequest('POST', '/api/profile-photos', {
+            photoURL: uploadedPhoto.uploadURL,
+            fileName: uploadedPhoto.fileName,
+            fileType: uploadedPhoto.fileType,
+          });
+          const photoData = await photoResponse.json();
+          childData.profileImageUrl = photoData.objectPath;
+        }
       }
       
       createChildMutation.mutate(childData);
@@ -164,13 +170,19 @@ export default function Children() {
       
       // Handle profile photo upload
       if (uploadedPhoto) {
-        const photoResponse = await apiRequest('POST', '/api/profile-photos', {
-          photoURL: uploadedPhoto.uploadURL,
-          fileName: uploadedPhoto.fileName,
-          fileType: uploadedPhoto.fileType,
-        });
-        const photoData = await photoResponse.json();
-        childData.profileImageUrl = photoData.objectPath;
+        if (uploadedPhoto.objectPath) {
+          // Photo was already processed during upload
+          childData.profileImageUrl = uploadedPhoto.objectPath;
+        } else {
+          // Fallback: process photo if not already done
+          const photoResponse = await apiRequest('POST', '/api/profile-photos', {
+            photoURL: uploadedPhoto.uploadURL,
+            fileName: uploadedPhoto.fileName,
+            fileType: uploadedPhoto.fileType,
+          });
+          const photoData = await photoResponse.json();
+          childData.profileImageUrl = photoData.objectPath;
+        }
       }
       
       updateChildMutation.mutate({ id: editingChild.id, data: childData });

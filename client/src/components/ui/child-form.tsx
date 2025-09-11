@@ -26,6 +26,7 @@ interface UploadedPhoto {
   uploadURL: string;
   fileName: string;
   fileType: string;
+  objectPath?: string; // Path after processing by backend
 }
 
 interface ChildFormProps {
@@ -74,7 +75,7 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
     }
   };
 
-  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     if (result.successful && result.successful.length > 0) {
       const file = result.successful[0];
       const newPhoto = {
@@ -82,9 +83,30 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
         fileName: file.name || 'profile-photo',
         fileType: file.type || 'image/jpeg'
       };
-      setUploadedPhoto(newPhoto);
-      setCurrentPhotoPreview(null); // Clear any existing preview
-      setUploadLoading(false);
+      
+      try {
+        setUploadLoading(true);
+        // Process the photo immediately to get the correct objectPath for preview
+        const photoResponse = await apiRequest('POST', '/api/profile-photos', {
+          photoURL: newPhoto.uploadURL,
+          fileName: newPhoto.fileName,
+          fileType: newPhoto.fileType,
+        });
+        const photoData = await photoResponse.json();
+        
+        // Update with the objectPath for immediate preview
+        setUploadedPhoto({
+          ...newPhoto,
+          objectPath: photoData.objectPath
+        });
+        setCurrentPhotoPreview(null); // Clear any existing preview
+      } catch (error) {
+        console.error('Erro ao processar foto:', error);
+        // Even if processing fails, keep the original photo data
+        setUploadedPhoto(newPhoto);
+      } finally {
+        setUploadLoading(false);
+      }
     }
   };
 
@@ -102,8 +124,9 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
   // Generate preview URL for existing photo
   const getPhotoUrl = () => {
     if (uploadedPhoto) {
-      // Use the normalized path format for new uploads
-      return `/api/object-storage/image?path=${uploadedPhoto.uploadURL}`;
+      // Use objectPath if available (after processing), otherwise fall back to uploadURL
+      const path = uploadedPhoto.objectPath || uploadedPhoto.uploadURL;
+      return `/api/object-storage/image?path=${path}`;
     }
     if (initialData?.profileImageUrl) {
       return `/api/object-storage/image?path=${initialData.profileImageUrl}`;
