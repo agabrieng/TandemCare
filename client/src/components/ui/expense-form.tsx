@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { apiRequest } from "@/lib/queryClient";
+import { Paperclip, X, FileText } from "lucide-react";
+import type { UploadResult } from "@uppy/core";
 
 const expenseFormSchema = z.object({
   description: z.string().min(1, "Descrição é obrigatória"),
@@ -24,8 +28,14 @@ const expenseFormSchema = z.object({
 
 type ExpenseFormData = z.infer<typeof expenseFormSchema>;
 
+interface UploadedFile {
+  uploadURL: string;
+  fileName: string;
+  fileType: string;
+}
+
 interface ExpenseFormProps {
-  onSubmit: (data: ExpenseFormData) => void;
+  onSubmit: (data: ExpenseFormData, uploadedFiles?: UploadedFile[]) => void;
   onCancel: () => void;
   isLoading?: boolean;
   initialData?: Partial<ExpenseFormData>;
@@ -51,6 +61,8 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || "");
   const [selectedChild, setSelectedChild] = useState(initialData?.childId || "");
   const [selectedStatus, setSelectedStatus] = useState(initialData?.status || "pendente");
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadLoading, setUploadLoading] = useState(false);
 
   const { data: children = [] } = useQuery<any[]>({
     queryKey: ["/api/children"],
@@ -86,7 +98,37 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
       ...data,
       amount: data.amount.replace(',', '.'),
     };
-    onSubmit(formattedData);
+    onSubmit(formattedData, uploadedFiles);
+  };
+
+  const handleGetUploadParameters = async () => {
+    try {
+      const response = await apiRequest('POST', '/api/objects/upload');
+      const data = await response.json();
+      return {
+        method: 'PUT' as const,
+        url: data.uploadURL
+      };
+    } catch (error) {
+      console.error('Erro ao preparar upload:', error);
+      throw error;
+    }
+  };
+
+  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const newFiles = result.successful.map(file => ({
+        uploadURL: file.uploadURL || '',
+        fileName: file.name || 'comprovante',
+        fileType: file.type || 'application/pdf'
+      }));
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      setUploadLoading(false);
+    }
+  };
+
+  const removeUploadedFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -221,6 +263,54 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Comprovantes Section */}
+          <div className="space-y-2 border-t pt-4">
+            <Label>Comprovantes (Opcional)</Label>
+            <p className="text-sm text-muted-foreground">
+              Adicione comprovantes para documentar esta despesa (PDF, imagens até 10MB)
+            </p>
+            
+            <div className="space-y-3">
+              <ObjectUploader
+                maxNumberOfFiles={3}
+                maxFileSize={10485760} // 10MB
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handleUploadComplete}
+                buttonClassName="w-full sm:w-auto"
+              >
+                <Paperclip className="w-4 h-4 mr-2" />
+                Adicionar Comprovante
+              </ObjectUploader>
+
+              {uploadedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Comprovantes Adicionados:</Label>
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm truncate">{file.fileName}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeUploadedFile(index)}
+                        className="text-muted-foreground hover:text-destructive p-1 h-6 w-6"
+                        data-testid={`button-remove-receipt-${index}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-2 sm:space-x-0 pt-4">

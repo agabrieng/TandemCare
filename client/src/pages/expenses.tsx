@@ -32,6 +32,12 @@ interface Child {
   dateOfBirth?: string;
 }
 
+interface UploadedFile {
+  uploadURL: string;
+  fileName: string;
+  fileType: string;
+}
+
 export default function Expenses() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
@@ -70,7 +76,8 @@ export default function Expenses() {
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/expenses", data);
+      const response = await apiRequest("POST", "/api/expenses", data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
@@ -166,8 +173,37 @@ export default function Expenses() {
     },
   });
 
-  const handleCreateExpense = (data: any) => {
-    createExpenseMutation.mutate(data);
+  const createReceiptMutation = useMutation({
+    mutationFn: async ({ expenseId, files }: { expenseId: string; files: UploadedFile[] }) => {
+      const promises = files.map(file => 
+        apiRequest("POST", "/api/receipts", {
+          receiptURL: file.uploadURL,
+          expenseId,
+          fileType: file.fileType,
+          fileName: file.fileName,
+        }).then(res => res.json())
+      );
+      return Promise.all(promises);
+    },
+    onError: (error) => {
+      console.error("Error creating receipts:", error);
+      toast({
+        title: "Aviso",
+        description: "Despesa criada, mas houve erro ao salvar alguns comprovantes.",
+        variant: "default",
+      });
+    },
+  });
+
+  const handleCreateExpense = (data: any, uploadedFiles?: UploadedFile[]) => {
+    createExpenseMutation.mutate(data, {
+      onSuccess: (expense) => {
+        // If there are uploaded files, create receipts for them
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          createReceiptMutation.mutate({ expenseId: expense.id, files: uploadedFiles });
+        }
+      },
+    });
   };
 
   const handleUpdateExpense = (data: any) => {
@@ -253,7 +289,7 @@ export default function Expenses() {
               </DialogHeader>
               <ExpenseForm
                 onSubmit={handleCreateExpense}
-                isLoading={createExpenseMutation.isPending}
+                isLoading={createExpenseMutation.isPending || createReceiptMutation.isPending}
                 onCancel={() => setIsAddDialogOpen(false)}
               />
             </DialogContent>
@@ -425,7 +461,8 @@ export default function Expenses() {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => setExpenseToDelete(expense)}
+                            onClick={() => handleDeleteExpense(expense)}
+                            data-testid={`button-delete-expense-${expense.id}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
