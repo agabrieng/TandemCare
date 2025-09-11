@@ -211,7 +211,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(lte(expenses.expenseDate, filters.endDate));
     }
 
-    return await db.query.expenses.findMany({
+    const expensesList = await db.query.expenses.findMany({
       where: and(...conditions),
       with: {
         child: true,
@@ -220,6 +220,14 @@ export class DatabaseStorage implements IStorage {
       },
       orderBy: desc(expenses.createdAt),
     });
+
+    // Normalize expenseDate to YYYY-MM-DD string to avoid timezone issues
+    return expensesList.map(expense => ({
+      ...expense,
+      expenseDate: expense.expenseDate && typeof expense.expenseDate === 'object'
+        ? new Date(expense.expenseDate).toISOString().slice(0, 10)
+        : String(expense.expenseDate)
+    }));
   }
 
   async createExpense(expense: InsertExpense): Promise<Expense> {
@@ -330,7 +338,7 @@ export class DatabaseStorage implements IStorage {
       childrenCount,
       receiptsCount,
       categoryBreakdown,
-      recentExpenses: recentExpenses.slice(0, 10), // Last 10 expenses
+      recentExpenses: recentExpenses.slice(0, 10), // Last 10 expenses (already normalized by getExpenses)
     };
   }
 
