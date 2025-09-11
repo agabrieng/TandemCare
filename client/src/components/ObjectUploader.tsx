@@ -86,7 +86,9 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: () => {
+        getUploadParameters: (file) => {
+          // Add debug log to see if this function is called
+          console.log("[DEBUG] ObjectUploader - getUploadParameters called with organizationParams:", organizationParamsRef.current);
           // Always use current organizationParams value from ref
           return onGetUploadParameters(organizationParamsRef.current);
         },
