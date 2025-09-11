@@ -181,9 +181,7 @@ export default function Receipts() {
     expenseDate: string;
   }) => {
     try {
-      console.log("[DEBUG] Frontend - organizationParams received:", organizationParams);
       const requestBody = organizationParams || {};
-      console.log("[DEBUG] Frontend - request body to send:", requestBody);
       const response = await apiRequest("POST", "/api/objects/upload", requestBody);
       const data = await response.json();
       return {
@@ -408,35 +406,18 @@ export default function Receipts() {
                   </Select>
                 </div>
                 
-                {(() => {
-                  console.log("[DEBUG] Receipts - IIFE executed");
-                  console.log("[DEBUG] Receipts - selectedExpense:", selectedExpense);
-                  console.log("[DEBUG] Receipts - user:", user);
-                  
-                  if (!selectedExpense || !user) {
-                    console.log("[DEBUG] Receipts - Missing selectedExpense or user, returning null");
-                    return null;
-                  }
-                  
-                  const expense = expenses?.find(e => e.id === selectedExpense);
-                  console.log("[DEBUG] Receipts - found expense:", expense);
-                  
-                  if (!expense) {
-                    console.log("[DEBUG] Receipts - no expense found, returning null");
-                    return null;
-                  }
+                {selectedExpense && user && expenses && (() => {
+                  const expense = expenses.find(e => e.id === selectedExpense);
+                  if (!expense || !expense.child) return null;
                   
                   // Format expenseDate to YYYY-MM-DD format
                   const formattedDate = format(parseISO(expense.expenseDate), 'yyyy-MM-dd');
-                  console.log("[DEBUG] Receipts - formattedDate:", formattedDate);
                   
                   const organizationParams = {
                     userId: user.id,
                     childId: expense.child.id,
                     expenseDate: formattedDate,
                   };
-                  
-                  console.log("[DEBUG] Receipts - final organizationParams:", organizationParams);
 
                   return (
                     <ObjectUploader

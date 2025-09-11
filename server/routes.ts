@@ -199,9 +199,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const { userId, childId, expenseDate } = req.body;
       
-      // DEBUG: Log request body to debug organization parameters
-      console.log("[DEBUG] /api/objects/upload - Request body:", JSON.stringify(req.body, null, 2));
-      console.log("[DEBUG] /api/objects/upload - Extracted params:", { userId, childId, expenseDate });
       
       // Validate organization parameters if provided
       let organizationParams;
