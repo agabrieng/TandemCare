@@ -10,6 +10,7 @@ import {
   FileText, 
   BarChart3, 
   Scale,
+  Tags,
   Settings, 
   LogOut, 
   Menu, 
@@ -199,13 +200,40 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
             })}
           </nav>
 
-          {/* Settings */}
+          {/* Sistema */}
           <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
-            <Link href="/settings">
+            {!isCollapsed && (
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-2">
+                Sistema
+              </div>
+            )}
+            <Link href="/categories">
               <div 
                 onClick={handleMobileNavClick}
                 className={cn(
                   "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  location === "/categories" 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    : "text-muted-foreground hover:text-foreground",
+                  isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
+                )}
+                data-testid="nav-categories">
+                <Tags className="w-5 h-5" />
+                {!isCollapsed && (
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Categorias</div>
+                    <div className="text-xs text-muted-foreground">Gerenciar categorias personalizadas</div>
+                  </div>
+                )}
+              </div>
+            </Link>
+            
+            <Link href="/settings">
+              <div 
+                onClick={handleMobileNavClick}
+                className={cn(
+                  "flex items-center rounded-xl transition-all duration-200 group cursor-pointer mt-2",
                   "hover:bg-accent hover:text-accent-foreground",
                   location === "/settings" 
                     ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
@@ -215,7 +243,10 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                 data-testid="nav-settings">
                 <Settings className="w-5 h-5" />
                 {!isCollapsed && (
-                  <span className="font-medium text-sm">Configurações</span>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Configurações</div>
+                    <div className="text-xs text-muted-foreground">Preferências e conta</div>
+                  </div>
                 )}
               </div>
             </Link>
