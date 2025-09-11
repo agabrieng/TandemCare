@@ -9,6 +9,7 @@ import {
   index,
   jsonb,
   uuid,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -70,6 +71,20 @@ export const expenses = pgTable("expenses", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Categories table - User-defined expense categories
+export const categories = pgTable("categories", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // user who created the category
+  name: varchar("name", { length: 100 }).notNull(), // category name
+  icon: varchar("icon", { length: 50 }), // icon/emoji (optional)
+  color: varchar("color", { length: 20 }), // color code (optional)  
+  isDefault: boolean("is_default").default(false), // false for custom categories, true for system default
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserCategory: sql`CONSTRAINT categories_user_name_unique UNIQUE (${table.userId}, ${table.name})`,
+}));
+
 // Receipts/Documents table
 export const receipts = pgTable("receipts", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -124,6 +139,7 @@ export const legalCases = pgTable("legal_cases", {
 export const usersRelations = relations(users, ({ many }) => ({
   userChildren: many(userChildren),
   expenses: many(expenses),
+  categories: many(categories),
   lawyers: many(lawyers),
   legalCases: many(legalCases),
 }));
@@ -160,6 +176,13 @@ export const receiptsRelations = relations(receipts, ({ one }) => ({
   expense: one(expenses, {
     fields: [receipts.expenseId],
     references: [expenses.id],
+  }),
+}));
+
+export const categoriesRelations = relations(categories, ({ one }) => ({
+  user: one(users, {
+    fields: [categories.userId],
+    references: [users.id],
   }),
 }));
 
@@ -212,6 +235,15 @@ export const insertReceiptSchema = createInsertSchema(receipts).omit({
   uploadedAt: true,
 });
 
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  name: z.string().trim().min(1, "Nome da categoria é obrigatório"),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Cor deve ser um código hexadecimal válido").optional(),
+});
+
 export const insertLawyerSchema = createInsertSchema(lawyers).omit({
   id: true,
   createdAt: true,
@@ -237,6 +269,8 @@ export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertReceipt = z.infer<typeof insertReceiptSchema>;
 export type Receipt = typeof receipts.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
 export type InsertLawyer = z.infer<typeof insertLawyerSchema>;
 export type Lawyer = typeof lawyers.$inferSelect;
 export type InsertLegalCase = z.infer<typeof insertLegalCaseSchema>;
