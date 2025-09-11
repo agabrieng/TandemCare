@@ -795,7 +795,7 @@ export default function Receipts() {
                                                                           <Button
                                                                             variant="ghost"
                                                                             size="sm"
-                                                                            onClick={() => window.open(receipt.filePath, '_blank')}
+                                                                            onClick={() => window.open(`/api/object-storage/image?path=${encodeURIComponent(receipt.filePath)}`, '_blank')}
                                                                             data-testid={`button-view-receipt-${receipt.id}`}
                                                                           >
                                                                             <Eye className="w-4 h-4" />
