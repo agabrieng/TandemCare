@@ -95,11 +95,26 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // Helper function to normalize expense dates to YYYY-MM-DD strings
   private normalizeExpense(expense: any): any {
+    if (!expense.expenseDate) return expense;
+    
+    const dateValue = expense.expenseDate;
+    let normalizedDate: string;
+    
+    // If it's already in YYYY-MM-DD format, keep it
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      normalizedDate = dateValue;
+    } else {
+      // Convert Date object or ISO string to YYYY-MM-DD
+      try {
+        normalizedDate = new Date(dateValue).toISOString().slice(0, 10);
+      } catch (error) {
+        normalizedDate = String(dateValue);
+      }
+    }
+    
     return {
       ...expense,
-      expenseDate: expense.expenseDate && typeof expense.expenseDate === 'object'
-        ? new Date(expense.expenseDate).toISOString().slice(0, 10)
-        : String(expense.expenseDate)
+      expenseDate: normalizedDate
     };
   }
 

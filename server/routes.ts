@@ -130,6 +130,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const expense = await storage.createExpense(expenseData);
+      
+      // Debug: Log what we're sending back
+      console.log('POST /api/expenses response:', {
+        expenseDate: expense.expenseDate,
+        typeof: typeof expense.expenseDate,
+        fullExpense: expense
+      });
+      
       res.status(201).json(expense);
     } catch (error) {
       console.error("Error creating expense:", error);
