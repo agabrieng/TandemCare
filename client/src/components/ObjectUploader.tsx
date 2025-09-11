@@ -11,7 +11,11 @@ import { Button } from "@/components/ui/button";
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
-  onGetUploadParameters: () => Promise<{
+  onGetUploadParameters: (organizationParams?: {
+    userId: string;
+    childId: string;
+    expenseDate: string;
+  }) => Promise<{
     method: "PUT";
     url: string;
   }>;
@@ -20,6 +24,11 @@ interface ObjectUploaderProps {
   ) => void;
   buttonClassName?: string;
   children: ReactNode;
+  organizationParams?: {
+    userId: string;
+    childId: string;
+    expenseDate: string;
+  };
 }
 
 /**
@@ -57,6 +66,7 @@ export function ObjectUploader({
   onComplete,
   buttonClassName,
   children,
+  organizationParams,
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
   const [uppy] = useState(() =>
@@ -69,7 +79,7 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
+        getUploadParameters: () => onGetUploadParameters(organizationParams),
       })
       .on("complete", (result) => {
         onComplete?.(result);

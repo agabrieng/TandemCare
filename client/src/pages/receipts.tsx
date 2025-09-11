@@ -107,6 +107,11 @@ export default function Receipts() {
     retry: false,
   });
 
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
   const createReceiptMutation = useMutation({
     mutationFn: async (data: any) => {
       await apiRequest("POST", "/api/receipts", data);
@@ -170,23 +175,13 @@ export default function Receipts() {
     },
   });
 
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (organizationParams?: {
+    userId: string;
+    childId: string;
+    expenseDate: string;
+  }) => {
     try {
-      // Find the selected expense to get organization parameters
-      const expense = expenses?.find(e => e.id === selectedExpense);
-      if (!expense) {
-        throw new Error("Despesa não encontrada");
-      }
-
-      // Get authenticated user's ID (will be added by the backend)
-      const { data: user } = await apiRequest("GET", "/api/auth/user").then(res => res.json());
-      
-      const requestBody = {
-        userId: user.id,
-        childId: expense.child.id,
-        expenseDate: expense.expenseDate,
-      };
-
+      const requestBody = organizationParams || {};
       const response = await apiRequest("POST", "/api/objects/upload", requestBody);
       const data = await response.json();
       return {
@@ -411,20 +406,35 @@ export default function Receipts() {
                   </Select>
                 </div>
                 
-                {selectedExpense && (
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={10485760} // 10MB
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={handleUploadComplete}
-                    buttonClassName="w-full"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Upload className="w-4 h-4" />
-                      <span>Selecionar Arquivo</span>
-                    </div>
-                  </ObjectUploader>
-                )}
+                {selectedExpense && user && (() => {
+                  const expense = expenses?.find(e => e.id === selectedExpense);
+                  if (!expense) return null;
+                  
+                  // Format expenseDate to YYYY-MM-DD format
+                  const formattedDate = format(parseISO(expense.expenseDate), 'yyyy-MM-dd');
+                  
+                  const organizationParams = {
+                    userId: user.id,
+                    childId: expense.child.id,
+                    expenseDate: formattedDate,
+                  };
+
+                  return (
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={10485760} // 10MB
+                      onGetUploadParameters={handleGetUploadParameters}
+                      onComplete={handleUploadComplete}
+                      buttonClassName="w-full"
+                      organizationParams={organizationParams}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Upload className="w-4 h-4" />
+                        <span>Selecionar Arquivo</span>
+                      </div>
+                    </ObjectUploader>
+                  );
+                })()}
               </div>
             </DialogContent>
           </Dialog>
