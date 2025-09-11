@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Filter, Search, Receipt, Edit, Trash2, Download } from "lucide-react";
+import { Plus, Filter, Search, Receipt, Edit, Trash2, Download, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ExpenseForm } from "@/components/ui/expense-form";
 import { ExpensesTable } from "@/components/ui/expenses-table";
@@ -273,13 +273,29 @@ export default function Expenses() {
             <h1 className="text-2xl font-bold" data-testid="title-expenses">Despesas</h1>
             <p className="text-muted-foreground">Gerencie todas as despesas dos seus filhos</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-add-expense">
-                <Plus className="mr-2 w-4 h-4" />
-                Nova Despesa
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+                toast({
+                  title: "Atualizado",
+                  description: "Dados atualizados com sucesso!",
+                });
+              }}
+              data-testid="button-refresh-expenses"
+            >
+              <RefreshCw className="mr-2 w-4 h-4" />
+              Atualizar
+            </Button>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-add-expense">
+                  <Plus className="mr-2 w-4 h-4" />
+                  Nova Despesa
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl" data-testid="dialog-add-expense">
               <DialogHeader>
                 <DialogTitle>Adicionar Nova Despesa</DialogTitle>
@@ -293,7 +309,8 @@ export default function Expenses() {
                 onCancel={() => setIsAddDialogOpen(false)}
               />
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
       </div>
 
