@@ -329,6 +329,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const objectStorageService = new ObjectStorageService();
       
+      // Debug logs
+      console.log("=== DEBUG ACCESS ===");
+      console.log("UserId:", userId);
+      console.log("FilePath:", filePath);
+      
       try {
         const objectFile = await objectStorageService.getObjectEntityFile(filePath);
         
@@ -338,6 +343,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: userId,
           requestedPermission: ObjectPermission.READ,
         });
+        
+        console.log("Can Access:", canAccess);
+        console.log("===================");
         
         if (!canAccess) {
           return res.status(403).json({ message: "Access denied" });
