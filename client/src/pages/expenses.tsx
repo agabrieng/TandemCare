@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +46,14 @@ export default function Expenses() {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedChild, setSelectedChild] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Build structured filter object for query key
+  const filters = {
+    category: selectedCategory || null,
+    status: selectedStatus || null,
+    childId: selectedChild || null
+  };
 
   // Build query parameters for filtering
   const queryParams = new URLSearchParams();
@@ -55,7 +62,7 @@ export default function Expenses() {
   if (selectedChild) queryParams.append('childId', selectedChild);
 
   const { data: expenses = [], isLoading } = useQuery<Expense[]>({
-    queryKey: ["/api/expenses", queryParams.toString()],
+    queryKey: ["/api/expenses", filters],
     queryFn: async () => {
       const url = queryParams.toString() 
         ? `/api/expenses?${queryParams.toString()}` 
@@ -81,8 +88,15 @@ export default function Expenses() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/expenses"],
+        exact: false,
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/dashboard/stats"],
+        refetchType: 'active'
+      });
       setIsAddDialogOpen(false);
       toast({
         title: "Sucesso",
@@ -114,8 +128,15 @@ export default function Expenses() {
       await apiRequest("PUT", `/api/expenses/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/expenses"],
+        exact: false,
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/dashboard/stats"],
+        refetchType: 'active'
+      });
       setEditingExpense(null);
       toast({
         title: "Sucesso",
@@ -147,8 +168,15 @@ export default function Expenses() {
       await apiRequest("DELETE", `/api/expenses/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/expenses"],
+        exact: false,
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/dashboard/stats"],
+        refetchType: 'active'
+      });
       toast({
         title: "Sucesso",
         description: "Despesa removida com sucesso!",
@@ -281,10 +309,17 @@ export default function Expenses() {
                 // Invalida todas as queries que começam com "/api/expenses"
                 queryClient.invalidateQueries({ 
                   queryKey: ["/api/expenses"],
-                  exact: false 
+                  exact: false,
+                  refetchType: 'active'
                 });
-                queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-                queryClient.invalidateQueries({ queryKey: ["/api/children"] });
+                queryClient.invalidateQueries({ 
+                  queryKey: ["/api/dashboard/stats"],
+                  refetchType: 'active'
+                });
+                queryClient.invalidateQueries({ 
+                  queryKey: ["/api/children"],
+                  refetchType: 'active'
+                });
                 toast({
                   title: "Atualizado",
                   description: "Dados atualizados com sucesso!",
