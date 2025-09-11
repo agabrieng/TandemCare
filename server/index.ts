@@ -36,6 +36,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Allow iframe embedding in development for Replit preview
+if (process.env.NODE_ENV === "development") {
+  app.use((req, res, next) => {
+    // Remove X-Frame-Options to allow iframe embedding
+    res.removeHeader('X-Frame-Options');
+    
+    // Set permissive headers for Replit dev mode
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Content-Security-Policy', 
+      "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: ws: wss: https://*.replit.com https://*.replit.dev https://*.repl.co https://*.googleapis.com https://*.gstatic.com; " +
+      "frame-ancestors 'self' https://*.replit.com https://*.replit.dev https://*.repl.co; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://*.googleapis.com; " +
+      "style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com; " +
+      "font-src 'self' data: https://*.googleapis.com https://*.gstatic.com;"
+    );
+    
+    next();
+  });
+}
+
 (async () => {
   const server = await registerRoutes(app);
 
