@@ -104,9 +104,21 @@ export class DatabaseStorage implements IStorage {
     if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
       normalizedDate = dateValue;
     } else {
-      // Convert Date object or ISO string to YYYY-MM-DD
+      // Convert Date object or ISO string to YYYY-MM-DD using Brazil timezone
       try {
-        normalizedDate = new Date(dateValue).toISOString().slice(0, 10);
+        // If it's an ISO string, extract just the date part first
+        let dateToFormat = dateValue;
+        if (typeof dateValue === 'string' && dateValue.includes('T')) {
+          dateToFormat = dateValue.slice(0, 10);
+        }
+        
+        // Use Brazil timezone to format the date to avoid UTC shifts
+        normalizedDate = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date(dateToFormat));
       } catch (error) {
         normalizedDate = String(dateValue);
       }

@@ -124,12 +124,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/expenses', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      
+      // Sanitize expenseDate to ensure it's YYYY-MM-DD format
+      let sanitizedBody = { ...req.body };
+      if (sanitizedBody.expenseDate && typeof sanitizedBody.expenseDate === 'string' && sanitizedBody.expenseDate.includes('T')) {
+        sanitizedBody.expenseDate = sanitizedBody.expenseDate.slice(0, 10);
+      }
+      
       const expenseData = insertExpenseSchema.parse({
-        ...req.body,
+        ...sanitizedBody,
         userId,
       });
       
+      // Debug logging
+      console.log('POST /api/expenses - expenseDate values:', {
+        originalBody: req.body.expenseDate,
+        sanitized: sanitizedBody.expenseDate,
+        parsed: expenseData.expenseDate,
+        typeof: typeof expenseData.expenseDate
+      });
+      
       const expense = await storage.createExpense(expenseData);
+      
+      console.log('POST /api/expenses - response expenseDate:', {
+        expenseDate: expense.expenseDate,
+        typeof: typeof expense.expenseDate
+      });
+      
       res.status(201).json(expense);
     } catch (error) {
       console.error("Error creating expense:", error);
