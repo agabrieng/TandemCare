@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,14 @@ interface Expense {
   status: string;
   child: any;
   receipts: any[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color?: string;
+  isDefault: boolean;
+  userId: string;
 }
 
 export default function Dashboard() {
@@ -65,6 +73,13 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
+  // Buscar categorias do usuário
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+    retry: false,
+    enabled: isAuthenticated,
+  });
+
   if (isLoading || statsLoading) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
@@ -92,15 +107,39 @@ export default function Dashboard() {
     }).format(value);
   };
 
-  const categoryColors = {
-    'educação': 'bg-blue-500',
-    'saúde': 'bg-green-500', 
-    'alimentação': 'bg-orange-500',
-    'vestuário': 'bg-purple-500',
-    'transporte': 'bg-yellow-500',
-    'lazer': 'bg-pink-500',
-    'outros': 'bg-gray-500'
-  };
+  // Criar mapeamento dinâmico de cores das categorias do usuário
+  const categoryColors = useMemo(() => {
+    const userColorMap: Record<string, string> = {};
+    const usedColors = new Set<string>();
+
+    // Mapear cores das categorias definidas pelo usuário
+    categories.forEach(category => {
+      if (category.color) {
+        userColorMap[category.name.toLowerCase()] = category.color;
+        usedColors.add(category.color);
+      }
+    });
+
+    // Cores padrão para categorias não definidas pelo usuário
+    const defaultColors = [
+      '#6b7280', // gray-500
+      '#94a3b8', // slate-400
+      '#78716c', // stone-500
+      '#71717a', // zinc-500
+      '#737373', // neutral-500
+    ];
+
+    // Encontrar uma cor padrão que não está sendo usada pelo usuário
+    let fallbackColor = '#6b7280'; // gray-500 como padrão
+    for (const color of defaultColors) {
+      if (!usedColors.has(color)) {
+        fallbackColor = color;
+        break;
+      }
+    }
+
+    return { userColorMap, fallbackColor };
+  }, [categories]);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -200,7 +239,8 @@ export default function Dashboard() {
             <CardContent>
               <ExpensesChart 
                 data={stats?.categoryBreakdown || []}
-                categoryColors={categoryColors}
+                userCategoryColors={categoryColors.userColorMap}
+                fallbackColor={categoryColors.fallbackColor}
                 data-testid="chart-expenses-by-category"
               />
             </CardContent>
