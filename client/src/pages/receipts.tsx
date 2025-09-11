@@ -219,14 +219,6 @@ export default function Receipts() {
     }).format(parseFloat(value));
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, 'dd/MM/yyyy', { locale: ptBR });
-    } catch {
-      return dateString;
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -785,7 +777,7 @@ export default function Receipts() {
                                                                               {receipt.fileName || 'Comprovante'}
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
-                                                                              {formatDate(receipt.uploadedAt)}
+                                                                              {formatDateForBrazil(receipt.uploadedAt)}
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
                                                                               {receipt.fileType}

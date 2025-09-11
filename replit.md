@@ -6,6 +6,15 @@ The application serves as a centralized platform where parents can register expe
 
 # Recent Changes
 
+## Date: 2025-09-11
+- **RESOLVED**: Fixed critical date formatting bug across all application screens
+  - Root cause: timezone conversion in `new Date().toLocaleDateString()` causing dates to display one day earlier
+  - Solution: Implemented direct string-based date formatting using `formatDateForBrazil()` function
+  - **Fixed screens**: Expenses list, Dashboard "Atividades Recentes", and Receipts/Comprovantes pages
+  - **Result**: Dates stored as "2025-09-11" now correctly display as "11/09/2025" instead of "10/09/2025"
+  - Simplified server-side `normalizeExpense()` function to preserve YYYY-MM-DD format without timezone conversions
+  - All expense creation, storage, and display functionality preserved without regression
+
 ## Date: 2025-09-10  
 - **RESOLVED**: Fixed critical React hooks error that prevented application from loading
   - Corrected duplicate `useAuth()` hook calls causing "Invalid hook call" errors
