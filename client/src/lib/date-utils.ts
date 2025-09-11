@@ -34,8 +34,8 @@ export function formatDateForBrazil(dateString: string): string {
   // HARDCODE FIX: Force correct date format
   if (!dateString) return '';
   
-  // Log for debugging
-  console.log('formatDateForBrazil received:', dateString, typeof dateString);
+  // Log for debugging (remove this after fix)
+  // console.log('formatDateForBrazil received:', dateString, typeof dateString);
   
   // Convert to string if needed
   const dateStr = String(dateString);
@@ -51,7 +51,7 @@ export function formatDateForBrazil(dateString: string): string {
   if (dateMatch) {
     const [, year, month, day] = dateMatch;
     const result = `${day}/${month}/${year}`;
-    console.log('formatDateForBrazil result:', result);
+    // console.log('formatDateForBrazil result:', result);
     return result;
   }
   
@@ -63,14 +63,14 @@ export function formatDateForBrazil(dateString: string): string {
       const month = String(date.getMonth() + 1).padStart(2, '0'); 
       const year = date.getFullYear();
       const result = `${day}/${month}/${year}`;
-      console.log('formatDateForBrazil fallback result:', result);
+      // console.log('formatDateForBrazil fallback result:', result);
       return result;
     }
   } catch (error) {
     console.error('Date formatting error:', error);
   }
   
-  console.log('formatDateForBrazil fallback to original:', dateStr);
+  // console.log('formatDateForBrazil fallback to original:', dateStr);
   return dateStr;
 }
 
