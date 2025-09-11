@@ -1,92 +1,23 @@
-import React, { useState } from "react";
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { ModernSidebar } from "./components/modern-sidebar";
-import { useAuth } from "@/hooks/useAuth";
-import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
-import Children from "@/pages/children";
-import Expenses from "@/pages/expenses";
-import Receipts from "@/pages/receipts";
-import Reports from "@/pages/reports";
-import Settings from "@/pages/settings";
-
-function Router({ isAuthenticated }: { isAuthenticated: boolean }) {
-  if (!isAuthenticated) {
-    return (
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route component={NotFound} />
-      </Switch>
-    );
-  }
-
-  return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/children" component={Children} />
-      <Route path="/expenses" component={Expenses} />
-      <Route path="/receipts" component={Receipts} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/settings" component={Settings} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
-function AuthenticatedApp() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Add loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show landing page when not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen">
-        <Router isAuthenticated={false} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background flex">
-      <ModernSidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)} 
-      />
-      <div className="flex-1 flex flex-col">
-        <main className="flex-1 overflow-auto">
-          <Router isAuthenticated={isAuthenticated} />
-        </main>
-      </div>
-    </div>
-  );
-}
-
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthenticatedApp />
-      <PWAInstallPrompt />
-      <OfflineIndicator />
-      <Toaster />
-    </QueryClientProvider>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center p-8">
+        <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-foreground mb-2">FinanceKids</h1>
+        <p className="text-xl text-muted-foreground mb-4">Gestão Financeira para Filhos</p>
+        <p className="text-lg text-muted-foreground">Teste básico - React funcionando!</p>
+        <button 
+          onClick={() => alert('React está funcionando!')}
+          className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Testar JavaScript
+        </button>
+      </div>
+    </div>
   );
 }
 
