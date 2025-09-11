@@ -3,6 +3,8 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,8 +67,8 @@ function AuthenticatedApp() {
               <SidebarTrigger className="-ml-1" data-testid="button-sidebar-toggle" />
               <div className="h-4 w-px bg-sidebar-border hidden md:block" />
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <span className="hidden sm:inline">Finanças Kids</span>
-                <span className="sm:hidden">FK</span>
+                <span className="hidden sm:inline">Tandem</span>
+                <span className="sm:hidden">Tandem</span>
               </div>
             </div>
           </div>
@@ -83,6 +85,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthenticatedApp />
+      <PWAInstallPrompt />
+      <OfflineIndicator />
       <Toaster />
     </QueryClientProvider>
   );
