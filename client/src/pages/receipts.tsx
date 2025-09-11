@@ -409,17 +409,28 @@ export default function Receipts() {
                 </div>
                 
                 {selectedExpense && user && (() => {
+                  console.log("[DEBUG] Receipts - selectedExpense:", selectedExpense);
+                  console.log("[DEBUG] Receipts - user:", user);
+                  
                   const expense = expenses?.find(e => e.id === selectedExpense);
-                  if (!expense) return null;
+                  console.log("[DEBUG] Receipts - found expense:", expense);
+                  
+                  if (!expense) {
+                    console.log("[DEBUG] Receipts - no expense found, returning null");
+                    return null;
+                  }
                   
                   // Format expenseDate to YYYY-MM-DD format
                   const formattedDate = format(parseISO(expense.expenseDate), 'yyyy-MM-dd');
+                  console.log("[DEBUG] Receipts - formattedDate:", formattedDate);
                   
                   const organizationParams = {
                     userId: user.id,
                     childId: expense.child.id,
                     expenseDate: formattedDate,
                   };
+                  
+                  console.log("[DEBUG] Receipts - final organizationParams:", organizationParams);
 
                   return (
                     <ObjectUploader
