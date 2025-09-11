@@ -37,10 +37,13 @@ export default function Categories() {
   // Create category mutation
   const createCategoryMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string; color?: string }) => {
-      return apiRequest("POST", "/api/categories", data);
+      const response = await apiRequest("POST", "/api/categories", data);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newCategory) => {
+      // Force refetch the categories
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       setIsAddDialogOpen(false);
       setNewCategory({ name: "", description: "", color: "#3b82f6" });
       toast({
@@ -60,10 +63,13 @@ export default function Categories() {
   // Update category mutation
   const updateCategoryMutation = useMutation({
     mutationFn: async (data: { id: string; name: string; description?: string; color?: string }) => {
-      return apiRequest("PUT", `/api/categories/${data.id}`, data);
+      const response = await apiRequest("PUT", `/api/categories/${data.id}`, data);
+      return response.json();
     },
     onSuccess: () => {
+      // Force refetch the categories
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       setEditingCategory(null);
       toast({
         title: "Categoria atualizada",
@@ -85,7 +91,9 @@ export default function Categories() {
       return apiRequest("DELETE", `/api/categories/${id}`, {});
     },
     onSuccess: () => {
+      // Force refetch the categories
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       setDeletingCategory(null);
       toast({
         title: "Categoria excluída",
