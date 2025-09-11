@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertChildSchema, insertExpenseSchema, insertReceiptSchema } from "@shared/schema";
+import { insertChildSchema, insertExpenseSchema, insertReceiptSchema, insertLawyerSchema, insertLegalCaseSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -324,6 +324,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error serving image from object storage:", error);
       res.status(500).json({ message: "Failed to serve image" });
+    }
+  });
+
+  // Lawyers routes
+  app.get('/api/lawyers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const lawyers = await storage.getLawyers(userId);
+      res.json(lawyers);
+    } catch (error) {
+      console.error("Error fetching lawyers:", error);
+      res.status(500).json({ message: "Failed to fetch lawyers" });
+    }
+  });
+
+  app.post('/api/lawyers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const lawyerData = insertLawyerSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const lawyer = await storage.createLawyer(lawyerData);
+      res.status(201).json(lawyer);
+    } catch (error) {
+      console.error("Error creating lawyer:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create lawyer" });
+      }
+    }
+  });
+
+  app.put('/api/lawyers/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const lawyerData = insertLawyerSchema.partial().parse(req.body);
+      const updatedLawyer = await storage.updateLawyer(id, lawyerData);
+      res.json(updatedLawyer);
+    } catch (error) {
+      console.error("Error updating lawyer:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update lawyer" });
+      }
+    }
+  });
+
+  app.delete('/api/lawyers/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLawyer(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting lawyer:", error);
+      res.status(500).json({ message: "Failed to delete lawyer" });
+    }
+  });
+
+  // Legal Cases routes
+  app.get('/api/legal-cases', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const legalCases = await storage.getLegalCases(userId);
+      res.json(legalCases);
+    } catch (error) {
+      console.error("Error fetching legal cases:", error);
+      res.status(500).json({ message: "Failed to fetch legal cases" });
+    }
+  });
+
+  app.post('/api/legal-cases', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const legalCaseData = insertLegalCaseSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const legalCase = await storage.createLegalCase(legalCaseData);
+      res.status(201).json(legalCase);
+    } catch (error) {
+      console.error("Error creating legal case:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create legal case" });
+      }
+    }
+  });
+
+  app.put('/api/legal-cases/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const legalCaseData = insertLegalCaseSchema.partial().parse(req.body);
+      const updatedLegalCase = await storage.updateLegalCase(id, legalCaseData);
+      res.json(updatedLegalCase);
+    } catch (error) {
+      console.error("Error updating legal case:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update legal case" });
+      }
+    }
+  });
+
+  app.delete('/api/legal-cases/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLegalCase(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting legal case:", error);
+      res.status(500).json({ message: "Failed to delete legal case" });
     }
   });
 

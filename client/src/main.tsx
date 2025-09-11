@@ -12,6 +12,7 @@ import Children from "@/pages/children";
 import Expenses from "@/pages/expenses";
 import Receipts from "@/pages/receipts";
 import Reports from "@/pages/reports";
+import LegalData from "@/pages/legal-data";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import "./index.css";
@@ -54,6 +55,7 @@ function App() {
         <Route path="/expenses" component={Expenses} />
         <Route path="/receipts" component={Receipts} />
         <Route path="/reports" component={Reports} />
+        <Route path="/legal-data" component={LegalData} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

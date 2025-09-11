@@ -9,6 +9,7 @@ import {
   Receipt, 
   FileText, 
   BarChart3, 
+  Scale,
   Settings, 
   LogOut, 
   Menu, 
@@ -56,6 +57,12 @@ const menuItems = [
     url: "/reports",
     icon: BarChart3,
     description: "Análises e estatísticas",
+  },
+  {
+    title: "Dados Jurídicos",
+    url: "/legal-data",
+    icon: Scale,
+    description: "Advogados e processos judiciais",
   },
 ];
 

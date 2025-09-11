@@ -4,6 +4,8 @@ import {
   userChildren,
   expenses,
   receipts,
+  lawyers,
+  legalCases,
   type User,
   type UpsertUser,
   type Child,
@@ -16,6 +18,10 @@ import {
   type Receipt,
   type InsertReceipt,
   type ChildWithParents,
+  type Lawyer,
+  type InsertLawyer,
+  type LegalCase,
+  type InsertLegalCase,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count, sum, gte, lte } from "drizzle-orm";
@@ -62,6 +68,18 @@ export interface IStorage {
     categoryBreakdown: { category: string; amount: number; percentage: number }[];
     recentExpenses: ExpenseWithDetails[];
   }>;
+
+  // Lawyer operations
+  getLawyers(userId: string): Promise<Lawyer[]>;
+  createLawyer(lawyer: InsertLawyer): Promise<Lawyer>;
+  updateLawyer(id: string, lawyer: Partial<InsertLawyer>): Promise<Lawyer>;
+  deleteLawyer(id: string): Promise<void>;
+
+  // Legal Case operations
+  getLegalCases(userId: string): Promise<(LegalCase & { lawyer?: Lawyer | null })[]>;
+  createLegalCase(legalCase: InsertLegalCase): Promise<LegalCase>;
+  updateLegalCase(id: string, legalCase: Partial<InsertLegalCase>): Promise<LegalCase>;
+  deleteLegalCase(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -302,6 +320,68 @@ export class DatabaseStorage implements IStorage {
       categoryBreakdown,
       recentExpenses: recentExpenses.slice(0, 10), // Last 10 expenses
     };
+  }
+
+  // Lawyer operations
+  async getLawyers(userId: string): Promise<Lawyer[]> {
+    return await db
+      .select()
+      .from(lawyers)
+      .where(eq(lawyers.userId, userId))
+      .orderBy(desc(lawyers.createdAt));
+  }
+
+  async createLawyer(lawyer: InsertLawyer): Promise<Lawyer> {
+    const [newLawyer] = await db
+      .insert(lawyers)
+      .values(lawyer)
+      .returning();
+    return newLawyer;
+  }
+
+  async updateLawyer(id: string, lawyer: Partial<InsertLawyer>): Promise<Lawyer> {
+    const [updatedLawyer] = await db
+      .update(lawyers)
+      .set({ ...lawyer, updatedAt: new Date() })
+      .where(eq(lawyers.id, id))
+      .returning();
+    return updatedLawyer;
+  }
+
+  async deleteLawyer(id: string): Promise<void> {
+    await db.delete(lawyers).where(eq(lawyers.id, id));
+  }
+
+  // Legal Case operations
+  async getLegalCases(userId: string): Promise<(LegalCase & { lawyer?: Lawyer | null })[]> {
+    return await db.query.legalCases.findMany({
+      where: eq(legalCases.userId, userId),
+      with: {
+        lawyer: true,
+      },
+      orderBy: desc(legalCases.createdAt),
+    });
+  }
+
+  async createLegalCase(legalCase: InsertLegalCase): Promise<LegalCase> {
+    const [newLegalCase] = await db
+      .insert(legalCases)
+      .values(legalCase)
+      .returning();
+    return newLegalCase;
+  }
+
+  async updateLegalCase(id: string, legalCase: Partial<InsertLegalCase>): Promise<LegalCase> {
+    const [updatedLegalCase] = await db
+      .update(legalCases)
+      .set({ ...legalCase, updatedAt: new Date() })
+      .where(eq(legalCases.id, id))
+      .returning();
+    return updatedLegalCase;
+  }
+
+  async deleteLegalCase(id: string): Promise<void> {
+    await db.delete(legalCases).where(eq(legalCases.id, id));
   }
 }
 
