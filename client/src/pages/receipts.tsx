@@ -408,9 +408,15 @@ export default function Receipts() {
                   </Select>
                 </div>
                 
-                {selectedExpense && user && (() => {
+                {(() => {
+                  console.log("[DEBUG] Receipts - IIFE executed");
                   console.log("[DEBUG] Receipts - selectedExpense:", selectedExpense);
                   console.log("[DEBUG] Receipts - user:", user);
+                  
+                  if (!selectedExpense || !user) {
+                    console.log("[DEBUG] Receipts - Missing selectedExpense or user, returning null");
+                    return null;
+                  }
                   
                   const expense = expenses?.find(e => e.id === selectedExpense);
                   console.log("[DEBUG] Receipts - found expense:", expense);
