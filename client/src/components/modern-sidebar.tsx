@@ -56,7 +56,7 @@ const menuItems = [
 ];
 
 export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as any;
   const [location] = useLocation();
 
   const handleLogout = async () => {
