@@ -8,11 +8,15 @@ interface ExpensesChartProps {
     amount: number;
     percentage: number;
   }>;
-  categoryColors: Record<string, string>;
+  userCategoryColors?: Record<string, string>;
+  fallbackColor?: string;
+  categoryColors?: Record<string, string>; // Manter para compatibilidade
   className?: string;
 }
 
-export function ExpensesChart({ data, categoryColors, className, ...props }: ExpensesChartProps) {
+export function ExpensesChart({ data, userCategoryColors, fallbackColor, categoryColors, className, ...props }: ExpensesChartProps) {
+  // Extrair props customizadas para evitar warnings do React
+  const { ...cardProps } = props;
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -28,16 +32,32 @@ export function ExpensesChart({ data, categoryColors, className, ...props }: Exp
   }));
 
   function getCategoryColor(category: string): string {
-    const colorMap: Record<string, string> = {
-      'educação': '#3b82f6', // blue-500
-      'saúde': '#10b981', // green-500
-      'alimentação': '#f97316', // orange-500
-      'vestuário': '#8b5cf6', // purple-500
-      'transporte': '#eab308', // yellow-500
-      'lazer': '#ec4899', // pink-500
-      'outros': '#6b7280' // gray-500
-    };
-    return colorMap[category.toLowerCase()] || '#6b7280';
+    // Priorizar cores das categorias definidas pelo usuário
+    if (userCategoryColors && userCategoryColors[category.toLowerCase()]) {
+      return userCategoryColors[category.toLowerCase()];
+    }
+
+    // Fallback para categorias não definidas pelo usuário
+    if (fallbackColor) {
+      return fallbackColor;
+    }
+
+    // Compatibilidade com o sistema antigo
+    if (categoryColors) {
+      const colorMap: Record<string, string> = {
+        'educação': '#3b82f6',
+        'saúde': '#10b981',
+        'alimentação': '#f97316',
+        'vestuário': '#8b5cf6',
+        'transporte': '#eab308',
+        'lazer': '#ec4899',
+        'outros': '#6b7280'
+      };
+      return colorMap[category.toLowerCase()] || '#6b7280';
+    }
+
+    // Cor padrão final
+    return '#6b7280';
   }
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -56,7 +76,7 @@ export function ExpensesChart({ data, categoryColors, className, ...props }: Exp
   };
 
   return (
-    <Card className={className} {...props}>
+    <Card className={className} {...cardProps}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Gastos por Categoria</CardTitle>
