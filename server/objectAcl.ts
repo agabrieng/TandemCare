@@ -143,7 +143,16 @@ export async function canAccessObject({
 }): Promise<boolean> {
   // When this function is called, the acl policy is required.
   const aclPolicy = await getObjectAclPolicy(objectFile);
+  
+  console.log("=== ACL DEBUG ===");
+  console.log("ACL Policy:", aclPolicy);
+  console.log("Requested UserId:", userId);
+  console.log("ACL Owner:", aclPolicy?.owner);
+  console.log("ACL Visibility:", aclPolicy?.visibility);
+  
   if (!aclPolicy) {
+    console.log("No ACL policy found - denying access");
+    console.log("================");
     return false;
   }
 
@@ -152,18 +161,26 @@ export async function canAccessObject({
     aclPolicy.visibility === "public" &&
     requestedPermission === ObjectPermission.READ
   ) {
+    console.log("Public object - allowing access");
+    console.log("================");
     return true;
   }
 
   // Access control requires the user id.
   if (!userId) {
+    console.log("No userId provided - denying access");
+    console.log("================");
     return false;
   }
 
   // The owner of the object can always access it.
   if (aclPolicy.owner === userId) {
+    console.log("User is owner - allowing access");
+    console.log("================");
     return true;
   }
+
+  console.log("Owner check failed - checking ACL rules");
 
   // Go through the ACL rules to check if the user has the required permission.
   for (const rule of aclPolicy.aclRules || []) {
@@ -172,9 +189,13 @@ export async function canAccessObject({
       (await accessGroup.hasMember(userId)) &&
       isPermissionAllowed(requestedPermission, rule.permission)
     ) {
+      console.log("ACL rule matched - allowing access");
+      console.log("================");
       return true;
     }
   }
 
+  console.log("No matching ACL rules - denying access");
+  console.log("================");
   return false;
 }
