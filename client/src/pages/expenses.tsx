@@ -278,8 +278,13 @@ export default function Expenses() {
             <Button 
               variant="outline" 
               onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+                // Invalida todas as queries que começam com "/api/expenses"
+                queryClient.invalidateQueries({ 
+                  queryKey: ["/api/expenses"],
+                  exact: false 
+                });
                 queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/children"] });
                 toast({
                   title: "Atualizado",
                   description: "Dados atualizados com sucesso!",
