@@ -22,8 +22,18 @@ const expenseFormSchema = z.object({
   }, "Valor deve ser um número positivo"),
   expenseDate: z.string().min(1, "Data é obrigatória"),
   category: z.string().min(1, "Categoria é obrigatória"),
+  customCategory: z.string().optional(),
   childId: z.string().min(1, "Filho é obrigatório"),
   status: z.string().default("pendente"),
+}).refine((data) => {
+  // If category is "outros", customCategory is required
+  if (data.category === "outros" && !data.customCategory?.trim()) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Especifique do que se trata a categoria 'Outros'",
+  path: ["customCategory"],
 });
 
 type ExpenseFormData = z.infer<typeof expenseFormSchema>;
@@ -87,6 +97,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
       amount: initialData?.amount || "",
       expenseDate: initialData?.expenseDate || new Date().toISOString().split('T')[0],
       category: initialData?.category || "",
+      customCategory: (initialData as any)?.customCategory || "",
       childId: initialData?.childId || "",
       status: initialData?.status || "pendente",
     },
@@ -263,6 +274,24 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
               )}
             </div>
           </div>
+
+          {/* Custom category field - only show when "outros" is selected */}
+          {selectedCategory === "outros" && (
+            <div className="space-y-2">
+              <Label htmlFor="customCategory">Do que se trata? *</Label>
+              <Input
+                id="customCategory"
+                {...register("customCategory")}
+                placeholder="Especifique a categoria personalizada..."
+                data-testid="input-custom-category"
+              />
+              {errors.customCategory && (
+                <p className="text-sm text-destructive" data-testid="error-custom-category">
+                  {errors.customCategory.message}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Status</Label>
