@@ -49,10 +49,23 @@ function AuthenticatedApp() {
     "--sidebar-width-icon": "4rem", // default icon width
   };
 
-  if (isLoading || !isAuthenticated) {
+  // Add loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show landing page when not authenticated
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen">
-        <Router isAuthenticated={isAuthenticated} />
+        <Router isAuthenticated={false} />
       </div>
     );
   }
