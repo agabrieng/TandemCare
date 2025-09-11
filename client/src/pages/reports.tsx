@@ -40,6 +40,39 @@ interface DashboardStats {
   recentExpenses: any[];
 }
 
+interface Lawyer {
+  id: string;
+  fullName: string;
+  oabNumber?: string;
+  oabState?: string;
+  lawFirm?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  specializations: string[];
+  notes?: string;
+}
+
+interface LegalCase {
+  id: string;
+  lawyerId?: string;
+  caseType: string;
+  caseNumber?: string;
+  courtName?: string;
+  judgeName?: string;
+  startDate?: string;
+  expectedEndDate?: string;
+  status: string;
+  childrenInvolved: string[];
+  custodyType?: string;
+  alimonyAmount?: string;
+  visitationSchedule?: string;
+  importantDates?: any;
+  documents: string[];
+  notes?: string;
+  lawyer?: Lawyer;
+}
+
 // Função auxiliar para carregar imagem do object storage via API
 const loadImageFromStorage = async (filePath: string): Promise<string | null> => {
   try {
@@ -86,6 +119,16 @@ export default function Reports() {
 
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    retry: false,
+  });
+
+  const { data: lawyers = [] } = useQuery<Lawyer[]>({
+    queryKey: ["/api/lawyers"],
+    retry: false,
+  });
+
+  const { data: legalCases = [] } = useQuery<LegalCase[]>({
+    queryKey: ["/api/legal-cases"],
     retry: false,
   });
 
@@ -835,6 +878,205 @@ export default function Reports() {
           yPosition += 4;
         }
       });
+
+      // ===== CONTRACAPA =====
+      pdf.addPage();
+      pageNumber++;
+      addPageNumber(pageNumber);
+      yPosition = margins.top + 10;
+      
+      pdf.setFontSize(14);
+      pdf.setFont("times", "bold");
+      pdf.text("CONTRACAPA", pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 20;
+      pdf.setFontSize(12);
+      pdf.text("DADOS JURÍDICOS E LEGAIS", pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 20;
+
+      // 1. ADVOGADO RESPONSÁVEL
+      pdf.setFontSize(12);
+      pdf.setFont("times", "bold");
+      pdf.text("1. ADVOGADO RESPONSÁVEL", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFont("times", "normal");
+      
+      if (lawyers && lawyers.length > 0) {
+        const primaryLawyer = lawyers[0]; // Usar o primeiro advogado como principal
+        
+        const lawyerInfo = [
+          `Nome: ${primaryLawyer.fullName}`,
+          primaryLawyer.oabNumber ? `OAB: ${primaryLawyer.oabNumber}${primaryLawyer.oabState ? ` - ${primaryLawyer.oabState}` : ''}` : '',
+          primaryLawyer.lawFirm ? `Escritório: ${primaryLawyer.lawFirm}` : '',
+          primaryLawyer.phone || primaryLawyer.email ? `Contato: ${[primaryLawyer.phone, primaryLawyer.email].filter(Boolean).join(' - ')}` : '',
+          primaryLawyer.specializations && primaryLawyer.specializations.length > 0 ? `Especialização: ${primaryLawyer.specializations.join(', ')}` : '',
+          primaryLawyer.address ? `Endereço: ${primaryLawyer.address}` : ''
+        ].filter(Boolean);
+        
+        lawyerInfo.forEach((info) => {
+          pdf.text(info, margins.left + 5, yPosition);
+          yPosition += 8;
+        });
+        
+        if (primaryLawyer.notes) {
+          yPosition += 5;
+          pdf.setFont("times", "italic");
+          pdf.text("Observações:", margins.left + 5, yPosition);
+          yPosition += 8;
+          
+          const notesLines = pdf.splitTextToSize(primaryLawyer.notes, contentWidth - 10);
+          notesLines.forEach((line: string) => {
+            pdf.text(line, margins.left + 10, yPosition);
+            yPosition += 6;
+          });
+          pdf.setFont("times", "normal");
+        }
+      } else {
+        pdf.setFont("times", "italic");
+        pdf.text("Nenhum advogado cadastrado no sistema.", margins.left + 5, yPosition);
+        yPosition += 8;
+        pdf.setFont("times", "normal");
+      }
+      
+      yPosition += 15;
+
+      // 2. PROCESSO JUDICIAL
+      pdf.setFont("times", "bold");
+      pdf.text("2. PROCESSO JUDICIAL", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFont("times", "normal");
+      
+      if (legalCases && legalCases.length > 0) {
+        const activeCases = legalCases.filter(legalCase => legalCase.status !== 'concluído');
+        const primaryCase = activeCases.length > 0 ? activeCases[0] : legalCases[0];
+        
+        const caseInfo = [
+          `Tipo: ${primaryCase.caseType}`,
+          primaryCase.caseNumber ? `Número: ${primaryCase.caseNumber}` : '',
+          primaryCase.courtName ? `Vara: ${primaryCase.courtName}` : '',
+          primaryCase.judgeName ? `Juiz: ${primaryCase.judgeName}` : '',
+          `Status: ${primaryCase.status.charAt(0).toUpperCase() + primaryCase.status.slice(1)}`,
+          primaryCase.startDate ? `Data de Início: ${format(new Date(primaryCase.startDate), 'dd/MM/yyyy')}` : '',
+          primaryCase.expectedEndDate ? `Previsão de Conclusão: ${format(new Date(primaryCase.expectedEndDate), 'dd/MM/yyyy')}` : '',
+          primaryCase.custodyType ? `Tipo de Guarda: ${primaryCase.custodyType}` : '',
+          primaryCase.alimonyAmount ? `Valor da Pensão: ${formatCurrency(parseFloat(primaryCase.alimonyAmount))}` : ''
+        ].filter(Boolean);
+        
+        caseInfo.forEach((info) => {
+          pdf.text(info, margins.left + 5, yPosition);
+          yPosition += 8;
+        });
+        
+        if (primaryCase.childrenInvolved && primaryCase.childrenInvolved.length > 0) {
+          yPosition += 5;
+          pdf.text("Filhos Envolvidos:", margins.left + 5, yPosition);
+          yPosition += 8;
+          
+          primaryCase.childrenInvolved.forEach((childId: string) => {
+            const child = children.find(c => c.id === childId);
+            if (child) {
+              pdf.text(`• ${child.firstName} ${child.lastName || ''}`, margins.left + 10, yPosition);
+              yPosition += 6;
+            }
+          });
+        }
+        
+        if (primaryCase.visitationSchedule) {
+          yPosition += 5;
+          pdf.text("Cronograma de Visitas:", margins.left + 5, yPosition);
+          yPosition += 8;
+          
+          const scheduleLines = pdf.splitTextToSize(primaryCase.visitationSchedule, contentWidth - 15);
+          scheduleLines.forEach((line: string) => {
+            pdf.text(line, margins.left + 10, yPosition);
+            yPosition += 6;
+          });
+        }
+        
+        if (primaryCase.notes) {
+          yPosition += 5;
+          pdf.setFont("times", "italic");
+          pdf.text("Observações do Processo:", margins.left + 5, yPosition);
+          yPosition += 8;
+          
+          const notesLines = pdf.splitTextToSize(primaryCase.notes, contentWidth - 10);
+          notesLines.forEach((line: string) => {
+            pdf.text(line, margins.left + 10, yPosition);
+            yPosition += 6;
+          });
+          pdf.setFont("times", "normal");
+        }
+      } else {
+        pdf.setFont("times", "italic");
+        pdf.text("Nenhum processo judicial cadastrado no sistema.", margins.left + 5, yPosition);
+        yPosition += 8;
+        pdf.setFont("times", "normal");
+      }
+      
+      yPosition += 15;
+
+      // 3. OBSERVAÇÕES LEGAIS
+      pdf.setFont("times", "bold");
+      pdf.text("3. OBSERVAÇÕES LEGAIS", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFont("times", "normal");
+      
+      const legalObservations = [
+        "Este relatório de prestação de contas foi elaborado em conformidade com as normas jurídicas brasileiras e destina-se a:",
+        "",
+        "• Documentar despesas relacionadas aos filhos em processos de divórcio e separação;",
+        "• Comprovar o cumprimento das obrigações alimentares estabelecidas judicialmente;",
+        "• Fornecer transparência na aplicação de recursos destinados ao bem-estar dos menores;",
+        "• Subsidiar decisões judiciais em ações de guarda, visitação e pensão alimentícia.",
+        "",
+        "A documentação apresentada neste relatório possui valor probatório e pode ser utilizada como meio de prova em procedimentos judiciais, conforme estabelece o Código de Processo Civil brasileiro.",
+        "",
+        "Todos os comprovantes anexados foram organizados seguindo critérios de autenticidade e relevância para a prestação de contas, observando-se os princípios da transparência e boa-fé processual.",
+        "",
+        "Este documento foi gerado automaticamente pelo sistema em " + format(new Date(), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR }) + " e reflete fielmente os dados cadastrados na plataforma."
+      ];
+      
+      legalObservations.forEach((observation) => {
+        if (observation === '') {
+          yPosition += 6;
+        } else {
+          const lines = pdf.splitTextToSize(observation, contentWidth);
+          lines.forEach((line: string) => {
+            // Verificar se precisa de nova página
+            if (yPosition > pageHeight - margins.bottom - 15) {
+              pdf.addPage();
+              pageNumber++;
+              addPageNumber(pageNumber);
+              yPosition = margins.top + 20;
+            }
+            
+            pdf.text(line, margins.left, yPosition);
+            yPosition += 6;
+          });
+          yPosition += 3;
+        }
+      });
+      
+      // Assinatura digital
+      yPosition += 15;
+      
+      if (yPosition > pageHeight - margins.bottom - 30) {
+        pdf.addPage();
+        pageNumber++;
+        addPageNumber(pageNumber);
+        yPosition = margins.top + 20;
+      }
+      
+      pdf.setFont("times", "italic");
+      pdf.text("Documento gerado eletronicamente pelo Sistema de Gestão Financeira", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 8;
+      pdf.text("para Filhos de Pais Divorciados", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 10;
+      pdf.text(`Data de geração: ${format(new Date(), 'dd/MM/yyyy \'às\' HH:mm \'h\'', { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
 
       // Salvar o PDF
       const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
