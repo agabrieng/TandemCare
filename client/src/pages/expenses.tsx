@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ExpenseForm } from "@/components/ui/expense-form";
 import { ExpensesTable } from "@/components/ui/expenses-table";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { formatDateForBrazil } from "@/lib/date-utils";
 
 interface Expense {
   id: string;
@@ -435,7 +436,7 @@ export default function Expenses() {
                   {filteredExpenses.map((expense: any) => (
                     <tr key={expense.id} className="hover:bg-muted">
                       <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {new Date(expense.expenseDate).toLocaleDateString('pt-BR')}
+                        {formatDateForBrazil(expense.expenseDate)}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium">{expense.description}</td>
                       <td className="px-6 py-4 text-sm">

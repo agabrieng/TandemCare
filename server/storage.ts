@@ -103,31 +103,12 @@ export class DatabaseStorage implements IStorage {
     // If it's already in YYYY-MM-DD format, keep it EXACTLY as is
     if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
       normalizedDate = dateValue;
-    } else if (dateValue instanceof Date) {
-      // For Date objects, format directly to YYYY-MM-DD without timezone conversion
-      const year = dateValue.getUTCFullYear();
-      const month = String(dateValue.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(dateValue.getUTCDate()).padStart(2, '0');
-      normalizedDate = `${year}-${month}-${day}`;
+    } else if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      // ISO string - extract just the date part
+      normalizedDate = dateValue.slice(0, 10);
     } else {
-      // Convert Date object or ISO string to YYYY-MM-DD using Brazil timezone
-      try {
-        // If it's an ISO string, extract just the date part first
-        let dateToFormat = dateValue;
-        if (typeof dateValue === 'string' && dateValue.includes('T')) {
-          dateToFormat = dateValue.slice(0, 10);
-        }
-        
-        // Use Brazil timezone to format the date to avoid UTC shifts
-        normalizedDate = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'America/Sao_Paulo',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        }).format(new Date(dateToFormat));
-      } catch (error) {
-        normalizedDate = String(dateValue);
-      }
+      // Fallback: convert to string
+      normalizedDate = String(dateValue);
     }
     
     return {
