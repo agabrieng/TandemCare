@@ -5,8 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoreHorizontal, Paperclip } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateForBrazil } from "@/lib/date-utils";
 
 interface ExpenseWithDetails {
   id: string;
@@ -47,14 +46,6 @@ export function ExpensesTable({
     }).format(parseFloat(value));
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, 'dd/MM/yyyy', { locale: ptBR });
-    } catch {
-      return dateString;
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -136,7 +127,7 @@ export function ExpensesTable({
                     <div className="flex-1">
                       <h4 className="font-medium text-sm leading-tight">{expense.description}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(expense.expenseDate)}
+                        {formatDateForBrazil(expense.expenseDate)}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 ml-2">
@@ -230,7 +221,7 @@ export function ExpensesTable({
                     <div>
                       <div className="font-medium text-sm">{expense.description}</div>
                       <div className="text-xs text-muted-foreground">
-                        Cadastrado em {formatDate(expense.createdAt)}
+                        Cadastrado em {formatDateForBrazil(expense.createdAt)}
                       </div>
                     </div>
                   </TableCell>
@@ -253,7 +244,7 @@ export function ExpensesTable({
                     {formatCurrency(expense.amount)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatDate(expense.expenseDate)}
+                    {formatDateForBrazil(expense.expenseDate)}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(expense.status)} variant="secondary">
