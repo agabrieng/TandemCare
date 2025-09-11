@@ -93,6 +93,16 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Helper function to normalize expense dates to YYYY-MM-DD strings
+  private normalizeExpense(expense: any): any {
+    return {
+      ...expense,
+      expenseDate: expense.expenseDate && typeof expense.expenseDate === 'object'
+        ? new Date(expense.expenseDate).toISOString().slice(0, 10)
+        : String(expense.expenseDate)
+    };
+  }
+
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -235,7 +245,7 @@ export class DatabaseStorage implements IStorage {
       .insert(expenses)
       .values(expense)
       .returning();
-    return newExpense;
+    return this.normalizeExpense(newExpense);
   }
 
   async updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense> {
@@ -244,7 +254,7 @@ export class DatabaseStorage implements IStorage {
       .set({ ...expense, updatedAt: new Date() })
       .where(eq(expenses.id, id))
       .returning();
-    return updatedExpense;
+    return this.normalizeExpense(updatedExpense);
   }
 
   async deleteExpense(id: string): Promise<void> {
