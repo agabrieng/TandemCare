@@ -11,26 +11,18 @@ const staticAssets = [
   '/apple-touch-icon.png'
 ];
 
-const fontsToCache = [
-  'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
-];
+// Don't pre-cache fonts to avoid CORS issues during install
+const fontsToCache = [];
 
 // Install service worker
 self.addEventListener('install', (event) => {
   console.log('SW: Installing service worker');
   
   event.waitUntil(
-    Promise.all([
-      caches.open(STATIC_CACHE_NAME).then((cache) => {
-        console.log('SW: Caching static assets');
-        return cache.addAll(staticAssets);
-      }),
-      caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
-        console.log('SW: Caching fonts');
-        return cache.addAll(fontsToCache);
-      })
-    ]).then(() => {
+    caches.open(STATIC_CACHE_NAME).then((cache) => {
+      console.log('SW: Caching static assets');
+      return cache.addAll(staticAssets);
+    }).then(() => {
       console.log('SW: Installation complete');
       return self.skipWaiting();
     })
@@ -90,8 +82,12 @@ async function handleFetch(request) {
       return await cacheFirstStrategy(request, DYNAMIC_CACHE_NAME);
     }
     
-    // API requests - Network First with fallback
+    // API requests - Network First with fallback (exclude auth endpoints)
     if (url.pathname.startsWith('/api/')) {
+      // Don't cache sensitive auth endpoints
+      if (url.pathname.startsWith('/api/auth/')) {
+        return await fetch(request);
+      }
       return await networkFirstStrategy(request, API_CACHE_NAME);
     }
     
