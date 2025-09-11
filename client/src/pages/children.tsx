@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Users, Calendar, Edit, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChildForm } from "@/components/ui/child-form";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -19,6 +19,7 @@ interface Child {
   firstName: string;
   lastName?: string;
   dateOfBirth?: string;
+  profileImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -130,13 +131,55 @@ export default function Children() {
     },
   });
 
-  const handleCreateChild = (data: any) => {
-    createChildMutation.mutate(data);
+  const handleCreateChild = async (data: any, uploadedPhoto?: any) => {
+    try {
+      let childData = { ...data };
+      
+      // Handle profile photo upload
+      if (uploadedPhoto) {
+        const photoResponse = await apiRequest('POST', '/api/profile-photos', {
+          photoURL: uploadedPhoto.uploadURL,
+          fileName: uploadedPhoto.fileName,
+          fileType: uploadedPhoto.fileType,
+        });
+        const photoData = await photoResponse.json();
+        childData.profileImageUrl = photoData.objectPath;
+      }
+      
+      createChildMutation.mutate(childData);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao processar foto. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateChild = (data: any) => {
-    if (editingChild) {
-      updateChildMutation.mutate({ id: editingChild.id, data });
+  const handleUpdateChild = async (data: any, uploadedPhoto?: any) => {
+    if (!editingChild) return;
+    
+    try {
+      let childData = { ...data };
+      
+      // Handle profile photo upload
+      if (uploadedPhoto) {
+        const photoResponse = await apiRequest('POST', '/api/profile-photos', {
+          photoURL: uploadedPhoto.uploadURL,
+          fileName: uploadedPhoto.fileName,
+          fileType: uploadedPhoto.fileType,
+        });
+        const photoData = await photoResponse.json();
+        childData.profileImageUrl = photoData.objectPath;
+      }
+      
+      updateChildMutation.mutate({ id: editingChild.id, data: childData });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao processar foto. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -249,6 +292,10 @@ export default function Children() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-12 h-12">
+                          <AvatarImage
+                            src={child.profileImageUrl ? `/api/object-storage/image?path=${child.profileImageUrl}` : undefined}
+                            alt={`Foto de ${child.firstName}`}
+                          />
                           <AvatarFallback className={getChildAvatarColor(child.firstName)}>
                             {getChildInitials(child.firstName, child.lastName)}
                           </AvatarFallback>

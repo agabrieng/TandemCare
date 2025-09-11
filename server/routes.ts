@@ -200,6 +200,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ uploadURL });
   });
 
+  // Profile photo management
+  app.post('/api/profile-photos', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      if (!req.body.photoURL) {
+        return res.status(400).json({ error: "photoURL is required" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.photoURL,
+        {
+          owner: userId,
+          visibility: "private", // Profile photos should be private to the owner
+        },
+      );
+
+      res.status(201).json({ objectPath });
+    } catch (error) {
+      console.error("Error creating profile photo:", error);
+      res.status(500).json({ message: "Failed to create profile photo" });
+    }
+  });
+
   // Receipt management
   app.post('/api/receipts', isAuthenticated, async (req: any, res) => {
     try {
