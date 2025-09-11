@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
@@ -69,6 +69,13 @@ export function ObjectUploader({
   organizationParams,
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
+  const organizationParamsRef = useRef(organizationParams);
+  
+  // Update ref when organizationParams change
+  useEffect(() => {
+    organizationParamsRef.current = organizationParams;
+  }, [organizationParams]);
+
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -79,7 +86,10 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: () => onGetUploadParameters(organizationParams),
+        getUploadParameters: () => {
+          // Always use current organizationParams value from ref
+          return onGetUploadParameters(organizationParamsRef.current);
+        },
       })
       .on("complete", (result) => {
         onComplete?.(result);
