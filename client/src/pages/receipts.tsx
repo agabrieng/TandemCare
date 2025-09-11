@@ -408,9 +408,12 @@ export default function Receipts() {
                   </Select>
                 </div>
                 
-                {selectedExpense && user && expenses && (() => {
+                {selectedExpense && user?.id && expenses && (() => {
                   const expense = expenses.find(e => e.id === selectedExpense);
-                  if (!expense || !expense.child) return null;
+                  if (!expense || !expense.child?.id) {
+                    console.log("[DEBUG] Receipts - Missing expense or child data");
+                    return null;
+                  }
                   
                   // Format expenseDate to YYYY-MM-DD format
                   const formattedDate = format(parseISO(expense.expenseDate), 'yyyy-MM-dd');
