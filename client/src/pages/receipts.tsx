@@ -421,6 +421,8 @@ export default function Receipts() {
                     expenseDate: formattedDate,
                   };
 
+                  console.log("[DEBUG] Receipts - About to render ObjectUploader with params:", organizationParams);
+
                   return (
                     <ObjectUploader
                       maxNumberOfFiles={1}
