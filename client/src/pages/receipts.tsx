@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { format, parseISO, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { formatDateForBrazil } from "@/lib/date-utils";
 import type { UploadResult } from '@uppy/core';
 
 interface Expense {
@@ -739,7 +740,7 @@ export default function Receipts() {
                                                               <div className="flex-1">
                                                                 <CardTitle className="text-base">{expense.description}</CardTitle>
                                                                 <CardDescription className="mt-1">
-                                                                  {formatDate(expense.expenseDate)} • {formatCurrency(expense.amount)}
+                                                                  {formatDateForBrazil(expense.expenseDate)} • {formatCurrency(expense.amount)}
                                                                 </CardDescription>
                                                                 <div className="flex items-center space-x-2 mt-2">
                                                                   <Badge className={getCategoryColor(expense.category)} variant="secondary">
