@@ -249,6 +249,10 @@ export class ObjectStorageService {
     objectFile: File;
     requestedPermission?: ObjectPermission;
   }): Promise<boolean> {
+    console.log("=== OBJECT ENTITY DEBUG ===");
+    console.log("File name:", objectFile.name);
+    console.log("Private dir:", this.getPrivateObjectDir());
+    
     // Additional security: Check if the file path belongs to the user's hierarchy
     if (userId && objectFile.name) {
       const privateDir = this.getPrivateObjectDir();
@@ -258,21 +262,35 @@ export class ObjectStorageService {
       const userHierarchyPrefix = `users/${userId}/`;
       const privatePathPrefix = privateDir.endsWith('/') ? privateDir : `${privateDir}/`;
       
+      console.log("User hierarchy prefix:", userHierarchyPrefix);
+      console.log("Private path prefix:", privatePathPrefix);
+      console.log("File path includes user hierarchy:", filePath.includes(userHierarchyPrefix));
+      
       // If the file is in the hierarchical structure, verify it belongs to the user
       if (filePath.includes(userHierarchyPrefix)) {
         const relativePath = filePath.replace(privatePathPrefix, '');
+        console.log("Relative path:", relativePath);
+        console.log("Starts with user hierarchy:", relativePath.startsWith(userHierarchyPrefix));
+        
         if (!relativePath.startsWith(userHierarchyPrefix)) {
           // File is in hierarchical structure but not in this user's folder
+          console.log("HIERARCHY CHECK FAILED - denying access");
+          console.log("===========================");
           return false;
         }
       }
     }
 
-    return canAccessObject({
+    console.log("HIERARCHY CHECK PASSED - checking ACL");
+    const result = await canAccessObject({
       userId,
       objectFile,
       requestedPermission: requestedPermission ?? ObjectPermission.READ,
     });
+    console.log("Final ACL result:", result);
+    console.log("===========================");
+    
+    return result;
   }
 }
 
