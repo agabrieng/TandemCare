@@ -100,9 +100,15 @@ export class DatabaseStorage implements IStorage {
     const dateValue = expense.expenseDate;
     let normalizedDate: string;
     
-    // If it's already in YYYY-MM-DD format, keep it
+    // If it's already in YYYY-MM-DD format, keep it EXACTLY as is
     if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
       normalizedDate = dateValue;
+    } else if (dateValue instanceof Date) {
+      // For Date objects, format directly to YYYY-MM-DD without timezone conversion
+      const year = dateValue.getUTCFullYear();
+      const month = String(dateValue.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(dateValue.getUTCDate()).padStart(2, '0');
+      normalizedDate = `${year}-${month}-${day}`;
     } else {
       // Convert Date object or ISO string to YYYY-MM-DD using Brazil timezone
       try {
