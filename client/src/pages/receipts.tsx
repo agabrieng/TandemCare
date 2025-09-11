@@ -82,10 +82,10 @@ export default function Receipts() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   
   // Filter states
-  const [selectedYear, setSelectedYear] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [selectedChild, setSelectedChild] = useState<string>("");
-  const [selectedFileType, setSelectedFileType] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("all-years");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all-months");
+  const [selectedChild, setSelectedChild] = useState<string>("all-children");
+  const [selectedFileType, setSelectedFileType] = useState<string>("all-types");
   const [minAmount, setMinAmount] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
@@ -279,25 +279,25 @@ export default function Receipts() {
       }
       
       // Year filter
-      if (selectedYear) {
+      if (selectedYear && selectedYear !== "all-years") {
         const expenseYear = getYear(parseISO(expense.expenseDate));
         if (expenseYear.toString() !== selectedYear) return false;
       }
       
       // Month filter
-      if (selectedMonth) {
+      if (selectedMonth && selectedMonth !== "all-months") {
         const expenseMonth = getMonth(parseISO(expense.expenseDate));
         if (expenseMonth.toString() !== selectedMonth) return false;
       }
       
       // Child filter
-      if (selectedChild) {
+      if (selectedChild && selectedChild !== "all-children") {
         const childName = `${expense.child.firstName}${expense.child.lastName ? ` ${expense.child.lastName}` : ''}`;
         if (childName !== selectedChild) return false;
       }
       
       // File type filter
-      if (selectedFileType) {
+      if (selectedFileType && selectedFileType !== "all-types") {
         const hasMatchingFileType = expense.receipts?.some((receipt: any) => 
           receipt.fileType === selectedFileType
         );
@@ -334,10 +334,10 @@ export default function Receipts() {
   // Clear all filters
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedYear("");
-    setSelectedMonth("");
-    setSelectedChild("");
-    setSelectedFileType("");
+    setSelectedYear("all-years");
+    setSelectedMonth("all-months");
+    setSelectedChild("all-children");
+    setSelectedFileType("all-types");
     setMinAmount("");
     setMaxAmount("");
   };
@@ -493,7 +493,7 @@ export default function Receipts() {
                           <SelectValue placeholder="Todos os anos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos os anos</SelectItem>
+                          <SelectItem value="all-years">Todos os anos</SelectItem>
                           {uniqueValues.years.map(year => (
                             <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                           ))}
@@ -512,7 +512,7 @@ export default function Receipts() {
                           <SelectValue placeholder="Todos os meses" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos os meses</SelectItem>
+                          <SelectItem value="all-months">Todos os meses</SelectItem>
                           {uniqueValues.months.map(month => (
                             <SelectItem key={month} value={month.toString()}>{monthNames[month]}</SelectItem>
                           ))}
@@ -531,7 +531,7 @@ export default function Receipts() {
                           <SelectValue placeholder="Todos os filhos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos os filhos</SelectItem>
+                          <SelectItem value="all-children">Todos os filhos</SelectItem>
                           {uniqueValues.children.map(child => (
                             <SelectItem key={child} value={child}>{child}</SelectItem>
                           ))}
@@ -550,7 +550,7 @@ export default function Receipts() {
                           <SelectValue placeholder="Todos os tipos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos os tipos</SelectItem>
+                          <SelectItem value="all-types">Todos os tipos</SelectItem>
                           {uniqueValues.fileTypes.map(type => (
                             <SelectItem key={type} value={type}>{type}</SelectItem>
                           ))}
