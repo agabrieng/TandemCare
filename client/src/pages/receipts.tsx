@@ -181,7 +181,9 @@ export default function Receipts() {
     expenseDate: string;
   }) => {
     try {
+      console.log("[DEBUG] Frontend - received organizationParams:", organizationParams);
       const requestBody = organizationParams || {};
+      console.log("[DEBUG] Frontend - sending request body:", requestBody);
       const response = await apiRequest("POST", "/api/objects/upload", requestBody);
       const data = await response.json();
       return {
