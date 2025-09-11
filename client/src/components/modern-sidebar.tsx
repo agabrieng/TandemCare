@@ -13,13 +13,17 @@ import {
   LogOut, 
   Menu, 
   X,
-  Wallet
+  Wallet,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ModernSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const menuItems = [
@@ -55,7 +59,7 @@ const menuItems = [
   },
 ];
 
-export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
+export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleCollapse }: ModernSidebarProps) {
   const { user, logout } = useAuth() as any;
   const [location] = useLocation();
 
@@ -97,26 +101,46 @@ export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full w-72 bg-card border-r border-border z-50 transform transition-transform duration-300 ease-in-out",
+        "fixed left-0 top-0 h-full bg-card border-r border-border z-50 transform transition-all duration-300 ease-in-out",
         "md:relative md:transform-none md:z-auto",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        // Mobile behavior
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        // Desktop width behavior  
+        isCollapsed ? "md:w-16" : "md:w-72",
+        "w-72" // Mobile always full width
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                <Wallet className="w-6 h-6 text-primary-foreground" />
+            <div className="flex items-center justify-between">
+              <div className={cn("flex items-center gap-3", isCollapsed && "md:justify-center")}>
+                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+                  <Wallet className="w-6 h-6 text-primary-foreground" />
+                </div>
+                {!isCollapsed && (
+                  <div className="md:block">
+                    <h1 className="text-xl font-bold text-foreground">FinanceKids</h1>
+                    <p className="text-xs text-muted-foreground">Gestão Financeira</p>
+                  </div>
+                )}
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">FinanceKids</h1>
-                <p className="text-xs text-muted-foreground">Gestão Financeira</p>
-              </div>
+              {/* Desktop Toggle Button */}
+              {onToggleCollapse && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleCollapse}
+                  className="hidden md:flex h-8 w-8"
+                  data-testid="button-sidebar-collapse"
+                >
+                  {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                </Button>
+              )}
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className={cn("flex-1 space-y-2", isCollapsed ? "p-2" : "p-4")}>
             {menuItems.map((item) => {
               const isActive = location === item.url;
               const Icon = item.icon;
@@ -125,11 +149,12 @@ export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
                 <Link key={item.url} href={item.url}>
                   <div
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group cursor-pointer",
+                      "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
                       "hover:bg-accent hover:text-accent-foreground",
                       isActive 
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                      isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
                     )}
                     data-testid={`nav-${item.title.toLowerCase()}`}
                   >
@@ -137,20 +162,22 @@ export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
                       "w-5 h-5 transition-colors",
                       isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
                     )} />
-                    <div className="flex-1">
-                      <div className={cn(
-                        "font-medium text-sm",
-                        isActive ? "text-primary-foreground" : "text-foreground"
-                      )}>
-                        {item.title}
+                    {!isCollapsed && (
+                      <div className="flex-1">
+                        <div className={cn(
+                          "font-medium text-sm",
+                          isActive ? "text-primary-foreground" : "text-foreground"
+                        )}>
+                          {item.title}
+                        </div>
+                        <div className={cn(
+                          "text-xs",
+                          isActive ? "text-primary-foreground/70" : "text-muted-foreground"
+                        )}>
+                          {item.description}
+                        </div>
                       </div>
-                      <div className={cn(
-                        "text-xs",
-                        isActive ? "text-primary-foreground/70" : "text-muted-foreground"
-                      )}>
-                        {item.description}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </Link>
               );
@@ -158,50 +185,61 @@ export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
           </nav>
 
           {/* Settings */}
-          <div className="p-4 border-t border-border">
+          <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
             <Link href="/settings">
               <div className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group cursor-pointer",
+                "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
                 "hover:bg-accent hover:text-accent-foreground",
                 location === "/settings" 
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+                isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
               )}
               data-testid="nav-settings">
                 <Settings className="w-5 h-5" />
-                <span className="font-medium text-sm">Configurações</span>
+                {!isCollapsed && (
+                  <span className="font-medium text-sm">Configurações</span>
+                )}
               </div>
             </Link>
           </div>
 
           {/* User Profile */}
-          <div className="p-4 border-t border-border">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/50">
+          <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
+            <div className={cn(
+              "flex items-center rounded-xl bg-accent/50",
+              isCollapsed ? "md:justify-center md:p-2 p-3 gap-3" : "p-3 gap-3"
+            )}>
               <Avatar className="w-10 h-10">
                 <AvatarImage src={user?.avatar} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
                   {getUserInitials(user?.firstName, user?.lastName)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-foreground truncate">
-                  {user?.firstName || 'Usuário'}
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-foreground truncate">
+                    {user?.firstName || 'Usuário'}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {user?.email || 'user@example.com'}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {user?.email || 'user@example.com'}
-                </div>
-              </div>
+              )}
             </div>
             
             <Button
               variant="ghost"
-              size="sm"
+              size={isCollapsed ? "icon" : "sm"}
               onClick={handleLogout}
-              className="w-full mt-3 justify-start gap-2 text-muted-foreground hover:text-foreground hover:bg-destructive/10 hover:text-destructive"
+              className={cn(
+                "mt-3 text-muted-foreground hover:text-foreground hover:bg-destructive/10 hover:text-destructive",
+                isCollapsed ? "md:w-full md:justify-center w-full justify-start gap-2" : "w-full justify-start gap-2"
+              )}
               data-testid="button-logout"
             >
               <LogOut className="w-4 h-4" />
-              Sair
+              {!isCollapsed && "Sair"}
             </Button>
           </div>
         </div>

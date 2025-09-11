@@ -7,9 +7,14 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   // Lock body scroll when mobile sidebar is open
@@ -28,10 +33,15 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex h-screen bg-background">
-      <ModernSidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      <ModernSidebar 
+        isOpen={sidebarOpen} 
+        onToggle={toggleSidebar}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
+      />
       
       {/* Main content area */}
-      <main className="flex-1 flex flex-col overflow-hidden md:ml-0">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {/* Main content */}
         <div className="flex-1 overflow-y-auto">
           {children}
