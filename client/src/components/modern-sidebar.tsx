@@ -25,7 +25,7 @@ interface ModernSidebarProps {
 const menuItems = [
   {
     title: "Dashboard",
-    url: "/",
+    url: "/dashboard",
     icon: Home,
     description: "Visão geral das finanças",
   },

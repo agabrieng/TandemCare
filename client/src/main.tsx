@@ -5,8 +5,15 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/useAuth";
+import { Layout } from "@/components/Layout";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import Children from "@/pages/children";
+import Expenses from "@/pages/expenses";
+import Receipts from "@/pages/receipts";
+import Reports from "@/pages/reports";
+import Settings from "@/pages/settings";
+import NotFound from "@/pages/not-found";
 import "./index.css";
 
 function App() {
@@ -23,15 +30,32 @@ function App() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen">
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <Layout>
       <Switch>
         <Route path="/">
-          {isAuthenticated ? <Redirect to="/dashboard" /> : <Landing />}
+          <Redirect to="/dashboard" />
         </Route>
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/children" component={Children} />
+        <Route path="/expenses" component={Expenses} />
+        <Route path="/receipts" component={Receipts} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/settings" component={Settings} />
+        <Route component={NotFound} />
       </Switch>
-    </div>
+    </Layout>
   );
 }
 

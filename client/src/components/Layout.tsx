@@ -1,0 +1,28 @@
+import React, { useState } from "react";
+import { ModernSidebar } from "./modern-sidebar";
+
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export function Layout({ children }: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  return (
+    <div className="flex h-screen bg-background">
+      <ModernSidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      
+      {/* Main content area */}
+      <main className="flex-1 flex flex-col overflow-hidden md:ml-0">
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
