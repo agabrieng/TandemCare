@@ -1,12 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { ModernSidebar } from "@/components/modern-sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -42,12 +41,7 @@ function Router({ isAuthenticated }: { isAuthenticated: boolean }) {
 
 function AuthenticatedApp() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Custom sidebar width for finance application
-  const style = {
-    "--sidebar-width": "16rem",     // 256px for better navigation
-    "--sidebar-width-icon": "4rem", // default icon width
-  };
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Add loading state
   if (isLoading) {
@@ -71,26 +65,17 @@ function AuthenticatedApp() {
   }
 
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b border-border">
-          <div className="flex items-center justify-between w-full gap-2 px-4">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="-ml-1" data-testid="button-sidebar-toggle" />
-              <div className="h-4 w-px bg-sidebar-border hidden md:block" />
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <span className="hidden sm:inline">Tandem</span>
-                <span className="sm:hidden">Tandem</span>
-              </div>
-            </div>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 overflow-hidden">
+    <div className="min-h-screen bg-background flex">
+      <ModernSidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+      />
+      <div className="flex-1 flex flex-col">
+        <main className="flex-1 overflow-auto">
           <Router isAuthenticated={isAuthenticated} />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </main>
+      </div>
+    </div>
   );
 }
 
