@@ -32,19 +32,24 @@ export function dateStringToBrazilTimezone(dateString: string): Date {
  */
 export function formatDateForBrazil(dateString: string): string {
   try {
-    // Defensive guard: if string contains ISO timestamp, extract just the date part
-    if (dateString.includes('T') && dateString.includes('Z')) {
-      dateString = dateString.slice(0, 10);
+    // Force conversion: extract date part if ISO timestamp or keep as is
+    let dateOnly = dateString;
+    if (typeof dateString === 'string' && dateString.includes('T')) {
+      dateOnly = dateString.slice(0, 10);
     }
     
-    // Para datas no formato YYYY-MM-DD (apenas data, sem horário)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const [year, month, day] = dateString.split('-');
+    // Direct string manipulation for YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+      const [year, month, day] = dateOnly.split('-');
       return `${day}/${month}/${year}`;
     }
     
-    // Para timestamps ISO com horário, usa timezone brasileiro
+    // Fallback for any other format - use Brazil timezone
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       timeZone: BRAZIL_TIMEZONE,
       year: 'numeric',

@@ -136,20 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
       
-      // Debug logging
-      console.log('POST /api/expenses - expenseDate values:', {
-        originalBody: req.body.expenseDate,
-        sanitized: sanitizedBody.expenseDate,
-        parsed: expenseData.expenseDate,
-        typeof: typeof expenseData.expenseDate
-      });
-      
       const expense = await storage.createExpense(expenseData);
-      
-      console.log('POST /api/expenses - response expenseDate:', {
-        expenseDate: expense.expenseDate,
-        typeof: typeof expense.expenseDate
-      });
       
       res.status(201).json(expense);
     } catch (error) {
