@@ -69,10 +69,16 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
     retry: false,
   });
 
+  const { data: user } = useQuery<{ id: string; email: string; firstName: string; lastName: string }>({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseFormSchema),
@@ -85,6 +91,16 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
       status: initialData?.status || "pendente",
     },
   });
+
+  // Watch form values for organization parameters
+  const currentExpenseDate = watch("expenseDate");
+
+  // Create organization parameters for ObjectUploader
+  const organizationParams = user?.id && selectedChild && currentExpenseDate ? {
+    userId: user.id,
+    childId: selectedChild,
+    expenseDate: currentExpenseDate
+  } : undefined;
 
   const formatCurrency = (value: string) => {
     // Remove non-numeric characters except decimal point
@@ -101,9 +117,14 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
     onSubmit(formattedData, uploadedFiles);
   };
 
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (organizationParams?: {
+    userId: string;
+    childId: string;
+    expenseDate: string;
+  }) => {
     try {
-      const response = await apiRequest('POST', '/api/objects/upload');
+      const requestBody = organizationParams || {};
+      const response = await apiRequest('POST', '/api/objects/upload', requestBody);
       const data = await response.json();
       return {
         method: 'PUT' as const,
@@ -279,6 +300,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                 onGetUploadParameters={handleGetUploadParameters}
                 onComplete={handleUploadComplete}
                 buttonClassName="w-full sm:w-auto"
+                organizationParams={organizationParams}
               >
                 <Paperclip className="w-4 h-4 mr-2" />
                 Adicionar Comprovante

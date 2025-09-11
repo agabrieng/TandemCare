@@ -199,8 +199,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const { userId, childId, expenseDate } = req.body;
       
-      console.log("[DEBUG] Backend received organizationParams:", { userId, childId, expenseDate });
-      
       // Validate organization parameters if provided
       let organizationParams;
       if (userId && childId && expenseDate) {

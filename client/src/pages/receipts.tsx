@@ -181,9 +181,7 @@ export default function Receipts() {
     expenseDate: string;
   }) => {
     try {
-      console.log("[DEBUG] Frontend - received organizationParams:", organizationParams);
       const requestBody = organizationParams || {};
-      console.log("[DEBUG] Frontend - sending request body:", requestBody);
       const response = await apiRequest("POST", "/api/objects/upload", requestBody);
       const data = await response.json();
       return {
@@ -411,7 +409,6 @@ export default function Receipts() {
                 {selectedExpense && user?.id && expenses && (() => {
                   const expense = expenses.find(e => e.id === selectedExpense);
                   if (!expense || !expense.child?.id) {
-                    console.log("[DEBUG] Receipts - Missing expense or child data");
                     return null;
                   }
                   
@@ -423,8 +420,6 @@ export default function Receipts() {
                     childId: expense.child.id,
                     expenseDate: formattedDate,
                   };
-
-                  console.log("[DEBUG] Receipts - About to render ObjectUploader with params:", organizationParams);
 
                   return (
                     <ObjectUploader
