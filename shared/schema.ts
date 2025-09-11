@@ -80,10 +80,52 @@ export const receipts = pgTable("receipts", {
   uploadedAt: timestamp("uploaded_at").defaultNow(),
 });
 
+// Legal Information - Lawyers/Attorneys table
+export const lawyers = pgTable("lawyers", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // parent who registered the lawyer
+  fullName: varchar("full_name", { length: 200 }).notNull(),
+  oabNumber: varchar("oab_number", { length: 50 }), // Ordem dos Advogados do Brasil registration
+  oabState: varchar("oab_state", { length: 5 }), // UF do estado da OAB
+  lawFirm: varchar("law_firm", { length: 200 }), // nome do escritório
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  specializations: text("specializations").array(), // especialidades (direito de família, etc.)
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Legal Cases - Divorce/Custody proceedings table
+export const legalCases = pgTable("legal_cases", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // parent who registered the case
+  lawyerId: uuid("lawyer_id"), // associated lawyer (optional)
+  caseType: varchar("case_type", { length: 100 }).notNull(), // 'divórcio', 'guarda compartilhada', 'pensão alimentícia'
+  caseNumber: varchar("case_number", { length: 100 }), // número do processo
+  courtName: varchar("court_name", { length: 200 }), // nome da vara/tribunal
+  judgeName: varchar("judge_name", { length: 200 }), // nome do juiz
+  startDate: date("start_date"), // data de início do processo
+  expectedEndDate: date("expected_end_date"), // previsão de conclusão
+  status: varchar("status", { length: 50 }).default("em_andamento"), // 'em_andamento', 'concluído', 'suspenso'
+  childrenInvolved: uuid("children_involved").array(), // IDs dos filhos envolvidos no processo
+  custodyType: varchar("custody_type", { length: 100 }), // 'compartilhada', 'unilateral', etc.
+  alimonyAmount: decimal("alimony_amount", { precision: 10, scale: 2 }), // valor da pensão alimentícia
+  visitationSchedule: text("visitation_schedule"), // cronograma de visitas
+  importantDates: jsonb("important_dates"), // datas importantes do processo
+  documents: text("documents").array(), // lista de documentos importantes
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Define relations
 export const usersRelations = relations(users, ({ many }) => ({
   userChildren: many(userChildren),
   expenses: many(expenses),
+  lawyers: many(lawyers),
+  legalCases: many(legalCases),
 }));
 
 export const childrenRelations = relations(children, ({ many }) => ({
@@ -121,6 +163,25 @@ export const receiptsRelations = relations(receipts, ({ one }) => ({
   }),
 }));
 
+export const lawyersRelations = relations(lawyers, ({ one, many }) => ({
+  user: one(users, {
+    fields: [lawyers.userId],
+    references: [users.id],
+  }),
+  legalCases: many(legalCases),
+}));
+
+export const legalCasesRelations = relations(legalCases, ({ one }) => ({
+  user: one(users, {
+    fields: [legalCases.userId],
+    references: [users.id],
+  }),
+  lawyer: one(lawyers, {
+    fields: [legalCases.lawyerId],
+    references: [lawyers.id],
+  }),
+}));
+
 // Schemas for validation
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -151,6 +212,20 @@ export const insertReceiptSchema = createInsertSchema(receipts).omit({
   uploadedAt: true,
 });
 
+export const insertLawyerSchema = createInsertSchema(lawyers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLegalCaseSchema = createInsertSchema(legalCases).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  alimonyAmount: z.string().optional().refine((val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), "Alimony amount must be a positive number or empty"),
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -162,6 +237,10 @@ export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertReceipt = z.infer<typeof insertReceiptSchema>;
 export type Receipt = typeof receipts.$inferSelect;
+export type InsertLawyer = z.infer<typeof insertLawyerSchema>;
+export type Lawyer = typeof lawyers.$inferSelect;
+export type InsertLegalCase = z.infer<typeof insertLegalCaseSchema>;
+export type LegalCase = typeof legalCases.$inferSelect;
 
 // Extended types for joined data
 export type ExpenseWithDetails = Expense & {
