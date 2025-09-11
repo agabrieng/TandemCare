@@ -238,11 +238,11 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                 </SelectTrigger>
                 <SelectContent>
                   {categoriesLoading ? (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="loading" disabled>
                       Carregando categorias...
                     </SelectItem>
                   ) : categories.length === 0 ? (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="no-categories" disabled>
                       Nenhuma categoria encontrada
                     </SelectItem>
                   ) : (
