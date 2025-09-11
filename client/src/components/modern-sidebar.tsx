@@ -166,7 +166,8 @@ export function ModernSidebar({ isOpen, onToggle }: ModernSidebarProps) {
                 location === "/settings" 
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                   : "text-muted-foreground hover:text-foreground"
-              )}>
+              )}
+              data-testid="nav-settings">
                 <Settings className="w-5 h-5" />
                 <span className="font-medium text-sm">Configurações</span>
               </div>

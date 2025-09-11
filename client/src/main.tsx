@@ -35,7 +35,9 @@ function App() {
       <div className="min-h-screen">
         <Switch>
           <Route path="/" component={Landing} />
-          <Route component={NotFound} />
+          <Route>
+            <Redirect to="/" />
+          </Route>
         </Switch>
       </div>
     );
