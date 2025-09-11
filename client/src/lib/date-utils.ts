@@ -32,6 +32,11 @@ export function dateStringToBrazilTimezone(dateString: string): Date {
  */
 export function formatDateForBrazil(dateString: string): string {
   try {
+    // Defensive guard: if string contains ISO timestamp, extract just the date part
+    if (dateString.includes('T') && dateString.includes('Z')) {
+      dateString = dateString.slice(0, 10);
+    }
+    
     // Para datas no formato YYYY-MM-DD (apenas data, sem horário)
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [year, month, day] = dateString.split('-');

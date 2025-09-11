@@ -64,7 +64,7 @@ export const expenses = pgTable("expenses", {
   childId: uuid("child_id").notNull(), // which child the expense relates to
   description: text("description").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  expenseDate: date("expense_date").notNull(),
+  expenseDate: text("expense_date").notNull(), // Store as YYYY-MM-DD string to avoid timezone issues
   category: varchar("category", { length: 100 }).notNull(), // 'educação', 'saúde', 'alimentação', etc.
   status: varchar("status", { length: 50 }).notNull().default("pendente"), // 'pendente', 'pago', 'reembolsado'
   createdAt: timestamp("created_at").defaultNow(),
