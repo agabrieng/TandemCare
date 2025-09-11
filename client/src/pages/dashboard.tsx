@@ -11,6 +11,7 @@ import { StatsCard } from "@/components/ui/stats-card";
 import { ExpensesChart } from "@/components/ui/expenses-chart";
 import { RecentActivities } from "@/components/ui/recent-activities";
 import { ExpensesTable } from "@/components/ui/expenses-table";
+import { formatDateForBrazil } from "@/lib/date-utils";
 import { Plus, Filter, DollarSign, Clock, Users, FileText, Search, PlusCircle, Download, Upload, BarChart3 } from "lucide-react";
 
 interface DashboardStats {
@@ -219,7 +220,7 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <p className="text-sm font-medium">{expense.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(expense.expenseDate).toLocaleDateString('pt-BR')} • {expense.category}
+                        {formatDateForBrazil(expense.expenseDate)} • {expense.category}
                       </p>
                     </div>
                     <div className="text-sm font-medium">
