@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { ModernSidebar } from "@/components/modern-sidebar";
+import { ModernSidebar } from "./components/modern-sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
