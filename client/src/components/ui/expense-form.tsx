@@ -27,7 +27,7 @@ const expenseFormSchema = z.object({
   status: z.string().default("pendente"),
 }).refine((data) => {
   // If category is "outros", customCategory is required
-  if (data.category === "outros" && !data.customCategory?.trim()) {
+  if (data.category.toLowerCase() === "outros" && !data.customCategory?.trim()) {
     return false;
   }
   return true;
@@ -51,15 +51,7 @@ interface ExpenseFormProps {
   initialData?: Partial<ExpenseFormData>;
 }
 
-const categories = [
-  { value: "educação", label: "Educação" },
-  { value: "saúde", label: "Saúde" },
-  { value: "alimentação", label: "Alimentação" },
-  { value: "vestuário", label: "Vestuário" },
-  { value: "transporte", label: "Transporte" },
-  { value: "lazer", label: "Lazer" },
-  { value: "outros", label: "Outros" },
-];
+// Categories will be loaded from the database
 
 const statusOptions = [
   { value: "pendente", label: "Pendente" },
@@ -78,6 +70,18 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
     queryKey: ["/api/children"],
     retry: false,
   });
+
+  const { data: categoriesData = [], isLoading: categoriesLoading } = useQuery<{ id: string; name: string; isDefault: boolean }[]>({
+    queryKey: ["/api/categories"],
+    retry: false,
+  });
+
+  // Ensure "Outros" category is always available as fallback
+  const categories = [...categoriesData];
+  const hasOthersCategory = categories.some(cat => cat.name.toLowerCase() === "outros");
+  if (!hasOthersCategory) {
+    categories.push({ id: "fallback-outros", name: "Outros", isDefault: false });
+  }
 
   const { data: user } = useQuery<{ id: string; email: string; firstName: string; lastName: string }>({
     queryKey: ["/api/auth/user"],
@@ -233,11 +237,21 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
+                  {categoriesLoading ? (
+                    <SelectItem value="" disabled>
+                      Carregando categorias...
                     </SelectItem>
-                  ))}
+                  ) : categories.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      Nenhuma categoria encontrada
+                    </SelectItem>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {errors.category && (
@@ -276,7 +290,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
           </div>
 
           {/* Custom category field - only show when "outros" is selected */}
-          {selectedCategory === "outros" && (
+          {selectedCategory.toLowerCase() === "outros" && (
             <div className="space-y-2">
               <Label htmlFor="customCategory">Do que se trata? *</Label>
               <Input
