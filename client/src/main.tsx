@@ -1,11 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import Dashboard from "@/pages/dashboard";
 import "./index.css";
 
 function App() {
@@ -25,7 +26,10 @@ function App() {
   return (
     <div className="min-h-screen">
       <Switch>
-        <Route path="/" component={Landing} />
+        <Route path="/">
+          {isAuthenticated ? <Redirect to="/dashboard" /> : <Landing />}
+        </Route>
+        <Route path="/dashboard" component={Dashboard} />
       </Switch>
     </div>
   );
