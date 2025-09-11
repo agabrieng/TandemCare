@@ -305,7 +305,7 @@ export default function Children() {
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-12 h-12">
                           <AvatarImage
-                            src={child.profileImageUrl ? `/api/object-storage/image?path=${child.profileImageUrl}` : undefined}
+                            src={child.profileImageUrl ? `/api/object-storage/image?path=${child.profileImageUrl}&t=${new Date(child.updatedAt).getTime()}` : undefined}
                             alt={`Foto de ${child.firstName}`}
                           />
                           <AvatarFallback className={getChildAvatarColor(child.firstName)}>
