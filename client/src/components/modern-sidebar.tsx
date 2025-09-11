@@ -78,6 +78,13 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
     return first + last;
   };
 
+  const handleMobileNavClick = () => {
+    // Close sidebar on mobile when navigating
+    if (window.innerWidth < 768 && isOpen) {
+      onToggle();
+    }
+  };
+
   return (
     <>
       {/* Mobile Toggle Button */}
@@ -85,7 +92,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
         variant="ghost"
         size="icon"
         onClick={onToggle}
-        className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-sm border shadow-lg"
+        className="fixed top-4 left-4 z-[60] md:hidden bg-background/80 backdrop-blur-sm border shadow-lg"
         data-testid="button-sidebar-toggle"
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -107,7 +114,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         // Desktop width behavior  
         isCollapsed ? "md:w-16" : "md:w-72",
-        "w-72" // Mobile always full width
+        "w-72" // Mobile width
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -148,6 +155,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
               return (
                 <Link key={item.url} href={item.url}>
                   <div
+                    onClick={handleMobileNavClick}
                     className={cn(
                       "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
                       "hover:bg-accent hover:text-accent-foreground",
@@ -187,15 +195,17 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
           {/* Settings */}
           <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
             <Link href="/settings">
-              <div className={cn(
-                "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
-                "hover:bg-accent hover:text-accent-foreground",
-                location === "/settings" 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                  : "text-muted-foreground hover:text-foreground",
-                isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
-              )}
-              data-testid="nav-settings">
+              <div 
+                onClick={handleMobileNavClick}
+                className={cn(
+                  "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  location === "/settings" 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    : "text-muted-foreground hover:text-foreground",
+                  isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
+                )}
+                data-testid="nav-settings">
                 <Settings className="w-5 h-5" />
                 {!isCollapsed && (
                   <span className="font-medium text-sm">Configurações</span>
