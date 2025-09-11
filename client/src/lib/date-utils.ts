@@ -31,35 +31,47 @@ export function dateStringToBrazilTimezone(dateString: string): Date {
  * @returns Data formatada em dd/MM/yyyy
  */
 export function formatDateForBrazil(dateString: string): string {
-  try {
-    // Force conversion: extract date part if ISO timestamp or keep as is
-    let dateOnly = dateString;
-    if (typeof dateString === 'string' && dateString.includes('T')) {
-      dateOnly = dateString.slice(0, 10);
-    }
-    
-    // Direct string manipulation for YYYY-MM-DD format
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-      const [year, month, day] = dateOnly.split('-');
-      return `${day}/${month}/${year}`;
-    }
-    
-    // Fallback for any other format - use Brazil timezone
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return dateString;
-    }
-    
-    return new Intl.DateTimeFormat('pt-BR', {
-      timeZone: BRAZIL_TIMEZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).format(date);
-  } catch (error) {
-    console.warn('Erro ao formatar data:', error);
-    return dateString;
+  // HARDCODE FIX: Force correct date format
+  if (!dateString) return '';
+  
+  // Log for debugging
+  console.log('formatDateForBrazil received:', dateString, typeof dateString);
+  
+  // Convert to string if needed
+  const dateStr = String(dateString);
+  
+  // Extract just the date part if it's an ISO timestamp
+  let cleanDate = dateStr;
+  if (dateStr.includes('T')) {
+    cleanDate = dateStr.split('T')[0];
   }
+  
+  // For YYYY-MM-DD format, directly convert to DD/MM/YYYY
+  const dateMatch = cleanDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateMatch) {
+    const [, year, month, day] = dateMatch;
+    const result = `${day}/${month}/${year}`;
+    console.log('formatDateForBrazil result:', result);
+    return result;
+  }
+  
+  // Last resort: try parsing the date
+  try {
+    const date = new Date(cleanDate);
+    if (!isNaN(date.getTime())) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); 
+      const year = date.getFullYear();
+      const result = `${day}/${month}/${year}`;
+      console.log('formatDateForBrazil fallback result:', result);
+      return result;
+    }
+  } catch (error) {
+    console.error('Date formatting error:', error);
+  }
+  
+  console.log('formatDateForBrazil fallback to original:', dateStr);
+  return dateStr;
 }
 
 /**
