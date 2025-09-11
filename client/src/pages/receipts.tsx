@@ -172,7 +172,22 @@ export default function Receipts() {
 
   const handleGetUploadParameters = async () => {
     try {
-      const response = await apiRequest("POST", "/api/objects/upload");
+      // Find the selected expense to get organization parameters
+      const expense = expenses?.find(e => e.id === selectedExpense);
+      if (!expense) {
+        throw new Error("Despesa não encontrada");
+      }
+
+      // Get authenticated user's ID (will be added by the backend)
+      const { data: user } = await apiRequest("GET", "/api/auth/user").then(res => res.json());
+      
+      const requestBody = {
+        userId: user.id,
+        childId: expense.child.id,
+        expenseDate: expense.expenseDate,
+      };
+
+      const response = await apiRequest("POST", "/api/objects/upload", requestBody);
       const data = await response.json();
       return {
         method: 'PUT' as const,

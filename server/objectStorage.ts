@@ -131,7 +131,11 @@ export class ObjectStorageService {
   }
 
   // Gets the upload URL for an object entity.
-  async getObjectEntityUploadURL(): Promise<string> {
+  async getObjectEntityUploadURL(organizationParams?: {
+    userId: string;
+    childId: string;
+    expenseDate: string; // YYYY-MM-DD format
+  }): Promise<string> {
     const privateObjectDir = this.getPrivateObjectDir();
     if (!privateObjectDir) {
       throw new Error(
@@ -141,7 +145,21 @@ export class ObjectStorageService {
     }
 
     const objectId = randomUUID();
-    const fullPath = `${privateObjectDir}/uploads/${objectId}`;
+    
+    let fullPath: string;
+    
+    if (organizationParams) {
+      // Extract year and month from expenseDate
+      const expenseDate = new Date(organizationParams.expenseDate);
+      const year = expenseDate.getFullYear();
+      const month = String(expenseDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      
+      // Create hierarchical path: users/{userId}/children/{childId}/receipts/{year}/{month}/{objectId}
+      fullPath = `${privateObjectDir}/users/${organizationParams.userId}/children/${organizationParams.childId}/receipts/${year}/${month}/${objectId}`;
+    } else {
+      // Fallback to old structure for backwards compatibility
+      fullPath = `${privateObjectDir}/uploads/${objectId}`;
+    }
 
     const { bucketName, objectName } = parseObjectPath(fullPath);
 
@@ -231,6 +249,25 @@ export class ObjectStorageService {
     objectFile: File;
     requestedPermission?: ObjectPermission;
   }): Promise<boolean> {
+    // Additional security: Check if the file path belongs to the user's hierarchy
+    if (userId && objectFile.name) {
+      const privateDir = this.getPrivateObjectDir();
+      const filePath = objectFile.name;
+      
+      // Check if file is in the new hierarchical structure (users/{userId}/...)
+      const userHierarchyPrefix = `users/${userId}/`;
+      const privatePathPrefix = privateDir.endsWith('/') ? privateDir : `${privateDir}/`;
+      
+      // If the file is in the hierarchical structure, verify it belongs to the user
+      if (filePath.includes(userHierarchyPrefix)) {
+        const relativePath = filePath.replace(privatePathPrefix, '');
+        if (!relativePath.startsWith(userHierarchyPrefix)) {
+          // File is in hierarchical structure but not in this user's folder
+          return false;
+        }
+      }
+    }
+
     return canAccessObject({
       userId,
       objectFile,

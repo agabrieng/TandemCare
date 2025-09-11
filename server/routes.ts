@@ -195,9 +195,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
-    const objectStorageService = new ObjectStorageService();
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    res.json({ uploadURL });
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const { userId, childId, expenseDate } = req.body;
+      
+      // Validate organization parameters if provided
+      let organizationParams;
+      if (userId && childId && expenseDate) {
+        // Validate userId matches the authenticated user
+        if (userId !== (req as any).user.claims.sub) {
+          return res.status(403).json({ error: "Cannot upload files for other users" });
+        }
+        
+        // Validate expenseDate format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(expenseDate)) {
+          return res.status(400).json({ error: "Invalid expenseDate format. Use YYYY-MM-DD" });
+        }
+        
+        // Validate that the date is not in the future
+        const expense = new Date(expenseDate);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Set to end of today
+        if (expense > today) {
+          return res.status(400).json({ error: "Expense date cannot be in the future" });
+        }
+        
+        organizationParams = { userId, childId, expenseDate };
+      }
+      
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL(organizationParams);
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
   });
 
   // Profile photo management
