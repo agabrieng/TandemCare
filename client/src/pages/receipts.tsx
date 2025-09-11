@@ -63,10 +63,10 @@ function groupExpensesByHierarchy(expenses: Expense[]) {
 }
 
 function getUniqueValues(expenses: Expense[]) {
-  const years = [...new Set(expenses.map(e => getYear(parseISO(e.expenseDate))))];
-  const months = [...new Set(expenses.map(e => getMonth(parseISO(e.expenseDate))))];
-  const fileTypes = [...new Set(expenses.flatMap(e => e.receipts?.map(r => r.fileType) || []))];
-  const children = [...new Set(expenses.map(e => `${e.child.firstName}${e.child.lastName ? ` ${e.child.lastName}` : ''}`))];
+  const years = Array.from(new Set(expenses.map(e => getYear(parseISO(e.expenseDate)))));
+  const months = Array.from(new Set(expenses.map(e => getMonth(parseISO(e.expenseDate)))));
+  const fileTypes = Array.from(new Set(expenses.flatMap(e => e.receipts?.map(r => r.fileType) || [])));
+  const children = Array.from(new Set(expenses.map(e => `${e.child.firstName}${e.child.lastName ? ` ${e.child.lastName}` : ''}`)));
   
   return { years: years.sort((a, b) => b - a), months: months.sort(), fileTypes, children };
 }
@@ -107,7 +107,7 @@ export default function Receipts() {
     retry: false,
   });
 
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<{ id: string; email: string; firstName: string; lastName: string }>({
     queryKey: ["/api/auth/user"],
     retry: false,
   });
