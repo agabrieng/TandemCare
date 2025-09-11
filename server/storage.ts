@@ -6,6 +6,7 @@ import {
   receipts,
   lawyers,
   legalCases,
+  categories,
   type User,
   type UpsertUser,
   type Child,
@@ -22,6 +23,8 @@ import {
   type InsertLawyer,
   type LegalCase,
   type InsertLegalCase,
+  type Category,
+  type InsertCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count, sum, gte, lte } from "drizzle-orm";
@@ -80,6 +83,13 @@ export interface IStorage {
   createLegalCase(legalCase: InsertLegalCase): Promise<LegalCase>;
   updateLegalCase(id: string, legalCase: Partial<InsertLegalCase>): Promise<LegalCase>;
   deleteLegalCase(id: string): Promise<void>;
+
+  // Category operations
+  getCategories(userId: string): Promise<Category[]>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>, userId?: string): Promise<Category>;
+  deleteCategory(id: string, userId?: string): Promise<void>;
+  getCategoryById(id: string, userId: string): Promise<Category | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -382,6 +392,59 @@ export class DatabaseStorage implements IStorage {
 
   async deleteLegalCase(id: string): Promise<void> {
     await db.delete(legalCases).where(eq(legalCases.id, id));
+  }
+
+  // Category operations
+  async getCategories(userId: string): Promise<Category[]> {
+    return await db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, userId))
+      .orderBy(categories.name);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db
+      .insert(categories)
+      .values(category)
+      .returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: string, category: Partial<InsertCategory>, userId?: string): Promise<Category> {
+    const whereClause = userId ? 
+      and(eq(categories.id, id), eq(categories.userId, userId)) : 
+      eq(categories.id, id);
+      
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ ...category, updatedAt: new Date() })
+      .where(whereClause)
+      .returning();
+      
+    if (!updatedCategory) {
+      throw new Error("Category not found or access denied");
+    }
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string, userId?: string): Promise<void> {
+    const whereClause = userId ? 
+      and(eq(categories.id, id), eq(categories.userId, userId)) : 
+      eq(categories.id, id);
+      
+    const result = await db.delete(categories).where(whereClause).returning();
+    if (result.length === 0) {
+      throw new Error("Category not found or access denied");
+    }
+  }
+
+  async getCategoryById(id: string, userId: string): Promise<Category | undefined> {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, id), eq(categories.userId, userId)));
+    return category;
   }
 }
 
