@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest } from "@/lib/queryClient";
+import { getTodayInBrazilTimezone, brazilDateToStorage } from "@/lib/date-utils";
 import { Paperclip, X, FileText } from "lucide-react";
 import type { UploadResult } from "@uppy/core";
 
@@ -99,7 +100,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
     defaultValues: {
       description: initialData?.description || "",
       amount: initialData?.amount || "",
-      expenseDate: initialData?.expenseDate || new Date().toISOString().split('T')[0],
+      expenseDate: initialData?.expenseDate || getTodayInBrazilTimezone(),
       category: initialData?.category || "",
       customCategory: (initialData as any)?.customCategory || "",
       childId: initialData?.childId || "",
