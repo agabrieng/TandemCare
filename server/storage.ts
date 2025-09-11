@@ -203,10 +203,16 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(expenses.status, filters.status));
     }
     if (filters?.startDate) {
-      conditions.push(gte(expenses.expenseDate, filters.startDate.toISOString().split('T')[0]));
+      // Convert date to Brazil timezone (UTC-3) for filtering
+      const brazilStartDate = new Date(filters.startDate.getTime() + (filters.startDate.getTimezoneOffset() * 60000));
+      const startDateString = brazilStartDate.toISOString().split('T')[0];
+      conditions.push(gte(expenses.expenseDate, startDateString));
     }
     if (filters?.endDate) {
-      conditions.push(lte(expenses.expenseDate, filters.endDate.toISOString().split('T')[0]));
+      // Convert date to Brazil timezone (UTC-3) for filtering
+      const brazilEndDate = new Date(filters.endDate.getTime() + (filters.endDate.getTimezoneOffset() * 60000));
+      const endDateString = brazilEndDate.toISOString().split('T')[0];
+      conditions.push(lte(expenses.expenseDate, endDateString));
     }
 
     return await db.query.expenses.findMany({
