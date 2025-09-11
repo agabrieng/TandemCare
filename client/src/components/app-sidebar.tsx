@@ -19,7 +19,7 @@ import {
   SidebarMenuBadge,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ChevronUp, Settings, User, LogOut, ChevronRight } from "lucide-react";
+import { ChevronUp, Settings, User, LogOut, ChevronRight, Tags } from "lucide-react";
 
 const menuItems = [
   {
@@ -152,6 +152,31 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={location === "/categories"}
+                  tooltip={state === "collapsed" ? "Categorias" : undefined}
+                  className="group relative rounded-lg px-3 py-2.5 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200"
+                  data-testid="nav-categories"
+                >
+                  <Link href="/categories" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
+                    <Tags className="w-5 h-5" />
+                    <span className="font-medium group-hover:text-sidebar-accent-foreground transition-colors duration-200">
+                      Categorias
+                    </span>
+                    {state === "expanded" && (
+                      <ChevronRight className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-1" />
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+                {state === "expanded" && (
+                  <div className="opacity-90 px-3 pb-1">
+                    <p className="text-xs text-muted-foreground">Gerenciar categorias personalizadas</p>
+                  </div>
+                )}
+              </SidebarMenuItem>
+              
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
