@@ -201,21 +201,6 @@ export function AppSidebar() {
                 )}
               </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={handleLogout}
-                  tooltip={state === "collapsed" ? "Sair" : undefined}
-                  className="group relative rounded-lg px-3 py-2.5 hover:bg-destructive/90 hover:text-destructive-foreground transition-all duration-200"
-                  data-testid="button-logout"
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <LogOut className="w-5 h-5" />
-                    <span className="font-medium group-hover:text-destructive-foreground transition-colors duration-200">
-                      Sair
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -246,6 +231,22 @@ export function AppSidebar() {
                   </span>
                   <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
                     {user?.email}
+                  </span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={handleLogout}
+                tooltip={state === "collapsed" ? "Sair" : undefined}
+                className="group relative rounded-lg px-3 py-2 mt-1 hover:bg-destructive/90 hover:text-destructive-foreground transition-all duration-200"
+                data-testid="button-logout"
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <LogOut className="w-4 h-4" />
+                  <span className="font-medium group-hover:text-destructive-foreground transition-colors duration-200">
+                    Sair
                   </span>
                 </div>
               </SidebarMenuButton>
