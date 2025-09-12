@@ -186,11 +186,11 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
             position: 'right',
             labels: {
               font: {
-                size: 13,
+                size: 16,
                 family: 'Times, serif',
                 weight: '500'
               },
-              padding: 12,
+              padding: 15,
               usePointStyle: true,
               pointStyle: 'circle',
               // Adicionar valores na legenda para melhor legibilidade em P&B
@@ -227,7 +227,7 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
             display: true,
             text: 'Distribuição por Categoria',
             font: {
-              size: 16,
+              size: 20,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -324,11 +324,11 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             position: 'top',
             labels: {
               font: {
-                size: 13,
+                size: 16,
                 family: 'Times, serif',
                 weight: '500'
               },
-              padding: 15,
+              padding: 18,
               usePointStyle: true
             }
           },
@@ -336,7 +336,7 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             display: true,
             text: 'Acumulado Anual de Despesas',
             font: {
-              size: 16,
+              size: 20,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -357,11 +357,11 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             },
             ticks: {
               font: {
-                size: 11,
+                size: 13,
                 family: 'Times, serif'
               },
               color: '#000000',
-              padding: 8,
+              padding: 10,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
@@ -375,7 +375,7 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             },
             ticks: {
               font: {
-                size: 11,
+                size: 13,
                 family: 'Times, serif'
               },
               color: '#000000',
@@ -454,11 +454,11 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             position: 'top',
             labels: {
               font: {
-                size: 13,
+                size: 16,
                 family: 'Times, serif',
                 weight: '500'
               },
-              padding: 15,
+              padding: 18,
               usePointStyle: true
             }
           },
@@ -466,7 +466,7 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             display: true,
             text: 'Despesas por Mês',
             font: {
-              size: 16,
+              size: 20,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -487,11 +487,11 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             },
             ticks: {
               font: {
-                size: 11,
+                size: 13,
                 family: 'Times, serif'
               },
               color: '#000000',
-              padding: 8,
+              padding: 10,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
@@ -503,7 +503,7 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             },
             ticks: {
               font: {
-                size: 11,
+                size: 13,
                 family: 'Times, serif'
               },
               color: '#000000',
@@ -622,11 +622,11 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             position: 'top',
             labels: {
               font: {
-                size: 13,
+                size: 16,
                 family: 'Times, serif',
                 weight: '500'
               },
-              padding: 15,
+              padding: 18,
               usePointStyle: true
             }
           },
@@ -634,7 +634,7 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             display: true,
             text: 'Tendência de Gastos Mensais',
             font: {
-              size: 16,
+              size: 20,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -655,11 +655,11 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             },
             ticks: {
               font: {
-                size: 11,
+                size: 13,
                 family: 'Times, serif'
               },
               color: '#000000',
-              padding: 8,
+              padding: 10,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
@@ -673,7 +673,7 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             },
             ticks: {
               font: {
-                size: 11,
+                size: 13,
                 family: 'Times, serif'
               },
               color: '#000000',
