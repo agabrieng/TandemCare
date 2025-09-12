@@ -89,8 +89,27 @@ export function PdfDownloadModal({
   const fileSizeInMB = pdfBlob ? (pdfBlob.size / (1024 * 1024)).toFixed(2) : "0";
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md sm:max-w-lg" data-testid="modal-pdf-download">
+    <div>
+      {/* Estilo customizado para garantir backdrop opaco */}
+      <style>
+        {`
+          [data-state="open"][data-radix-dialog-overlay] {
+            background-color: rgba(0, 0, 0, 0.75) !important;
+            backdrop-filter: blur(4px) !important;
+          }
+          [data-radix-collection-item][data-radix-dialog-overlay] {
+            background-color: rgba(0, 0, 0, 0.75) !important;
+            backdrop-filter: blur(4px) !important;
+          }
+          .fixed.inset-0.z-50.bg-black\\/80 {
+            background-color: rgba(0, 0, 0, 0.75) !important;
+            backdrop-filter: blur(4px) !important;
+          }
+        `}
+      </style>
+      
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-w-md sm:max-w-lg" data-testid="modal-pdf-download">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
@@ -197,5 +216,6 @@ export function PdfDownloadModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  </div>
   );
 }
