@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart } from "lucide-react";
-import { format, subDays, subMonths, subYears } from "date-fns";
+import { format, parse, subDays, subMonths, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
@@ -138,16 +138,31 @@ const compressImage = async (imageData: string, maxWidth: number = 800, quality:
 const generatePieChart = async (categoryTotals: Record<string, number>): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 300;
+    // Aumentar resolução para melhor qualidade
+    const scale = 2;
+    canvas.width = 600 * scale;
+    canvas.height = 450 * scale;
+    canvas.style.width = '600px';
+    canvas.style.height = '450px';
     
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
     
     const labels = Object.keys(categoryTotals);
     const data = Object.values(categoryTotals);
+    
+    // Paleta de cores moderna e profissional
     const colors = [
-      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', 
-      '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+      '#6366F1', // Azul índigo
+      '#EC4899', // Rosa vibrante
+      '#10B981', // Verde esmeralda
+      '#F59E0B', // Âmbar
+      '#8B5CF6', // Violeta
+      '#EF4444', // Vermelho
+      '#06B6D4', // Ciano
+      '#84CC16', // Lima
+      '#F97316', // Laranja
+      '#6B7280'  // Cinza
     ];
     
     const chart = new Chart(ctx, {
@@ -157,8 +172,11 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
         datasets: [{
           data: data,
           backgroundColor: colors.slice(0, labels.length),
-          borderWidth: 2,
-          borderColor: '#fff'
+          borderWidth: 4,
+          borderColor: '#ffffff',
+          hoverBorderWidth: 5,
+          hoverBorderColor: '#ffffff',
+          hoverOffset: 8
         }]
       },
       options: {
@@ -168,9 +186,41 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
             position: 'right',
             labels: {
               font: {
-                size: 12
+                size: 13,
+                family: 'Times, serif',
+                weight: '500'
               },
-              padding: 10
+              padding: 12,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              // Adicionar valores na legenda para melhor legibilidade em P&B
+              generateLabels: function(chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  const dataset = data.datasets[0];
+                  const total = dataset.data.reduce((sum: number, value: number) => sum + value, 0);
+                  
+                  return data.labels.map((label, i) => {
+                    const value = dataset.data[i];
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    const amount = value.toLocaleString('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL' 
+                    });
+                    
+                    return {
+                      text: `${label}: ${amount} (${percentage}%)`,
+                      fillStyle: dataset.backgroundColor[i],
+                      strokeStyle: dataset.borderColor,
+                      lineWidth: dataset.borderWidth,
+                      pointStyle: 'circle',
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
             }
           },
           title: {
@@ -178,22 +228,33 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
             text: 'Distribuição por Categoria',
             font: {
               size: 16,
-              weight: 'bold'
-            }
+              weight: 'bold',
+              family: 'Times, serif'
+            },
+            padding: {
+              top: 10,
+              bottom: 20
+            },
+            color: '#000000'
           }
         },
         layout: {
-          padding: 10
+          padding: 20
+        },
+        elements: {
+          arc: {
+            borderRadius: 2
+          }
         }
       }
     });
     
-    // Aguardar o gráfico ser renderizado e converter para imagem
+    // Aguardar o gráfico ser renderizado e converter para imagem de alta qualidade
     setTimeout(() => {
-      const imageData = canvas.toDataURL('image/png');
+      const imageData = canvas.toDataURL('image/png', 1.0);
       chart.destroy();
       resolve(imageData);
-    }, 500);
+    }, 800);
   });
 };
 
@@ -201,10 +262,15 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
 const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 300;
+    // Aumentar resolução para melhor qualidade
+    const scale = 2;
+    canvas.width = 700 * scale;
+    canvas.height = 400 * scale;
+    canvas.style.width = '700px';
+    canvas.style.height = '400px';
     
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
     
     // Organizar dados por mês
     const monthlyData: Record<string, number> = {};
@@ -221,6 +287,11 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
     const labels = Object.keys(monthlyData);
     const data = Object.values(monthlyData);
     
+    // Fundo sutil para melhor legibilidade em P&B (reduzida transparência)
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.15)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0.02)');
+    
     const chart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -228,58 +299,102 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
         datasets: [{
           label: 'Acumulado (R$)',
           data: data,
-          borderColor: '#36A2EB',
-          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          borderColor: '#000080', // Azul mais escuro para melhor contraste em P&B
+          backgroundColor: gradient,
           fill: true,
           tension: 0.3,
-          pointBackgroundColor: '#36A2EB',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4
+          pointBackgroundColor: '#000080',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 4,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 4, // Linha mais grossa para impressão
+          pointHoverBorderWidth: 5
         }]
       },
       options: {
         responsive: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
         plugins: {
           legend: {
             display: true,
-            position: 'top'
+            position: 'top',
+            labels: {
+              font: {
+                size: 13,
+                family: 'Times, serif',
+                weight: '500'
+              },
+              padding: 15,
+              usePointStyle: true
+            }
           },
           title: {
             display: true,
             text: 'Acumulado Anual de Despesas',
             font: {
               size: 16,
-              weight: 'bold'
-            }
+              weight: 'bold',
+              family: 'Times, serif'
+            },
+            padding: {
+              top: 10,
+              bottom: 20
+            },
+            color: '#000000'
           }
         },
         scales: {
           y: {
             beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.2)', // Grid mais escuro para P&B
+              drawBorder: true,
+              lineWidth: 1
+            },
             ticks: {
+              font: {
+                size: 11,
+                family: 'Times, serif'
+              },
+              color: '#000000',
+              padding: 8,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
             }
           },
           x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.15)',
+              drawBorder: true,
+              lineWidth: 1
+            },
             ticks: {
-              maxRotation: 45
+              font: {
+                size: 11,
+                family: 'Times, serif'
+              },
+              color: '#000000',
+              maxRotation: 45,
+              padding: 8
             }
           }
         },
         layout: {
-          padding: 10
+          padding: 20
         }
       }
     });
     
     setTimeout(() => {
-      const imageData = canvas.toDataURL('image/png');
+      const imageData = canvas.toDataURL('image/png', 1.0);
       chart.destroy();
       resolve(imageData);
-    }, 500);
+    }, 800);
   });
 };
 
@@ -287,10 +402,15 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
 const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 300;
+    // Aumentar resolução para melhor qualidade
+    const scale = 2;
+    canvas.width = 700 * scale;
+    canvas.height = 400 * scale;
+    canvas.style.width = '700px';
+    canvas.style.height = '400px';
     
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
     
     // Organizar dados por mês
     const monthlyData: Record<string, number> = {};
@@ -302,8 +422,8 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
     });
     
     const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
-      const dateA = new Date(a[0].split('/').reverse().join('-'));
-      const dateB = new Date(b[0].split('/').reverse().join('-'));
+      const dateA = parse(a[0], 'MMM/yyyy', new Date(), { locale: ptBR });
+      const dateB = parse(b[0], 'MMM/yyyy', new Date(), { locale: ptBR });
       return dateA.getTime() - dateB.getTime();
     });
     
@@ -317,9 +437,13 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
         datasets: [{
           label: 'Gastos Mensais (R$)',
           data: data,
-          backgroundColor: 'rgba(75, 192, 192, 0.6)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1
+          backgroundColor: '#4B5563', // Cinza escuro sólido para melhor P&B
+          borderColor: '#000000',
+          borderWidth: 2,
+          borderRadius: 3, // Radius menor para impressão
+          borderSkipped: false,
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#000000'
         }]
       },
       options: {
@@ -327,43 +451,83 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
         plugins: {
           legend: {
             display: true,
-            position: 'top'
+            position: 'top',
+            labels: {
+              font: {
+                size: 13,
+                family: 'Times, serif',
+                weight: '500'
+              },
+              padding: 15,
+              usePointStyle: true
+            }
           },
           title: {
             display: true,
             text: 'Despesas por Mês',
             font: {
               size: 16,
-              weight: 'bold'
-            }
+              weight: 'bold',
+              family: 'Times, serif'
+            },
+            padding: {
+              top: 10,
+              bottom: 20
+            },
+            color: '#000000'
           }
         },
         scales: {
           y: {
             beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.2)', // Grid mais escuro para P&B
+              drawBorder: true,
+              lineWidth: 1
+            },
             ticks: {
+              font: {
+                size: 11,
+                family: 'Times, serif'
+              },
+              color: '#000000',
+              padding: 8,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
             }
           },
           x: {
+            grid: {
+              display: false
+            },
             ticks: {
-              maxRotation: 45
+              font: {
+                size: 11,
+                family: 'Times, serif'
+              },
+              color: '#000000',
+              maxRotation: 45,
+              padding: 8
             }
           }
         },
         layout: {
-          padding: 10
+          padding: 20
+        },
+        elements: {
+          bar: {
+            borderRadius: 3
+          }
         }
       }
     });
     
     setTimeout(() => {
-      const imageData = canvas.toDataURL('image/png');
+      const imageData = canvas.toDataURL('image/png', 1.0);
       chart.destroy();
       resolve(imageData);
-    }, 500);
+    }, 800);
   });
 };
 
@@ -371,10 +535,15 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
 const generateTrendChart = async (expenses: any[]): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 300;
+    // Aumentar resolução para melhor qualidade
+    const scale = 2;
+    canvas.width = 700 * scale;
+    canvas.height = 400 * scale;
+    canvas.style.width = '700px';
+    canvas.style.height = '400px';
     
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
     
     // Organizar dados por mês
     const monthlyData: Record<string, number> = {};
@@ -386,8 +555,8 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
     });
     
     const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
-      const dateA = new Date(a[0].split('/').reverse().join('-'));
-      const dateB = new Date(b[0].split('/').reverse().join('-'));
+      const dateA = parse(a[0], 'MMM/yyyy', new Date(), { locale: ptBR });
+      const dateB = parse(b[0], 'MMM/yyyy', new Date(), { locale: ptBR });
       return dateA.getTime() - dateB.getTime();
     });
     
@@ -409,66 +578,121 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
           {
             label: 'Gastos Mensais (R$)',
             data: data,
-            borderColor: 'rgba(255, 99, 132, 0.8)',
-            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-            fill: false,
-            tension: 0.1,
-            pointRadius: 3
+            borderColor: '#000000', // Preto sólido para melhor P&B
+            backgroundColor: 'rgba(0, 0, 0, 0.05)', // Fundo muito sutil
+            fill: false, // Sem preenchimento para melhor legibilidade em P&B
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#000000',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 3,
+            pointHoverRadius: 7,
+            borderWidth: 4, // Linha mais grossa
+            pointHoverBorderWidth: 4,
+            pointStyle: 'circle'
           },
           {
             label: 'Tendência (Média Móvel 3 meses)',
             data: movingAverage,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-            fill: false,
+            borderColor: '#4B5563', // Cinza escuro para distinguir
+            backgroundColor: 'rgba(75, 85, 99, 0.05)',
+            fill: false, // Sem preenchimento para melhor legibilidade em P&B
             tension: 0.3,
             pointRadius: 4,
-            borderWidth: 3
+            pointBackgroundColor: '#4B5563',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 3,
+            pointHoverRadius: 8,
+            borderWidth: 4,
+            pointHoverBorderWidth: 4,
+            borderDash: [8, 4], // Linha tracejada para distinguir
+            pointStyle: 'triangle'
           }
         ]
       },
       options: {
         responsive: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
         plugins: {
           legend: {
             display: true,
-            position: 'top'
+            position: 'top',
+            labels: {
+              font: {
+                size: 13,
+                family: 'Times, serif',
+                weight: '500'
+              },
+              padding: 15,
+              usePointStyle: true
+            }
           },
           title: {
             display: true,
             text: 'Tendência de Gastos Mensais',
             font: {
               size: 16,
-              weight: 'bold'
-            }
+              weight: 'bold',
+              family: 'Times, serif'
+            },
+            padding: {
+              top: 10,
+              bottom: 20
+            },
+            color: '#000000'
           }
         },
         scales: {
           y: {
             beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.2)', // Grid mais escuro para P&B
+              drawBorder: true,
+              lineWidth: 1
+            },
             ticks: {
+              font: {
+                size: 11,
+                family: 'Times, serif'
+              },
+              color: '#000000',
+              padding: 8,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
             }
           },
           x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.15)',
+              drawBorder: true,
+              lineWidth: 1
+            },
             ticks: {
-              maxRotation: 45
+              font: {
+                size: 11,
+                family: 'Times, serif'
+              },
+              color: '#000000',
+              maxRotation: 45,
+              padding: 8
             }
           }
         },
         layout: {
-          padding: 10
+          padding: 20
         }
       }
     });
     
     setTimeout(() => {
-      const imageData = canvas.toDataURL('image/png');
+      const imageData = canvas.toDataURL('image/png', 1.0);
       chart.destroy();
       resolve(imageData);
-    }, 500);
+    }, 800);
   });
 };
 
