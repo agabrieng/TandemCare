@@ -210,46 +210,71 @@ export function AppSidebar() {
         {user && (
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                size="lg" 
-                className="group relative rounded-xl p-3 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200"
-              >
-                <div className="relative">
-                  <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
-                    <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
-                    <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
-                      {getUserInitials(user?.firstName, user?.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold group-hover:text-sidebar-accent-foreground transition-colors duration-200" data-testid="text-user-name">
-                    {user?.firstName && user?.lastName 
-                      ? `${user?.firstName} ${user?.lastName}` 
-                      : user?.firstName || "Usuário"
-                    }
-                  </span>
-                  <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
-                    {user?.email}
-                  </span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={handleLogout}
-                tooltip={state === "collapsed" ? "Sair" : undefined}
-                className="group relative rounded-lg px-3 py-2 mt-1 hover:bg-destructive/90 hover:text-destructive-foreground transition-all duration-200"
-                data-testid="button-logout"
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <LogOut className="w-4 h-4" />
-                  <span className="font-medium group-hover:text-destructive-foreground transition-colors duration-200">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton 
+                    size="lg" 
+                    className="group relative rounded-xl p-3 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200"
+                    data-testid="button-user-menu"
+                  >
+                    <div className="relative">
+                      <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
+                        <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
+                        <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
+                          {getUserInitials(user?.firstName, user?.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold group-hover:text-sidebar-accent-foreground transition-colors duration-200" data-testid="text-user-name">
+                        {user?.firstName && user?.lastName 
+                          ? `${user?.firstName} ${user?.lastName}` 
+                          : user?.firstName || "Usuário"
+                        }
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
+                        {user?.email}
+                      </span>
+                    </div>
+                    <ChevronUp className="ml-auto h-4 w-4 opacity-60" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  side="top" 
+                  align="start" 
+                  sideOffset={8} 
+                  className="w-64 p-2"
+                >
+                  <div className="flex items-center gap-3 p-2">
+                    <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
+                      <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
+                      <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
+                        {getUserInitials(user?.firstName, user?.lastName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold" data-testid="text-user-name">
+                        {user?.firstName && user?.lastName 
+                          ? `${user?.firstName} ${user?.lastName}` 
+                          : user?.firstName || "Usuário"
+                        }
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
+                        {user?.email}
+                      </span>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                    data-testid="menuitem-logout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
                     Sair
-                  </span>
-                </div>
-              </SidebarMenuButton>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
         )}
