@@ -13,10 +13,7 @@ import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configurar worker do PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// PDF.js será carregado dinamicamente
 
 interface Expense {
   id: string;
@@ -136,8 +133,17 @@ const compressImage = async (imageData: string, maxWidth: number = 800, quality:
 // Função para converter PDF em imagem (primeira página)
 const convertPdfToImage = async (pdfData: string, maxWidth: number = 600): Promise<string | null> => {
   try {
+    console.log('Iniciando conversão de PDF para imagem...');
+    
+    // Importar PDF.js dinamicamente
+    const pdfjsLib = await import('pdfjs-dist');
+    
+    // Configurar worker usando URL local/CDN estável
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+    
     // Remover o prefixo data:application/pdf;base64, se existir
     const base64Data = pdfData.includes(',') ? pdfData.split(',')[1] : pdfData;
+    console.log('Base64 data length:', base64Data.length);
     
     // Converter base64 para Uint8Array
     const binaryString = atob(base64Data);
@@ -145,25 +151,42 @@ const convertPdfToImage = async (pdfData: string, maxWidth: number = 600): Promi
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
+    console.log('PDF bytes length:', bytes.length);
     
     // Carregar o PDF
-    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    console.log('Carregando documento PDF...');
+    const loadingTask = pdfjsLib.getDocument({ 
+      data: bytes,
+      cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+      cMapPacked: true,
+    });
+    const pdf = await loadingTask.promise;
+    console.log('PDF carregado. Número de páginas:', pdf.numPages);
     
     // Obter a primeira página
+    console.log('Obtendo primeira página...');
     const page = await pdf.getPage(1);
+    console.log('Página obtida com sucesso');
     
     // Calcular escala baseada na largura máxima
     const viewport = page.getViewport({ scale: 1 });
-    const scale = maxWidth / viewport.width;
+    const scale = Math.min(maxWidth / viewport.width, 1); // Não aumentar além do tamanho original
     const scaledViewport = page.getViewport({ scale });
+    console.log('Viewport calculado:', { width: scaledViewport.width, height: scaledViewport.height });
     
     // Criar canvas
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d')!;
-    canvas.height = scaledViewport.height;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Não foi possível obter contexto 2D do canvas');
+    }
+    
     canvas.width = scaledViewport.width;
+    canvas.height = scaledViewport.height;
+    console.log('Canvas criado:', { width: canvas.width, height: canvas.height });
     
     // Renderizar página no canvas
+    console.log('Renderizando página no canvas...');
     const renderContext = {
       canvasContext: context,
       viewport: scaledViewport,
@@ -171,12 +194,20 @@ const convertPdfToImage = async (pdfData: string, maxWidth: number = 600): Promi
     };
     
     await page.render(renderContext).promise;
+    console.log('Renderização concluída');
     
     // Converter canvas para imagem
-    return canvas.toDataURL('image/jpeg', 0.8);
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    console.log('Conversão para imagem concluída. Data URL length:', imageData.length);
+    
+    return imageData;
     
   } catch (error) {
-    console.error('Erro ao converter PDF para imagem:', error);
+    console.error('Erro detalhado ao converter PDF para imagem:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return null;
   }
 };
