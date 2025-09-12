@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,6 +82,7 @@ const monthNames = [
 ];
 
 export default function Expenses() {
+  const isMobile = useIsMobile();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -97,6 +99,7 @@ export default function Expenses() {
   const [openChildren, setOpenChildren] = useState<Record<string, boolean>>({});
   const [openYears, setOpenYears] = useState<Record<string, boolean>>({});
   const [openMonths, setOpenMonths] = useState<Record<string, boolean>>({});
+  const [allExpanded, setAllExpanded] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -417,6 +420,40 @@ export default function Expenses() {
     setOpenMonths(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Expand/collapse all functionality - especially useful on mobile
+  const expandAll = () => {
+    const childrenToExpand: Record<string, boolean> = {};
+    const yearsToExpand: Record<string, boolean> = {};
+    const monthsToExpand: Record<string, boolean> = {};
+    
+    Object.entries(hierarchicalData).forEach(([childName, yearData]) => {
+      const childKey = `child-${childName}`;
+      childrenToExpand[childKey] = true;
+      
+      Object.entries(yearData).forEach(([year, monthData]) => {
+        const yearKey = `${childKey}-year-${year}`;
+        yearsToExpand[yearKey] = true;
+        
+        Object.keys(monthData).forEach((month) => {
+          const monthKey = `${yearKey}-month-${month}`;
+          monthsToExpand[monthKey] = true;
+        });
+      });
+    });
+    
+    setOpenChildren(childrenToExpand);
+    setOpenYears(yearsToExpand);
+    setOpenMonths(monthsToExpand);
+    setAllExpanded(true);
+  };
+  
+  const collapseAll = () => {
+    setOpenChildren({});
+    setOpenYears({});
+    setOpenMonths({});
+    setAllExpanded(false);
+  };
+
   const categories = [
     { value: "educação", label: "Educação" },
     { value: "saúde", label: "Saúde" },
@@ -644,9 +681,9 @@ export default function Expenses() {
             </CollapsibleContent>
           </Collapsible>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-4`}>
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
                 <div className="flex items-center space-x-2">
                   <Receipt className="w-5 h-5 text-blue-600" />
                   <div>
@@ -658,7 +695,7 @@ export default function Expenses() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
                 <div className="flex items-center space-x-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
                   <div>
@@ -672,7 +709,7 @@ export default function Expenses() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
                 <div className="flex items-center space-x-2">
                   <Receipt className="w-5 h-5 text-yellow-600" />
                   <div>
@@ -688,23 +725,23 @@ export default function Expenses() {
         </div>
 
         {/* Hierarchical Expenses View */}
-        <div className="space-y-6">
+        <div className={`${isMobile ? 'space-y-3' : 'space-y-6'}`}>
           {Object.keys(hierarchicalData).length > 0 ? (
             Object.entries(hierarchicalData).map(([childName, yearData]) => {
               const childKey = `child-${childName}`;
               const isChildOpen = openChildren[childKey];
               
               return (
-                <Card key={childKey} data-testid={`card-child-${childName}`}>
+                <Card key={childKey} data-testid={`card-child-${childName}`} className={isMobile ? 'touch-manipulation' : ''}>
                   <Collapsible open={isChildOpen} onOpenChange={() => toggleChild(childKey)}>
                     <CollapsibleTrigger className="w-full">
-                      <CardHeader className="hover-elevate">
+                      <CardHeader className={`hover-elevate ${isMobile ? 'py-3' : 'py-6'}`}>
                         <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center space-x-3">
-                            <User className="w-6 h-6 text-primary" />
+                          <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
+                            <User className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-primary`} />
                             <div className="text-left">
-                              <CardTitle className="text-xl">{childName}</CardTitle>
-                              <CardDescription>
+                              <CardTitle className={`${isMobile ? 'text-lg' : 'text-xl'}`}>{childName}</CardTitle>
+                              <CardDescription className={isMobile ? 'text-sm' : ''}>
                                 {Object.values(yearData).reduce((total, monthData) => 
                                   total + Object.values(monthData).reduce((monthTotal, expenses) => 
                                     monthTotal + expenses.length, 0), 0)} despesas
@@ -712,31 +749,31 @@ export default function Expenses() {
                             </div>
                           </div>
                           {isChildOpen ? 
-                            <ChevronDown className="w-5 h-5 text-muted-foreground" /> : 
-                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                            <ChevronDown className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-muted-foreground`} /> : 
+                            <ChevronRight className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-muted-foreground`} />
                           }
                         </div>
                       </CardHeader>
                     </CollapsibleTrigger>
                     
                     <CollapsibleContent>
-                      <CardContent className="pt-0">
-                        <div className="space-y-4">
+                      <CardContent className={`pt-0 ${isMobile ? 'px-3 pb-3' : ''}`}>
+                        <div className={`${isMobile ? 'space-y-2' : 'space-y-4'}`}>
                           {Object.entries(yearData).map(([year, monthData]) => {
                             const yearKey = `${childKey}-year-${year}`;
                             const isYearOpen = openYears[yearKey];
                             
                             return (
-                              <Card key={yearKey} className="ml-4" data-testid={`card-year-${year}`}>
+                              <Card key={yearKey} className={`${isMobile ? 'ml-2' : 'ml-4'} touch-manipulation`} data-testid={`card-year-${year}`}>
                                 <Collapsible open={isYearOpen} onOpenChange={() => toggleYear(yearKey)}>
                                   <CollapsibleTrigger className="w-full">
-                                    <CardHeader className="py-3 hover-elevate">
+                                    <CardHeader className={`${isMobile ? 'py-2' : 'py-3'} hover-elevate`}>
                                       <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center space-x-3">
-                                          <CalendarIcon className="w-5 h-5 text-blue-600" />
+                                        <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
+                                          <CalendarIcon className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-blue-600`} />
                                           <div className="text-left">
-                                            <CardTitle className="text-lg">{year}</CardTitle>
-                                            <CardDescription>
+                                            <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'}`}>{year}</CardTitle>
+                                            <CardDescription className={isMobile ? 'text-sm' : ''}>
                                               {Object.values(monthData).reduce((total, expenses) => 
                                                 total + expenses.length, 0)} despesas
                                             </CardDescription>
@@ -751,72 +788,74 @@ export default function Expenses() {
                                   </CollapsibleTrigger>
                                   
                                   <CollapsibleContent>
-                                    <CardContent className="pt-0">
-                                      <div className="space-y-3">
+                                    <CardContent className={`pt-0 ${isMobile ? 'px-3 pb-3' : ''}`}>
+                                      <div className={`${isMobile ? 'space-y-2' : 'space-y-3'}`}>
                                         {Object.entries(monthData).map(([month, expenses]) => {
                                           const monthKey = `${yearKey}-month-${month}`;
                                           const isMonthOpen = openMonths[monthKey];
                                           
                                           return (
-                                            <Card key={monthKey} className="ml-4" data-testid={`card-month-${month}`}>
+                                            <Card key={monthKey} className={`${isMobile ? 'ml-1' : 'ml-4'} touch-manipulation`} data-testid={`card-month-${month}`}>
                                               <Collapsible open={isMonthOpen} onOpenChange={() => toggleMonth(monthKey)}>
                                                 <CollapsibleTrigger className="w-full">
-                                                  <CardHeader className="py-2 hover-elevate">
+                                                  <CardHeader className={`${isMobile ? 'py-1.5' : 'py-2'} hover-elevate`}>
                                                     <div className="flex items-center justify-between w-full">
-                                                      <div className="flex items-center space-x-3">
+                                                      <div className={`flex items-center ${isMobile ? 'space-x-2' : 'space-x-3'}`}>
                                                         <Receipt className="w-4 h-4 text-green-600" />
                                                         <div className="text-left">
-                                                          <CardTitle className="text-md">{monthNames[parseInt(month)]}</CardTitle>
-                                                          <CardDescription>
+                                                          <CardTitle className={`${isMobile ? 'text-sm' : 'text-md'}`}>{monthNames[parseInt(month)]}</CardTitle>
+                                                          <CardDescription className={isMobile ? 'text-xs' : 'text-sm'}>
                                                             {expenses.length} despesas
                                                           </CardDescription>
                                                         </div>
                                                       </div>
                                                       {isMonthOpen ? 
-                                                        <ChevronDown className="w-4 h-4 text-muted-foreground" /> : 
-                                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                        <ChevronDown className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-muted-foreground`} /> : 
+                                                        <ChevronRight className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-muted-foreground`} />
                                                       }
                                                     </div>
                                                   </CardHeader>
                                                 </CollapsibleTrigger>
                                                 
                                                 <CollapsibleContent>
-                                                  <CardContent className="pt-0">
-                                                    <div className="space-y-3">
+                                                  <CardContent className={`pt-0 ${isMobile ? 'px-2 pb-2' : ''}`}>
+                                                    <div className={`${isMobile ? 'space-y-2' : 'space-y-3'}`}>
                                                       {expenses.map((expense: any) => (
-                                                        <Card key={expense.id} className="ml-4" data-testid={`card-expense-${expense.id}`}>
-                                                          <CardHeader className="pb-3">
-                                                            <div className="flex items-start justify-between">
-                                                              <div className="flex-1">
-                                                                <CardTitle className="text-base">{expense.description}</CardTitle>
-                                                                <CardDescription className="mt-1">
+                                                        <Card key={expense.id} className={`${isMobile ? 'ml-1' : 'ml-4'} touch-manipulation`} data-testid={`card-expense-${expense.id}`}>
+                                                          <CardHeader className={`${isMobile ? 'pb-2 px-3 py-2' : 'pb-3'}`}>
+                                                            <div className={`flex items-start ${isMobile ? 'flex-col' : 'justify-between'}`}>
+                                                              <div className={`${isMobile ? 'w-full mb-2' : 'flex-1'}`}>
+                                                                <CardTitle className={`${isMobile ? 'text-sm' : 'text-base'}`}>{expense.description}</CardTitle>
+                                                                <CardDescription className={`mt-1 ${isMobile ? 'text-xs' : ''}`}>
                                                                   {formatDateForBrazil(expense.expenseDate)} • {formatCurrency(expense.amount)}
                                                                 </CardDescription>
-                                                                <div className="flex items-center space-x-2 mt-2">
-                                                                  <Badge className={getCategoryColor(expense.category)} variant="secondary">
+                                                                <div className={`flex items-center ${isMobile ? 'flex-wrap gap-1' : 'space-x-2'} mt-2`}>
+                                                                  <Badge className={getCategoryColor(expense.category)} variant="secondary" size={isMobile ? 'sm' : 'default'}>
                                                                     {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
                                                                   </Badge>
-                                                                  <Badge className={getStatusColor(expense.status)} variant="secondary">
+                                                                  <Badge className={getStatusColor(expense.status)} variant="secondary" size={isMobile ? 'sm' : 'default'}>
                                                                     {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
                                                                   </Badge>
                                                                 </div>
                                                               </div>
-                                                              <div className="flex items-center space-x-2">
+                                                              <div className={`flex items-center ${isMobile ? 'w-full justify-end gap-1' : 'space-x-2'}`}>
                                                                 <Button
                                                                   variant="ghost"
-                                                                  size="sm"
+                                                                  size={isMobile ? 'sm' : 'sm'}
                                                                   onClick={() => setEditingExpense(expense)}
                                                                   data-testid={`button-edit-expense-${expense.id}`}
+                                                                  className={isMobile ? 'min-w-[44px] min-h-[44px]' : ''}
                                                                 >
-                                                                  <Edit className="w-4 h-4" />
+                                                                  <Edit className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
                                                                 </Button>
                                                                 <Button
                                                                   variant="ghost"
-                                                                  size="sm"
+                                                                  size={isMobile ? 'sm' : 'sm'}
                                                                   onClick={() => handleDeleteExpense(expense)}
                                                                   data-testid={`button-delete-expense-${expense.id}`}
+                                                                  className={isMobile ? 'min-w-[44px] min-h-[44px]' : ''}
                                                                 >
-                                                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                                                  <Trash2 className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-destructive`} />
                                                                 </Button>
                                                               </div>
                                                             </div>
@@ -846,14 +885,19 @@ export default function Expenses() {
             })
           ) : (
             <Card>
-              <CardContent className="text-center py-12">
-                <Receipt className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma despesa encontrada</h3>
-                <p className="text-muted-foreground mb-4">
+              <CardContent className={`text-center ${isMobile ? 'py-8' : 'py-12'}`}>
+                <Receipt className={`${isMobile ? 'w-8 h-8' : 'w-12 h-12'} mx-auto mb-4 text-muted-foreground`} />
+                <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold mb-2`}>Nenhuma despesa encontrada</h3>
+                <p className={`text-muted-foreground mb-4 ${isMobile ? 'text-sm' : ''}`}>
                   Não há despesas que correspondam aos filtros selecionados.
                 </p>
                 {(selectedCategory || selectedStatus || selectedChild || searchTerm || selectedYear !== "all-years" || selectedMonth !== "all-months") && (
-                  <Button variant="outline" onClick={clearFilters} data-testid="button-clear-filters-empty">
+                  <Button 
+                    variant="outline" 
+                    size={isMobile ? 'sm' : 'default'}
+                    onClick={clearFilters} 
+                    data-testid="button-clear-filters-empty"
+                  >
                     Limpar Filtros
                   </Button>
                 )}
@@ -866,10 +910,10 @@ export default function Expenses() {
         <Dialog open={!!editingExpense} onOpenChange={(open) => {
           if (!open) setEditingExpense(null);
         }}>
-          <DialogContent className="max-w-2xl" data-testid="dialog-edit-expense">
+          <DialogContent className={`${isMobile ? 'max-w-[95vw] w-full' : 'max-w-2xl'}`} data-testid="dialog-edit-expense">
             <DialogHeader>
-              <DialogTitle>Editar Despesa</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className={isMobile ? 'text-base' : 'text-lg'}>Editar Despesa</DialogTitle>
+              <DialogDescription className={isMobile ? 'text-sm' : ''}>
                 Atualize os dados da despesa.
               </DialogDescription>
             </DialogHeader>
