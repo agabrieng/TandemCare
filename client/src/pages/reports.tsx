@@ -12,6 +12,7 @@ import { format, subDays, subMonths, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { useGlobalProgress } from "@/contexts/progress-context";
+import { PdfDownloadModal } from "@/components/pdf-download-modal";
 
 interface Expense {
   id: string;
@@ -106,6 +107,16 @@ export default function Reports() {
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  // Estados para o modal de download do PDF
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [reportStats, setReportStats] = useState<{
+    totalAmount: number;
+    expenseCount: number;
+    receiptCount: number;
+    period: { start: Date; end: Date };
+  } | null>(null);
 
   const { showProgress, updateProgress, hideProgress } = useGlobalProgress();
 
@@ -1098,27 +1109,36 @@ export default function Reports() {
       yPosition += 10;
       pdf.text(`Data de geração: ${format(new Date(), 'dd/MM/yyyy \'às\' HH:mm \'h\'', { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
 
-      // Salvar o PDF
+      // Gerar o PDF como blob
       updateProgress(90, "Finalizando documento...");
-      const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}`;
       
       updateProgress(95, "Preparando download...");
       await new Promise(resolve => setTimeout(resolve, 500)); // Simular processamento final
       
-      pdf.save(fileName);
+      // Gerar blob do PDF ao invés de salvar diretamente
+      const pdfBlob = pdf.output('blob');
+      
+      // Configurar estatísticas para o modal
+      const stats = {
+        totalAmount: report.totalAmount,
+        expenseCount: report.expenseCount,
+        receiptCount: report.receiptCount,
+        period: report.period
+      };
       
       updateProgress(100, "Relatório PDF gerado com sucesso!");
       
       // Esperar um pouco para mostrar 100% e então finalizar
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Esconder progresso imediatamente antes do alert
+      // Esconder progresso imediatamente
       hideProgress(true);
       
-      // Pequeno delay adicional para garantir que a UI seja atualizada
-      setTimeout(() => {
-        alert("PDF no padrão ABNT gerado com sucesso! O relatório foi baixado.");
-      }, 200);
+      // Configurar estados e abrir modal
+      setPdfBlob(pdfBlob);
+      setReportStats(stats);
+      setShowPdfModal(true);
       
     } catch (error) {
       hideProgress(true);
@@ -1443,6 +1463,20 @@ export default function Reports() {
           </div>
         </div>
       </main>
+
+      {/* Modal de Download do PDF */}
+      <PdfDownloadModal
+        isOpen={showPdfModal}
+        onClose={() => setShowPdfModal(false)}
+        pdfBlob={pdfBlob}
+        reportStats={reportStats || {
+          totalAmount: 0,
+          expenseCount: 0,
+          receiptCount: 0,
+          period: { start: new Date(), end: new Date() }
+        }}
+        defaultFileName={`relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}`}
+      />
     </div>
   );
 }
