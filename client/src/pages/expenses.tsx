@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Filter, Search, Receipt, Edit, Trash2, Download, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Filter, Search, Receipt, Edit, Trash2, Download, RefreshCw, CalendarIcon, User, ChevronDown, ChevronRight, DollarSign } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ExpenseForm } from "@/components/ui/expense-form";
 import { ExpensesTable } from "@/components/ui/expenses-table";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDateForBrazil } from "@/lib/date-utils";
+import { parseISO, getYear, getMonth } from "date-fns";
 
 interface Expense {
   id: string;
@@ -38,6 +41,45 @@ interface UploadedFile {
   fileType: string;
 }
 
+// Utility functions for data organization
+function groupExpensesByHierarchy(expenses: Expense[]) {
+  const hierarchy: Record<string, Record<number, Record<number, Expense[]>>> = {};
+
+  expenses.forEach(expense => {
+    const childName = expense.child.firstName + (expense.child.lastName ? ` ${expense.child.lastName}` : '');
+    const expenseDate = parseISO(expense.expenseDate);
+    const year = getYear(expenseDate);
+    const month = getMonth(expenseDate); // 0-based (0=Jan, 11=Dec)
+
+    if (!hierarchy[childName]) {
+      hierarchy[childName] = {};
+    }
+    if (!hierarchy[childName][year]) {
+      hierarchy[childName][year] = {};
+    }
+    if (!hierarchy[childName][year][month]) {
+      hierarchy[childName][year][month] = [];
+    }
+
+    hierarchy[childName][year][month].push(expense);
+  });
+
+  return hierarchy;
+}
+
+function getUniqueValues(expenses: Expense[]) {
+  const years = Array.from(new Set(expenses.map(e => getYear(parseISO(e.expenseDate)))));
+  const months = Array.from(new Set(expenses.map(e => getMonth(parseISO(e.expenseDate)))));
+  const children = Array.from(new Set(expenses.map(e => `${e.child.firstName}${e.child.lastName ? ` ${e.child.lastName}` : ''}`)));
+  
+  return { years: years.sort((a, b) => b - a), months: months.sort(), children };
+}
+
+const monthNames = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
 export default function Expenses() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
@@ -45,6 +87,17 @@ export default function Expenses() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedChild, setSelectedChild] = useState("");
+  
+  // Filter states for hierarchical view
+  const [selectedYear, setSelectedYear] = useState<string>("all-years");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all-months");
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Collapsible states
+  const [openChildren, setOpenChildren] = useState<Record<string, boolean>>({});
+  const [openYears, setOpenYears] = useState<Record<string, boolean>>({});
+  const [openMonths, setOpenMonths] = useState<Record<string, boolean>>({});
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -252,18 +305,118 @@ export default function Expenses() {
     setSelectedStatus("");
     setSelectedChild("");
     setSearchTerm("");
+    setSelectedYear("all-years");
+    setSelectedMonth("all-months");
   };
 
-  // Filter expenses based on search term
-  const filteredExpenses = expenses?.filter((expense: any) => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      expense.description.toLowerCase().includes(searchLower) ||
-      expense.child.firstName.toLowerCase().includes(searchLower) ||
-      expense.category.toLowerCase().includes(searchLower)
-    );
-  }) || [];
+  // Helper functions for styling
+  const formatCurrency = (value: string) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(parseFloat(value));
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'educação':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300';
+      case 'saúde':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300';
+      case 'alimentação':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/80 dark:text-orange-300';
+      case 'vestuário':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-300';
+      case 'transporte':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/80 dark:text-yellow-300';
+      case 'lazer':
+        return 'bg-pink-100 text-pink-800 dark:bg-pink-900/80 dark:text-pink-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/80 dark:text-gray-300';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pago':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300';
+      case 'pendente':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/80 dark:text-yellow-300';
+      case 'reembolsado':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/80 dark:text-gray-300';
+    }
+  };
+
+  // Generate unique values for filters
+  const uniqueValues = useMemo(() => {
+    return getUniqueValues(expenses);
+  }, [expenses]);
+
+  // Apply filters to expenses
+  const filteredExpenses = useMemo(() => {
+    return expenses?.filter((expense: any) => {
+      // Search term filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch = (
+          expense.description.toLowerCase().includes(searchLower) ||
+          expense.child.firstName.toLowerCase().includes(searchLower) ||
+          expense.category.toLowerCase().includes(searchLower)
+        );
+        if (!matchesSearch) return false;
+      }
+
+      // Category filter
+      if (selectedCategory && expense.category !== selectedCategory) {
+        return false;
+      }
+
+      // Status filter
+      if (selectedStatus && expense.status !== selectedStatus) {
+        return false;
+      }
+
+      // Child filter
+      if (selectedChild !== "all-children" && selectedChild) {
+        const childName = `${expense.child.firstName}${expense.child.lastName ? ` ${expense.child.lastName}` : ''}`;
+        if (childName !== selectedChild) return false;
+      }
+
+      // Year filter
+      if (selectedYear !== "all-years") {
+        const expenseYear = getYear(parseISO(expense.expenseDate));
+        if (expenseYear.toString() !== selectedYear) return false;
+      }
+
+      // Month filter
+      if (selectedMonth !== "all-months") {
+        const expenseMonth = getMonth(parseISO(expense.expenseDate));
+        if (expenseMonth.toString() !== selectedMonth) return false;
+      }
+
+      return true;
+    }) || [];
+  }, [expenses, searchTerm, selectedCategory, selectedStatus, selectedChild, selectedYear, selectedMonth]);
+
+  // Group filtered expenses hierarchically
+  const hierarchicalData = useMemo(() => {
+    return groupExpensesByHierarchy(filteredExpenses);
+  }, [filteredExpenses]);
+
+  // Toggle functions for collapsibles
+  const toggleChild = (childName: string) => {
+    setOpenChildren(prev => ({ ...prev, [childName]: !prev[childName] }));
+  };
+
+  const toggleYear = (key: string) => {
+    setOpenYears(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleMonth = (key: string) => {
+    setOpenMonths(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const categories = [
     { value: "educação", label: "Educação" },
@@ -355,190 +508,360 @@ export default function Expenses() {
         </div>
       </div>
 
-      <main className="p-6 space-y-6">
-        {/* Filters Section */}
-        <Card className="hover-elevate">
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="flex items-center text-base sm:text-lg">
-              <Filter className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />
-              Filtros e Busca
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6">
-            <div className="space-y-4">
-              {/* Search bar - full width on mobile */}
-              <div className="w-full">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por descrição, filho ou categoria..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 text-base"
-                    data-testid="input-search-expenses"
-                  />
+      <main className="p-6">
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por descrição, filho ou categoria..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="input-search-expenses"
+              />
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              data-testid="button-toggle-filters"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filtros
+              {showFilters ? <ChevronDown className="w-4 h-4 ml-2" /> : <ChevronRight className="w-4 h-4 ml-2" />}
+            </Button>
+          </div>
+
+          {/* Advanced Filters */}
+          <Collapsible open={showFilters} onOpenChange={setShowFilters}>
+            <CollapsibleContent className="space-y-4">
+              <Card>
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Filtros Avançados</CardTitle>
+                    <Button variant="ghost" size="sm" onClick={clearFilters} data-testid="button-clear-filters">
+                      Limpar Filtros
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Category Filter */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Receipt className="w-4 h-4" />
+                        Categoria
+                      </label>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger data-testid="select-category-filter">
+                          <SelectValue placeholder="Todas as categorias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(category => (
+                            <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <DollarSign className="w-4 h-4" />
+                        Status
+                      </label>
+                      <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                        <SelectTrigger data-testid="select-status-filter">
+                          <SelectValue placeholder="Todos os status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map(status => (
+                            <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Year Filter */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <CalendarIcon className="w-4 h-4" />
+                        Ano
+                      </label>
+                      <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger data-testid="select-year-filter">
+                          <SelectValue placeholder="Todos os anos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all-years">Todos os anos</SelectItem>
+                          {uniqueValues.years.map(year => (
+                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Month Filter */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <CalendarIcon className="w-4 h-4" />
+                        Mês
+                      </label>
+                      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                        <SelectTrigger data-testid="select-month-filter">
+                          <SelectValue placeholder="Todos os meses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all-months">Todos os meses</SelectItem>
+                          {uniqueValues.months.map(month => (
+                            <SelectItem key={month} value={month.toString()}>{monthNames[month]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Child Filter */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Filho
+                      </label>
+                      <Select value={selectedChild} onValueChange={setSelectedChild}>
+                        <SelectTrigger data-testid="select-child-filter">
+                          <SelectValue placeholder="Todos os filhos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all-children">Todos os filhos</SelectItem>
+                          {uniqueValues.children.map(child => (
+                            <SelectItem key={child} value={child}>{child}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Receipt className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-medium">Total de Despesas</p>
+                    <p className="text-2xl font-bold" data-testid="text-total-expenses">{filteredExpenses.length}</p>
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium">Despesas Pagas</p>
+                    <p className="text-2xl font-bold" data-testid="text-paid-expenses">
+                      {filteredExpenses.filter((e: any) => e.status === 'pago').length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Receipt className="w-5 h-5 text-yellow-600" />
+                  <div>
+                    <p className="text-sm font-medium">Pendentes</p>
+                    <p className="text-2xl font-bold" data-testid="text-pending-expenses">
+                      {filteredExpenses.filter((e: any) => e.status === 'pendente').length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Hierarchical Expenses View */}
+        <div className="space-y-6">
+          {Object.keys(hierarchicalData).length > 0 ? (
+            Object.entries(hierarchicalData).map(([childName, yearData]) => {
+              const childKey = `child-${childName}`;
+              const isChildOpen = openChildren[childKey];
               
-              {/* Filter selects - responsive grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger data-testid="select-filter-category" className="text-base">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem 
-                        key={category.value} 
-                        value={category.value}
-                      >
-                        {category.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger data-testid="select-filter-status" className="text-base">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((status) => (
-                      <SelectItem 
-                        key={status.value} 
-                        value={status.value}
-                      >
-                        {status.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedChild} onValueChange={setSelectedChild}>
-                  <SelectTrigger data-testid="select-filter-child" className="text-base">
-                    <SelectValue placeholder="Filho" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {children?.map((child: any) => (
-                      <SelectItem 
-                        key={child.id} 
-                        value={child.id}
-                      >
-                        {child.firstName} {child.lastName || ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            {(selectedCategory || selectedStatus || selectedChild || searchTerm) && (
-              <div className="flex justify-center sm:justify-end mt-6">
-                <Button 
-                  variant="outline" 
-                  size="default"
-                  onClick={clearFilters} 
-                  className="w-full sm:w-auto"
-                  data-testid="button-clear-filters"
-                >
-                  Limpar Filtros
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Expenses Table */}
-        <Card data-testid="table-expenses">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center">
-                <Receipt className="mr-2 w-5 h-5" />
-                Despesas ({filteredExpenses.length})
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 w-4 h-4" />
-                  Exportar
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b bg-muted">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Data</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Descrição</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Filho</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Categoria</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Valor</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredExpenses.map((expense: any) => (
-                    <tr key={expense.id} className="hover:bg-muted">
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {formatDateForBrazil(expense.expenseDate)}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium">{expense.description}</td>
-                      <td className="px-6 py-4 text-sm">
-                        {expense.child?.firstName || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          expense.category === 'educação' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300' :
-                          expense.category === 'saúde' ? 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300' :
-                          expense.category === 'lazer' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/80 dark:text-yellow-300' :
-                          expense.category === 'vestuário' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-300' :
-                          expense.category === 'transporte' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/80 dark:text-indigo-300' :
-                          expense.category === 'alimentação' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/80 dark:text-orange-300' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-900/80 dark:text-gray-300'
-                        }`}>
-                          {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium">
-                        R$ {Number(expense.amount).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          expense.status === 'pago' ? 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300' :
-                          expense.status === 'pendente' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/80 dark:text-yellow-300' :
-                          'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300'
-                        }`}>
-                          {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setEditingExpense(expense)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDeleteExpense(expense)}
-                            data-testid={`button-delete-expense-${expense.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+              return (
+                <Card key={childKey} data-testid={`card-child-${childName}`}>
+                  <Collapsible open={isChildOpen} onOpenChange={() => toggleChild(childKey)}>
+                    <CollapsibleTrigger className="w-full">
+                      <CardHeader className="hover-elevate">
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center space-x-3">
+                            <User className="w-6 h-6 text-primary" />
+                            <div className="text-left">
+                              <CardTitle className="text-xl">{childName}</CardTitle>
+                              <CardDescription>
+                                {Object.values(yearData).reduce((total, monthData) => 
+                                  total + Object.values(monthData).reduce((monthTotal, expenses) => 
+                                    monthTotal + expenses.length, 0), 0)} despesas
+                              </CardDescription>
+                            </div>
+                          </div>
+                          {isChildOpen ? 
+                            <ChevronDown className="w-5 h-5 text-muted-foreground" /> : 
+                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                          }
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent>
+                      <CardContent className="pt-0">
+                        <div className="space-y-4">
+                          {Object.entries(yearData).map(([year, monthData]) => {
+                            const yearKey = `${childKey}-year-${year}`;
+                            const isYearOpen = openYears[yearKey];
+                            
+                            return (
+                              <Card key={yearKey} className="ml-4" data-testid={`card-year-${year}`}>
+                                <Collapsible open={isYearOpen} onOpenChange={() => toggleYear(yearKey)}>
+                                  <CollapsibleTrigger className="w-full">
+                                    <CardHeader className="py-3 hover-elevate">
+                                      <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center space-x-3">
+                                          <CalendarIcon className="w-5 h-5 text-blue-600" />
+                                          <div className="text-left">
+                                            <CardTitle className="text-lg">{year}</CardTitle>
+                                            <CardDescription>
+                                              {Object.values(monthData).reduce((total, expenses) => 
+                                                total + expenses.length, 0)} despesas
+                                            </CardDescription>
+                                          </div>
+                                        </div>
+                                        {isYearOpen ? 
+                                          <ChevronDown className="w-4 h-4 text-muted-foreground" /> : 
+                                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                        }
+                                      </div>
+                                    </CardHeader>
+                                  </CollapsibleTrigger>
+                                  
+                                  <CollapsibleContent>
+                                    <CardContent className="pt-0">
+                                      <div className="space-y-3">
+                                        {Object.entries(monthData).map(([month, expenses]) => {
+                                          const monthKey = `${yearKey}-month-${month}`;
+                                          const isMonthOpen = openMonths[monthKey];
+                                          
+                                          return (
+                                            <Card key={monthKey} className="ml-4" data-testid={`card-month-${month}`}>
+                                              <Collapsible open={isMonthOpen} onOpenChange={() => toggleMonth(monthKey)}>
+                                                <CollapsibleTrigger className="w-full">
+                                                  <CardHeader className="py-2 hover-elevate">
+                                                    <div className="flex items-center justify-between w-full">
+                                                      <div className="flex items-center space-x-3">
+                                                        <Receipt className="w-4 h-4 text-green-600" />
+                                                        <div className="text-left">
+                                                          <CardTitle className="text-md">{monthNames[parseInt(month)]}</CardTitle>
+                                                          <CardDescription>
+                                                            {expenses.length} despesas
+                                                          </CardDescription>
+                                                        </div>
+                                                      </div>
+                                                      {isMonthOpen ? 
+                                                        <ChevronDown className="w-4 h-4 text-muted-foreground" /> : 
+                                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                      }
+                                                    </div>
+                                                  </CardHeader>
+                                                </CollapsibleTrigger>
+                                                
+                                                <CollapsibleContent>
+                                                  <CardContent className="pt-0">
+                                                    <div className="space-y-3">
+                                                      {expenses.map((expense: any) => (
+                                                        <Card key={expense.id} className="ml-4" data-testid={`card-expense-${expense.id}`}>
+                                                          <CardHeader className="pb-3">
+                                                            <div className="flex items-start justify-between">
+                                                              <div className="flex-1">
+                                                                <CardTitle className="text-base">{expense.description}</CardTitle>
+                                                                <CardDescription className="mt-1">
+                                                                  {formatDateForBrazil(expense.expenseDate)} • {formatCurrency(expense.amount)}
+                                                                </CardDescription>
+                                                                <div className="flex items-center space-x-2 mt-2">
+                                                                  <Badge className={getCategoryColor(expense.category)} variant="secondary">
+                                                                    {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
+                                                                  </Badge>
+                                                                  <Badge className={getStatusColor(expense.status)} variant="secondary">
+                                                                    {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
+                                                                  </Badge>
+                                                                </div>
+                                                              </div>
+                                                              <div className="flex items-center space-x-2">
+                                                                <Button
+                                                                  variant="ghost"
+                                                                  size="sm"
+                                                                  onClick={() => setEditingExpense(expense)}
+                                                                  data-testid={`button-edit-expense-${expense.id}`}
+                                                                >
+                                                                  <Edit className="w-4 h-4" />
+                                                                </Button>
+                                                                <Button
+                                                                  variant="ghost"
+                                                                  size="sm"
+                                                                  onClick={() => handleDeleteExpense(expense)}
+                                                                  data-testid={`button-delete-expense-${expense.id}`}
+                                                                >
+                                                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                                                </Button>
+                                                              </div>
+                                                            </div>
+                                                          </CardHeader>
+                                                        </Card>
+                                                      ))}
+                                                    </div>
+                                                  </CardContent>
+                                                </CollapsibleContent>
+                                              </Collapsible>
+                                            </Card>
+                                          );
+                                        })}
+                                      </div>
+                                    </CardContent>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
+              );
+            })
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Receipt className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Nenhuma despesa encontrada</h3>
+                <p className="text-muted-foreground mb-4">
+                  Não há despesas que correspondam aos filtros selecionados.
+                </p>
+                {(selectedCategory || selectedStatus || selectedChild || searchTerm || selectedYear !== "all-years" || selectedMonth !== "all-months") && (
+                  <Button variant="outline" onClick={clearFilters} data-testid="button-clear-filters-empty">
+                    Limpar Filtros
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Edit Dialog */}
         <Dialog open={!!editingExpense} onOpenChange={(open) => {
