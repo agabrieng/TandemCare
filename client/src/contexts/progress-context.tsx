@@ -4,7 +4,7 @@ import { FullScreenProgress } from '@/components/ui/progress-indicator';
 interface ProgressContextType {
   showProgress: (message?: string, title?: string) => void;
   updateProgress: (progress: number, message?: string) => void;
-  hideProgress: () => void;
+  hideProgress: (immediate?: boolean) => void;
   isVisible: boolean;
   progress: number;
   message: string;
@@ -37,17 +37,25 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
     }
   }, []);
 
-  const hideProgress = useCallback(() => {
-    // Primeiro completar a barra de progresso
-    setProgress(100);
-    
-    // Depois esconder após um breve delay
-    setTimeout(() => {
+  const hideProgress = useCallback((immediate: boolean = false) => {
+    if (immediate) {
+      // Esconder imediatamente sem delay
       setIsVisible(false);
       setProgress(0);
       setMessage('Carregando...');
       setTitle('Aguarde');
-    }, 300);
+    } else {
+      // Primeiro completar a barra de progresso
+      setProgress(100);
+      
+      // Depois esconder após um breve delay
+      setTimeout(() => {
+        setIsVisible(false);
+        setProgress(0);
+        setMessage('Carregando...');
+        setTitle('Aguarde');
+      }, 300);
+    }
   }, []);
 
   const value = {

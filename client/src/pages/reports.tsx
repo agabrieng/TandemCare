@@ -1109,20 +1109,27 @@ export default function Reports() {
       
       updateProgress(100, "Relatório PDF gerado com sucesso!");
       
-      // Finalizar progresso após um breve delay
-      const finalTimeoutId = setTimeout(() => {
-        hideProgress();
+      // Esperar um pouco para mostrar 100% e então finalizar
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Esconder progresso imediatamente antes do alert
+      hideProgress(true);
+      
+      // Pequeno delay adicional para garantir que a UI seja atualizada
+      setTimeout(() => {
         alert("PDF no padrão ABNT gerado com sucesso! O relatório foi baixado.");
-      }, 1000);
-      timeoutIds.push(finalTimeoutId);
+      }, 200);
       
     } catch (error) {
-      hideProgress();
+      hideProgress(true);
       console.error("Erro ao gerar PDF:", error);
       alert("Erro ao gerar PDF. Verifique o console para mais detalhes.");
     } finally {
+      // Garantir que o progresso seja escondido em qualquer situação
+      hideProgress(true);
       // Cleanup all timeouts to prevent memory leaks
       timeoutIds.forEach(id => clearTimeout(id));
+      timeoutIds.length = 0; // Limpar o array
     }
   };
 
