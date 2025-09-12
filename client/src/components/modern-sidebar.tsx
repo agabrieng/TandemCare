@@ -109,14 +109,14 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-background z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={onToggle}
         />
       )}
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full bg-card border-r border-border z-50 transform transition-all duration-300 ease-in-out",
+        "fixed left-0 top-0 h-full bg-background border-r border-border z-50 transform transition-all duration-300 ease-in-out shadow-lg",
         "md:relative md:transform-none md:z-auto",
         // Mobile behavior
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
