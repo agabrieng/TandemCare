@@ -11,9 +11,13 @@ import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart }
 import { format, subDays, subMonths, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
+import { Chart, registerables } from 'chart.js';
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
 // PDF.js será carregado dinamicamente
+
+// Registrar os componentes do Chart.js
+Chart.register(...registerables);
 
 interface Expense {
   id: string;
@@ -127,6 +131,344 @@ const compressImage = async (imageData: string, maxWidth: number = 800, quality:
     
     img.onerror = () => resolve(imageData); // Fallback para imagem original
     img.src = imageData;
+  });
+};
+
+// Função para gerar gráfico de pizza das categorias
+const generatePieChart = async (categoryTotals: Record<string, number>): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 300;
+    
+    const ctx = canvas.getContext('2d')!;
+    
+    const labels = Object.keys(categoryTotals);
+    const data = Object.values(categoryTotals);
+    const colors = [
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', 
+      '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+    ];
+    
+    const chart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+        datasets: [{
+          data: data,
+          backgroundColor: colors.slice(0, labels.length),
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              font: {
+                size: 12
+              },
+              padding: 10
+            }
+          },
+          title: {
+            display: true,
+            text: 'Distribuição por Categoria',
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          }
+        },
+        layout: {
+          padding: 10
+        }
+      }
+    });
+    
+    // Aguardar o gráfico ser renderizado e converter para imagem
+    setTimeout(() => {
+      const imageData = canvas.toDataURL('image/png');
+      chart.destroy();
+      resolve(imageData);
+    }, 500);
+  });
+};
+
+// Função para gerar gráfico de linha do acumulado anual
+const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 500;
+    canvas.height = 300;
+    
+    const ctx = canvas.getContext('2d')!;
+    
+    // Organizar dados por mês
+    const monthlyData: Record<string, number> = {};
+    const sortedExpenses = expenses.sort((a, b) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime());
+    
+    let accumulated = 0;
+    sortedExpenses.forEach(expense => {
+      const date = new Date(expense.expenseDate);
+      const monthKey = format(date, 'MMM/yyyy', { locale: ptBR });
+      accumulated += parseFloat(expense.amount);
+      monthlyData[monthKey] = accumulated;
+    });
+    
+    const labels = Object.keys(monthlyData);
+    const data = Object.values(monthlyData);
+    
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Acumulado (R$)',
+          data: data,
+          borderColor: '#36A2EB',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: '#36A2EB',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: 'Acumulado Anual de Despesas',
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value: any) {
+                return 'R$ ' + value.toLocaleString('pt-BR');
+              }
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45
+            }
+          }
+        },
+        layout: {
+          padding: 10
+        }
+      }
+    });
+    
+    setTimeout(() => {
+      const imageData = canvas.toDataURL('image/png');
+      chart.destroy();
+      resolve(imageData);
+    }, 500);
+  });
+};
+
+// Função para gerar gráfico de barras das despesas por mês
+const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 500;
+    canvas.height = 300;
+    
+    const ctx = canvas.getContext('2d')!;
+    
+    // Organizar dados por mês
+    const monthlyData: Record<string, number> = {};
+    
+    expenses.forEach(expense => {
+      const date = new Date(expense.expenseDate);
+      const monthKey = format(date, 'MMM/yyyy', { locale: ptBR });
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + parseFloat(expense.amount);
+    });
+    
+    const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
+      const dateA = new Date(a[0].split('/').reverse().join('-'));
+      const dateB = new Date(b[0].split('/').reverse().join('-'));
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    const labels = sortedEntries.map(([month]) => month);
+    const data = sortedEntries.map(([, amount]) => amount);
+    
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Gastos Mensais (R$)',
+          data: data,
+          backgroundColor: 'rgba(75, 192, 192, 0.6)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: 'Despesas por Mês',
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value: any) {
+                return 'R$ ' + value.toLocaleString('pt-BR');
+              }
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45
+            }
+          }
+        },
+        layout: {
+          padding: 10
+        }
+      }
+    });
+    
+    setTimeout(() => {
+      const imageData = canvas.toDataURL('image/png');
+      chart.destroy();
+      resolve(imageData);
+    }, 500);
+  });
+};
+
+// Função para gerar gráfico de tendência (média móvel)
+const generateTrendChart = async (expenses: any[]): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 500;
+    canvas.height = 300;
+    
+    const ctx = canvas.getContext('2d')!;
+    
+    // Organizar dados por mês
+    const monthlyData: Record<string, number> = {};
+    
+    expenses.forEach(expense => {
+      const date = new Date(expense.expenseDate);
+      const monthKey = format(date, 'MMM/yyyy', { locale: ptBR });
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + parseFloat(expense.amount);
+    });
+    
+    const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
+      const dateA = new Date(a[0].split('/').reverse().join('-'));
+      const dateB = new Date(b[0].split('/').reverse().join('-'));
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    const labels = sortedEntries.map(([month]) => month);
+    const data = sortedEntries.map(([, amount]) => amount);
+    
+    // Calcular média móvel de 3 meses
+    const movingAverage = data.map((_, index) => {
+      if (index < 2) return data[index];
+      const sum = data[index] + data[index - 1] + data[index - 2];
+      return sum / 3;
+    });
+    
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Gastos Mensais (R$)',
+            data: data,
+            borderColor: 'rgba(255, 99, 132, 0.8)',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            fill: false,
+            tension: 0.1,
+            pointRadius: 3
+          },
+          {
+            label: 'Tendência (Média Móvel 3 meses)',
+            data: movingAverage,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 4,
+            borderWidth: 3
+          }
+        ]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          title: {
+            display: true,
+            text: 'Tendência de Gastos Mensais',
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value: any) {
+                return 'R$ ' + value.toLocaleString('pt-BR');
+              }
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45
+            }
+          }
+        },
+        layout: {
+          padding: 10
+        }
+      }
+    });
+    
+    setTimeout(() => {
+      const imageData = canvas.toDataURL('image/png');
+      chart.destroy();
+      resolve(imageData);
+    }, 500);
   });
 };
 
@@ -379,10 +721,15 @@ export default function Reports() {
         { text: "2.1 Distribuição por categoria", page: "4" },
         { text: "2.2 Distribuição por status", page: "4" },
         { text: "2.3 Análise de conformidade documental", page: "4" },
-        { text: "3 DETALHAMENTO DAS DESPESAS", page: "5" },
-        { text: "4 EXTRATO DE DESPESAS COM COMPROVANTES", page: "6" },
-        { text: "5 CONCLUSÕES E RECOMENDAÇÕES", page: "7" },
-        { text: "REFERÊNCIAS", page: "8" }
+        { text: "3 GRÁFICOS E INSIGHTS", page: "5" },
+        { text: "3.1 Distribuição por categoria", page: "5" },
+        { text: "3.2 Acumulado anual de despesas", page: "5" },
+        { text: "3.3 Despesas por mês", page: "6" },
+        { text: "3.4 Tendência de gastos", page: "6" },
+        { text: "4 DETALHAMENTO DAS DESPESAS", page: "7" },
+        { text: "5 EXTRATO DE DESPESAS COM COMPROVANTES", page: "8" },
+        { text: "6 CONCLUSÕES E RECOMENDAÇÕES", page: "9" },
+        { text: "REFERÊNCIAS", page: "10" }
       ];
       
       summaryItems.forEach((item) => {
@@ -551,8 +898,8 @@ export default function Reports() {
         yPosition += 6;
       });
 
-      // ===== 3. DETALHAMENTO DAS DESPESAS =====
-      updateProgress(70, "Detalhando despesas...");
+      // ===== 3. GRÁFICOS E INSIGHTS =====
+      updateProgress(65, "Gerando gráficos e insights...");
       pdf.addPage();
       pageNumber = 5;
       addPageNumber(pageNumber);
@@ -560,7 +907,143 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("3 DETALHAMENTO DAS DESPESAS", margins.left, yPosition);
+      pdf.text("3 GRÁFICOS E INSIGHTS", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFontSize(12);
+      pdf.setFont("times", "normal");
+      
+      const insightsText = "Esta seção apresenta análises visuais das despesas para facilitar a compreensão dos padrões de gastos e tendências ao longo do período analisado.";
+      const insightsLines = pdf.splitTextToSize(insightsText, contentWidth);
+      insightsLines.forEach((line: string) => {
+        pdf.text(line, margins.left, yPosition);
+        yPosition += 6;
+      });
+      
+      yPosition += 10;
+      
+      // 3.1 Gráfico de Pizza - Distribuição por Categoria
+      try {
+        pdf.setFont("times", "bold");
+        pdf.text("3.1 Distribuição por Categoria", margins.left, yPosition);
+        yPosition += 10;
+        
+        const pieChartImage = await generatePieChart(report.categoryTotals);
+        const pieChartWidth = 120;
+        const pieChartHeight = 90;
+        
+        // Verificar se precisa de nova página
+        if (yPosition + pieChartHeight > pageHeight - margins.bottom - 20) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        const pieChartX = margins.left + (contentWidth - pieChartWidth) / 2; // Centralizar
+        pdf.addImage(pieChartImage, 'PNG', pieChartX, yPosition, pieChartWidth, pieChartHeight);
+        yPosition += pieChartHeight + 15;
+      } catch (error) {
+        console.error("Erro ao gerar gráfico de pizza:", error);
+        pdf.setFont("times", "italic");
+        pdf.text("Erro ao gerar gráfico de distribuição por categoria", margins.left, yPosition);
+        yPosition += 15;
+      }
+      
+      // 3.2 Gráfico de Linha - Acumulado Anual
+      try {
+        // Verificar se precisa de nova página
+        if (yPosition + 110 > pageHeight - margins.bottom - 20) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        pdf.setFont("times", "bold");
+        pdf.text("3.2 Acumulado Anual de Despesas", margins.left, yPosition);
+        yPosition += 10;
+        
+        const lineChartImage = await generateAccumulatedLineChart(report.filteredExpenses);
+        const lineChartWidth = 140;
+        const lineChartHeight = 84;
+        
+        const lineChartX = margins.left + (contentWidth - lineChartWidth) / 2; // Centralizar
+        pdf.addImage(lineChartImage, 'PNG', lineChartX, yPosition, lineChartWidth, lineChartHeight);
+        yPosition += lineChartHeight + 15;
+      } catch (error) {
+        console.error("Erro ao gerar gráfico de linha:", error);
+        pdf.setFont("times", "italic");
+        pdf.text("Erro ao gerar gráfico de acumulado anual", margins.left, yPosition);
+        yPosition += 15;
+      }
+      
+      // 3.3 Gráfico de Barras - Despesas por Mês
+      try {
+        // Verificar se precisa de nova página
+        if (yPosition + 110 > pageHeight - margins.bottom - 20) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        pdf.setFont("times", "bold");
+        pdf.text("3.3 Despesas por Mês", margins.left, yPosition);
+        yPosition += 10;
+        
+        const barChartImage = await generateMonthlyBarChart(report.filteredExpenses);
+        const barChartWidth = 140;
+        const barChartHeight = 84;
+        
+        const barChartX = margins.left + (contentWidth - barChartWidth) / 2; // Centralizar
+        pdf.addImage(barChartImage, 'PNG', barChartX, yPosition, barChartWidth, barChartHeight);
+        yPosition += barChartHeight + 15;
+      } catch (error) {
+        console.error("Erro ao gerar gráfico de barras:", error);
+        pdf.setFont("times", "italic");
+        pdf.text("Erro ao gerar gráfico de despesas mensais", margins.left, yPosition);
+        yPosition += 15;
+      }
+      
+      // 3.4 Gráfico de Tendência
+      try {
+        // Verificar se precisa de nova página
+        if (yPosition + 110 > pageHeight - margins.bottom - 20) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        pdf.setFont("times", "bold");
+        pdf.text("3.4 Tendência de Gastos Mensais", margins.left, yPosition);
+        yPosition += 10;
+        
+        const trendChartImage = await generateTrendChart(report.filteredExpenses);
+        const trendChartWidth = 140;
+        const trendChartHeight = 84;
+        
+        const trendChartX = margins.left + (contentWidth - trendChartWidth) / 2; // Centralizar
+        pdf.addImage(trendChartImage, 'PNG', trendChartX, yPosition, trendChartWidth, trendChartHeight);
+        yPosition += trendChartHeight + 15;
+      } catch (error) {
+        console.error("Erro ao gerar gráfico de tendência:", error);
+        pdf.setFont("times", "italic");
+        pdf.text("Erro ao gerar gráfico de tendência", margins.left, yPosition);
+        yPosition += 15;
+      }
+
+      // ===== 4. DETALHAMENTO DAS DESPESAS =====
+      updateProgress(70, "Detalhando despesas...");
+      pdf.addPage();
+      pageNumber++;
+      addPageNumber(pageNumber);
+      yPosition = margins.top + 10;
+      
+      pdf.setFontSize(14);
+      pdf.setFont("times", "bold");
+      pdf.text("4 DETALHAMENTO DAS DESPESAS", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(10);
@@ -627,7 +1110,7 @@ export default function Reports() {
         yPosition += 8;
       });
 
-      // ===== 4. EXTRATO DE DESPESAS COM COMPROVANTES =====
+      // ===== 5. EXTRATO DE DESPESAS COM COMPROVANTES =====
       updateProgress(80, "Processando comprovantes...");
       pdf.addPage();
       pageNumber++;
@@ -636,7 +1119,7 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("4 EXTRATO DE DESPESAS COM COMPROVANTES", margins.left, yPosition);
+      pdf.text("5 EXTRATO DE DESPESAS COM COMPROVANTES", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
@@ -884,7 +1367,7 @@ export default function Reports() {
         // Separador removido pois cada despesa agora está em página separada
       }
 
-      // ===== 5. CONCLUSÕES E RECOMENDAÇÕES =====
+      // ===== 6. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
       pageNumber++;
       addPageNumber(pageNumber);
@@ -892,7 +1375,7 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("5 CONCLUSÕES E RECOMENDAÇÕES", margins.left, yPosition);
+      pdf.text("6 CONCLUSÕES E RECOMENDAÇÕES", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
