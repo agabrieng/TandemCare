@@ -117,11 +117,11 @@ export function ExpensesTable({
     // Mobile Card Layout
     return (
       <div className={className} {...props}>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {expenses.length > 0 ? (
             expenses.map((expense) => (
-              <Card key={expense.id} className="p-4 hover:bg-muted/50 transition-colors">
-                <div className="space-y-3">
+              <Card key={expense.id} className="p-4 hover-elevate">
+                <div className="space-y-4">
                   {/* Header with description and actions */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -130,22 +130,22 @@ export function ExpensesTable({
                         {formatDateForBrazil(expense.expenseDate)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 ml-2">
+                    <div className="flex items-center gap-2 ml-2">
                       {expense.receipts && expense.receipts.length > 0 && (
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-testid={`button-view-receipt-${expense.id}`}>
+                        <Button variant="ghost" size="icon" data-testid={`button-view-receipt-${expense.id}`}>
                           <Paperclip className="w-4 h-4 text-primary" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-testid={`button-expense-actions-${expense.id}`}>
+                      <Button variant="ghost" size="icon" data-testid={`button-expense-actions-${expense.id}`}>
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                   
                   {/* Main info row */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between py-2">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="w-8 h-8">
+                      <Avatar className="w-10 h-10">
                         <AvatarFallback className={getChildAvatarColor(expense.child.firstName)}>
                           {getChildInitials(expense.child.firstName, expense.child.lastName)}
                         </AvatarFallback>
@@ -158,7 +158,7 @@ export function ExpensesTable({
                   </div>
                   
                   {/* Badges row */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <Badge className={getCategoryColor(expense.category)} variant="secondary">
                       {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
                     </Badge>
@@ -170,23 +170,23 @@ export function ExpensesTable({
               </Card>
             ))
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>Nenhuma despesa encontrada</p>
-              <p className="text-sm">Adicione sua primeira despesa para começar</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <p className="text-base">Nenhuma despesa encontrada</p>
+              <p className="text-sm mt-2">Adicione sua primeira despesa para começar</p>
             </div>
           )}
         </div>
         
         {showPagination && expenses.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-4 border-t border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 py-6 border-t border-border bg-muted">
             <div className="text-sm text-muted-foreground text-center sm:text-left">
               Mostrando 1-{Math.min(10, expenses.length)} de {expenses.length} despesas
             </div>
-            <div className="flex items-center justify-center space-x-2">
-              <Button variant="outline" size="sm" disabled data-testid="button-previous-page">
+            <div className="flex items-center justify-center space-x-3">
+              <Button variant="outline" size="default" disabled data-testid="button-previous-page">
                 Anterior
               </Button>
-              <Button variant="outline" size="sm" disabled data-testid="button-next-page">
+              <Button variant="outline" size="default" disabled data-testid="button-next-page">
                 Próxima
               </Button>
             </div>
