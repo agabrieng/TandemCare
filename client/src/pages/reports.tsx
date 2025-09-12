@@ -14,6 +14,7 @@ import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
+import type { Category } from "@shared/schema";
 // PDF.js será carregado dinamicamente
 
 // Registrar os componentes do Chart.js
@@ -744,15 +745,16 @@ export default function Reports() {
     retry: false,
   });
 
-  const categories = [
-    { value: "educação", label: "Educação" },
-    { value: "saúde", label: "Saúde" },
-    { value: "alimentação", label: "Alimentação" },
-    { value: "vestuário", label: "Vestuário" },
-    { value: "transporte", label: "Transporte" },
-    { value: "lazer", label: "Lazer" },
-    { value: "outros", label: "Outros" },
-  ];
+  const { data: userCategories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+    retry: false,
+  });
+
+  // Converter categorias do usuário para o formato esperado pelo Select
+  const categories = userCategories.map(category => ({
+    value: category.name.toLowerCase(),
+    label: category.name
+  }));
 
   const statusOptions = [
     { value: "pendente", label: "Pendente" },
