@@ -323,32 +323,32 @@ export default function Expenses() {
   const getCategoryColor = (category: string) => {
     switch (category.toLowerCase()) {
       case 'educação':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
       case 'saúde':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
       case 'alimentação':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/80 dark:text-orange-300';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300';
       case 'vestuário':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-300';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
       case 'transporte':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/80 dark:text-yellow-300';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
       case 'lazer':
-        return 'bg-pink-100 text-pink-800 dark:bg-pink-900/80 dark:text-pink-300';
+        return 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-300';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/80 dark:text-gray-300';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pago':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
       case 'pendente':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/80 dark:text-yellow-300';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
       case 'reembolsado':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/80 dark:text-gray-300';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300';
     }
   };
 
@@ -830,10 +830,10 @@ export default function Expenses() {
                                                                   {formatDateForBrazil(expense.expenseDate)} • {formatCurrency(expense.amount)}
                                                                 </CardDescription>
                                                                 <div className={`flex items-center ${isMobile ? 'flex-wrap gap-1' : 'space-x-2'} mt-2`}>
-                                                                  <Badge className={getCategoryColor(expense.category)} variant="secondary" size={isMobile ? 'sm' : 'default'}>
+                                                                  <Badge className={getCategoryColor(expense.category)} variant="secondary">
                                                                     {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
                                                                   </Badge>
-                                                                  <Badge className={getStatusColor(expense.status)} variant="secondary" size={isMobile ? 'sm' : 'default'}>
+                                                                  <Badge className={getStatusColor(expense.status)} variant="secondary">
                                                                     {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
                                                                   </Badge>
                                                                 </div>
