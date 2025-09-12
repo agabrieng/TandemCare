@@ -357,82 +357,88 @@ export default function Expenses() {
 
       <main className="p-6 space-y-6">
         {/* Filters Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Filter className="mr-2 w-5 h-5" />
+        <Card className="hover-elevate">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Filter className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />
               Filtros e Busca
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-2">
+          <CardContent className="px-4 sm:px-6">
+            <div className="space-y-4">
+              {/* Search bar - full width on mobile */}
+              <div className="w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar por descrição, filho ou categoria..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-base"
                     data-testid="input-search-expenses"
                   />
                 </div>
               </div>
               
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger data-testid="select-filter-category">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem 
-                      key={category.value} 
-                      value={category.value}
-                    >
-                      {category.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Filter selects - responsive grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger data-testid="select-filter-category" className="text-base">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem 
+                        key={category.value} 
+                        value={category.value}
+                      >
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger data-testid="select-filter-status">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem 
-                      key={status.value} 
-                      value={status.value}
-                    >
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger data-testid="select-filter-status" className="text-base">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem 
+                        key={status.value} 
+                        value={status.value}
+                      >
+                        {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={selectedChild} onValueChange={setSelectedChild}>
-                <SelectTrigger data-testid="select-filter-child">
-                  <SelectValue placeholder="Filho" />
-                </SelectTrigger>
-                <SelectContent>
-                  {children?.map((child: any) => (
-                    <SelectItem 
-                      key={child.id} 
-                      value={child.id}
-                    >
-                      {child.firstName} {child.lastName || ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select value={selectedChild} onValueChange={setSelectedChild}>
+                  <SelectTrigger data-testid="select-filter-child" className="text-base">
+                    <SelectValue placeholder="Filho" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {children?.map((child: any) => (
+                      <SelectItem 
+                        key={child.id} 
+                        value={child.id}
+                      >
+                        {child.firstName} {child.lastName || ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {(selectedCategory || selectedStatus || selectedChild || searchTerm) && (
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-center sm:justify-end mt-6">
                 <Button 
                   variant="outline" 
+                  size="default"
                   onClick={clearFilters} 
+                  className="w-full sm:w-auto"
                   data-testid="button-clear-filters"
                 >
                   Limpar Filtros

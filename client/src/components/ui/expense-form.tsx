@@ -169,16 +169,17 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 sm:space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição *</Label>
+    <Card className="hover-elevate">
+      <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5 sm:space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="description" className="text-sm font-medium">Descrição *</Label>
             <Textarea
               id="description"
               {...register("description")}
               placeholder="Descreva a despesa..."
               rows={3}
+              className="text-base"
               data-testid="input-expense-description"
             />
             {errors.description && (
@@ -188,13 +189,15 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor (R$) *</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <Label htmlFor="amount" className="text-sm font-medium">Valor (R$) *</Label>
               <Input
                 id="amount"
                 {...register("amount")}
                 placeholder="0,00"
+                className="text-base text-right sm:text-left"
+                inputMode="decimal"
                 onChange={(e) => {
                   const formatted = formatCurrency(e.target.value);
                   e.target.value = formatted;
@@ -208,11 +211,12 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="expenseDate">Data da Despesa *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="expenseDate" className="text-sm font-medium">Data da Despesa *</Label>
               <Input
                 id="expenseDate"
                 type="date"
+                className="text-base"
                 {...register("expenseDate")}
                 data-testid="input-expense-date"
               />
@@ -224,9 +228,9 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Categoria *</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Categoria *</Label>
               <Select
                 value={selectedCategory}
                 onValueChange={(value) => {
@@ -234,7 +238,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                   setValue("category", value);
                 }}
               >
-                <SelectTrigger data-testid="select-expense-category">
+                <SelectTrigger data-testid="select-expense-category" className="text-base">
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -262,8 +266,8 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Filho *</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Filho *</Label>
               <Select
                 value={selectedChild}
                 onValueChange={(value) => {
@@ -271,7 +275,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                   setValue("childId", value);
                 }}
               >
-                <SelectTrigger data-testid="select-expense-child">
+                <SelectTrigger data-testid="select-expense-child" className="text-base">
                   <SelectValue placeholder="Selecione um filho" />
                 </SelectTrigger>
                 <SelectContent>
@@ -292,12 +296,13 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
 
           {/* Custom category field - only show when "outros" is selected */}
           {selectedCategory.toLowerCase() === "outros" && (
-            <div className="space-y-2">
-              <Label htmlFor="customCategory">Do que se trata? *</Label>
+            <div className="space-y-3 p-4 bg-muted rounded-lg border">
+              <Label htmlFor="customCategory" className="text-sm font-medium">Do que se trata? *</Label>
               <Input
                 id="customCategory"
                 {...register("customCategory")}
                 placeholder="Especifique a categoria personalizada..."
+                className="text-base"
                 data-testid="input-custom-category"
               />
               {errors.customCategory && (
@@ -308,8 +313,8 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label>Status</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Status</Label>
             <Select
               value={selectedStatus}
               onValueChange={(value) => {
@@ -317,7 +322,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                 setValue("status", value);
               }}
             >
-              <SelectTrigger data-testid="select-expense-status">
+              <SelectTrigger data-testid="select-expense-status" className="text-base">
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
@@ -331,11 +336,13 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
           </div>
 
           {/* Comprovantes Section */}
-          <div className="space-y-2 border-t pt-4">
-            <Label>Comprovantes (Opcional)</Label>
-            <p className="text-sm text-muted-foreground">
-              Adicione comprovantes para documentar esta despesa (PDF, imagens até 10MB)
-            </p>
+          <div className="space-y-4 border-t pt-6">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Comprovantes (Opcional)</Label>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Adicione comprovantes para documentar esta despesa (PDF, imagens até 10MB)
+              </p>
+            </div>
             
             <div className="space-y-3">
               <ObjectUploader
@@ -379,19 +386,23 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
             </div>
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-2 sm:space-x-0 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-4 sm:gap-3 pt-6 border-t">
             <Button
               type="button"
               variant="outline"
+              size="lg"
               onClick={onCancel}
               disabled={isLoading}
+              className="w-full sm:w-auto"
               data-testid="button-cancel-expense"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
+              size="lg"
               disabled={isLoading}
+              className="w-full sm:w-auto"
               data-testid="button-save-expense"
             >
               {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Adicionar"}
