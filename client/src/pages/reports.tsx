@@ -13,6 +13,10 @@ import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configurar worker do PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface Expense {
   id: string;
@@ -127,6 +131,54 @@ const compressImage = async (imageData: string, maxWidth: number = 800, quality:
     img.onerror = () => resolve(imageData); // Fallback para imagem original
     img.src = imageData;
   });
+};
+
+// Função para converter PDF em imagem (primeira página)
+const convertPdfToImage = async (pdfData: string, maxWidth: number = 600): Promise<string | null> => {
+  try {
+    // Remover o prefixo data:application/pdf;base64, se existir
+    const base64Data = pdfData.includes(',') ? pdfData.split(',')[1] : pdfData;
+    
+    // Converter base64 para Uint8Array
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Carregar o PDF
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    
+    // Obter a primeira página
+    const page = await pdf.getPage(1);
+    
+    // Calcular escala baseada na largura máxima
+    const viewport = page.getViewport({ scale: 1 });
+    const scale = maxWidth / viewport.width;
+    const scaledViewport = page.getViewport({ scale });
+    
+    // Criar canvas
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    canvas.height = scaledViewport.height;
+    canvas.width = scaledViewport.width;
+    
+    // Renderizar página no canvas
+    const renderContext = {
+      canvasContext: context,
+      viewport: scaledViewport,
+      canvas: canvas,
+    };
+    
+    await page.render(renderContext).promise;
+    
+    // Converter canvas para imagem
+    return canvas.toDataURL('image/jpeg', 0.8);
+    
+  } catch (error) {
+    console.error('Erro ao converter PDF para imagem:', error);
+    return null;
+  }
 };
 
 export default function Reports() {
@@ -789,34 +841,123 @@ export default function Reports() {
                     yPosition += finalHeight + 5;
                     
                   } else if (isPDF) {
-                    // Processar como PDF - criar representação visual
-                    const pdfHeight = 30;
+                    // Processar como PDF - tentar converter para imagem
+                    console.log('Processando PDF:', receipt.fileName);
                     
-                    // Verificar se cabe na página
-                    if (yPosition + pdfHeight > pageHeight - margins.bottom - 10) {
-                      pdf.addPage();
-                      pageNumber++;
-                      addPageNumber(pageNumber);
-                      yPosition = margins.top + 20;
+                    try {
+                      const pdfImageData = await convertPdfToImage(fileData.data, 600);
+                      
+                      if (pdfImageData) {
+                        // PDF convertido com sucesso - tratar como imagem
+                        const compressedPdfImage = await compressImage(pdfImageData, 600, 0.7);
+                        
+                        // Criar uma imagem temporária para obter as dimensões
+                        const tempImg = new Image();
+                        tempImg.src = compressedPdfImage;
+                        
+                        await new Promise((resolve) => {
+                          tempImg.onload = resolve;
+                          tempImg.onerror = resolve;
+                        });
+                        
+                        // Calcular dimensões proporcionais
+                        const originalWidth = tempImg.width || 600;
+                        const originalHeight = tempImg.height || 400;
+                        const aspectRatio = originalWidth / originalHeight;
+                        
+                        // Definir largura máxima e calcular altura proporcionalmente
+                        const maxWidth = contentWidth - 20;
+                        const maxHeight = 80; // Altura máxima
+                        
+                        let finalWidth = Math.min(maxWidth, originalWidth);
+                        let finalHeight = finalWidth / aspectRatio;
+                        
+                        // Se a altura calculada exceder o máximo, recalcular baseado na altura
+                        if (finalHeight > maxHeight) {
+                          finalHeight = maxHeight;
+                          finalWidth = maxHeight * aspectRatio;
+                        }
+                        
+                        // Verificar se cabe na página
+                        if (yPosition + finalHeight + 30 > pageHeight - margins.bottom - 10) {
+                          pdf.addPage();
+                          pageNumber++;
+                          addPageNumber(pageNumber);
+                          yPosition = margins.top + 20;
+                        }
+                        
+                        // Adicionar cabeçalho do PDF
+                        pdf.setFontSize(9);
+                        pdf.setTextColor(220, 53, 69);
+                        pdf.text(`📄 PDF: ${receipt.fileName || 'documento.pdf'}`, margins.left + 10, yPosition);
+                        yPosition += 8;
+                        
+                        // Centralizar a imagem se ela for menor que a largura máxima
+                        const imageX = finalWidth < maxWidth ? 
+                          margins.left + 10 + (maxWidth - finalWidth) / 2 : 
+                          margins.left + 10;
+                        
+                        pdf.addImage(compressedPdfImage, 'JPEG', imageX, yPosition, finalWidth, finalHeight);
+                        yPosition += finalHeight + 5;
+                        
+                      } else {
+                        // Fallback: não conseguiu converter - usar representação visual
+                        const pdfHeight = 30;
+                        
+                        // Verificar se cabe na página
+                        if (yPosition + pdfHeight > pageHeight - margins.bottom - 10) {
+                          pdf.addPage();
+                          pageNumber++;
+                          addPageNumber(pageNumber);
+                          yPosition = margins.top + 20;
+                        }
+                        
+                        // Criar caixa para representar PDF
+                        pdf.setDrawColor(220, 53, 69);
+                        pdf.setFillColor(248, 249, 250);
+                        pdf.rect(margins.left + 10, yPosition, contentWidth - 20, pdfHeight, 'FD');
+                        
+                        pdf.setFontSize(9);
+                        pdf.setTextColor(220, 53, 69);
+                        pdf.text('📄 DOCUMENTO PDF (NÃO FOI POSSÍVEL RENDERIZAR)', margins.left + 15, yPosition + 8);
+                        
+                        pdf.setTextColor(70, 70, 70);
+                        pdf.text(`Nome: ${receipt.fileName || 'documento.pdf'}`, margins.left + 15, yPosition + 16);
+                        pdf.text('Comprovante disponível mas não pôde ser visualizado', margins.left + 15, yPosition + 24);
+                        
+                        pdf.setTextColor(0, 0, 0);
+                        pdf.setFontSize(10);
+                        yPosition += pdfHeight + 5;
+                      }
+                    } catch (error) {
+                      console.error('Erro ao processar PDF:', error);
+                      
+                      // Fallback em caso de erro
+                      const pdfHeight = 30;
+                      
+                      if (yPosition + pdfHeight > pageHeight - margins.bottom - 10) {
+                        pdf.addPage();
+                        pageNumber++;
+                        addPageNumber(pageNumber);
+                        yPosition = margins.top + 20;
+                      }
+                      
+                      pdf.setDrawColor(220, 53, 69);
+                      pdf.setFillColor(248, 249, 250);
+                      pdf.rect(margins.left + 10, yPosition, contentWidth - 20, pdfHeight, 'FD');
+                      
+                      pdf.setFontSize(9);
+                      pdf.setTextColor(220, 53, 69);
+                      pdf.text('📄 ERRO AO PROCESSAR PDF', margins.left + 15, yPosition + 8);
+                      
+                      pdf.setTextColor(70, 70, 70);
+                      pdf.text(`Nome: ${receipt.fileName || 'documento.pdf'}`, margins.left + 15, yPosition + 16);
+                      pdf.text('Erro técnico ao renderizar o documento', margins.left + 15, yPosition + 24);
+                      
+                      pdf.setTextColor(0, 0, 0);
+                      pdf.setFontSize(10);
+                      yPosition += pdfHeight + 5;
                     }
-                    
-                    // Criar caixa para representar PDF
-                    pdf.setDrawColor(220, 53, 69); // Cor vermelha para PDF
-                    pdf.setFillColor(248, 249, 250);
-                    pdf.rect(margins.left + 10, yPosition, contentWidth - 20, pdfHeight, 'FD');
-                    
-                    // Ícone e texto para PDF
-                    pdf.setFontSize(9);
-                    pdf.setTextColor(220, 53, 69);
-                    pdf.text('📄 DOCUMENTO PDF', margins.left + 15, yPosition + 8);
-                    
-                    pdf.setTextColor(70, 70, 70);
-                    pdf.text(`Nome: ${receipt.fileName || 'documento.pdf'}`, margins.left + 15, yPosition + 16);
-                    pdf.text('✓ Comprovante em PDF anexado ao relatório', margins.left + 15, yPosition + 24);
-                    
-                    pdf.setTextColor(0, 0, 0);
-                    pdf.setFontSize(10);
-                    yPosition += pdfHeight + 5;
                     
                   } else {
                     // Arquivo de tipo desconhecido
