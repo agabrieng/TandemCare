@@ -100,7 +100,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
         variant="ghost"
         size="icon"
         onClick={onToggle}
-        className="fixed top-4 left-4 z-[60] md:hidden bg-background/80 backdrop-blur-sm border shadow-lg"
+        className="fixed top-4 left-4 z-[60] md:hidden bg-background border shadow-lg hover-elevate"
         data-testid="button-sidebar-toggle"
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -109,7 +109,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-background z-40 md:hidden"
           onClick={onToggle}
         />
       )}
@@ -122,11 +122,11 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         // Desktop width behavior  
         isCollapsed ? "md:w-16" : "md:w-72",
-        "w-72" // Mobile width
+        "w-80" // Mobile width optimized for touch
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-border">
+          <div className="p-4 sm:p-6 border-b border-border">
             <div className="flex items-center justify-between">
               <div className={cn("flex items-center gap-3", isCollapsed && "md:justify-center")}>
                 <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
@@ -155,7 +155,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
           </div>
 
           {/* Navigation */}
-          <nav className={cn("flex-1 space-y-2", isCollapsed ? "p-2" : "p-4")}>
+          <nav className={cn("flex-1 space-y-1 sm:space-y-2", isCollapsed ? "p-2" : "p-3 sm:p-4")}>
             {menuItems.map((item) => {
               const isActive = location === item.url;
               const Icon = item.icon;
@@ -168,9 +168,9 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                       "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
                       "hover:bg-accent hover:text-accent-foreground",
                       isActive 
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                        ? "bg-primary text-primary-foreground shadow-lg" 
                         : "text-muted-foreground hover:text-foreground",
-                      isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
+                      isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-4" : "px-4 py-4 gap-3"
                     )}
                     data-testid={`nav-${item.title.toLowerCase()}`}
                   >
@@ -188,7 +188,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                         </div>
                         <div className={cn(
                           "text-xs",
-                          isActive ? "text-primary-foreground/70" : "text-muted-foreground"
+                          isActive ? "text-primary-foreground" : "text-muted-foreground"
                         )}>
                           {item.description}
                         </div>
@@ -214,9 +214,9 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                   "flex items-center rounded-xl transition-all duration-200 group cursor-pointer",
                   "hover:bg-accent hover:text-accent-foreground",
                   location === "/categories" 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    ? "bg-primary text-primary-foreground shadow-lg" 
                     : "text-muted-foreground hover:text-foreground",
-                  isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
+                  isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-4" : "px-4 py-4 gap-3"
                 )}
                 data-testid="nav-categories">
                 <Tags className="w-5 h-5" />
@@ -236,9 +236,9 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                   "flex items-center rounded-xl transition-all duration-200 group cursor-pointer mt-2",
                   "hover:bg-accent hover:text-accent-foreground",
                   location === "/settings" 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    ? "bg-primary text-primary-foreground shadow-lg" 
                     : "text-muted-foreground hover:text-foreground",
-                  isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-3" : "px-4 py-3 gap-3"
+                  isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-4" : "px-4 py-4 gap-3"
                 )}
                 data-testid="nav-settings">
                 <Settings className="w-5 h-5" />
@@ -255,7 +255,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
           {/* User Profile */}
           <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
             <div className={cn(
-              "flex items-center rounded-xl bg-accent/50",
+              "flex items-center rounded-xl bg-accent hover-elevate",
               isCollapsed ? "md:justify-center md:p-2 p-3 gap-3" : "p-3 gap-3"
             )}>
               <Avatar className="w-10 h-10">
@@ -281,7 +281,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
               size={isCollapsed ? "icon" : "sm"}
               onClick={handleLogout}
               className={cn(
-                "mt-3 text-muted-foreground hover:text-foreground hover:bg-destructive/10 hover:text-destructive",
+                "mt-3 text-muted-foreground hover:text-destructive",
                 isCollapsed ? "md:w-full md:justify-center w-full justify-start gap-2" : "w-full justify-start gap-2"
               )}
               data-testid="button-logout"
