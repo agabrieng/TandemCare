@@ -317,8 +317,9 @@ export default function Reports() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
-      // Margens ABNT: Superior 3cm, Inferior 2cm, Esquerda 3cm, Direita 2cm
-      const margins = { top: 30, bottom: 20, left: 30, right: 20 };
+      // Margens otimizadas para melhor aproveitamento do espaço dos comprovantes
+      // Superior e inferior reduzidas para dar mais espaço às imagens
+      const margins = { top: 20, bottom: 15, left: 30, right: 20 };
       const contentWidth = pageWidth - margins.left - margins.right;
       let yPosition = margins.top;
       let pageNumber = 1;
@@ -650,11 +651,20 @@ export default function Reports() {
       
       yPosition += 15;
 
-      // Processar cada despesa individualmente
+      // Processar cada despesa individualmente - cada uma em uma página separada para melhor visualização
       for (let index = 0; index < sortedExpenses.length; index++) {
         const expense = sortedExpenses[index];
-        // Verificar se precisa de nova página
-        if (yPosition > pageHeight - margins.bottom - 60) {
+        
+        // Adicionar nova página para cada despesa (exceto a primeira)
+        if (index > 0) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        // Verificar se ainda precisa de nova página (por questões de espaço)
+        if (yPosition > pageHeight - margins.bottom - 100) {
           pdf.addPage();
           pageNumber++;
           addPageNumber(pageNumber);
@@ -726,8 +736,9 @@ export default function Reports() {
             }
             
             // Carregar e inserir imagem real do comprovante
+            // Agora que cada despesa tem sua própria página, podemos usar mais espaço para as imagens
             let imageHeight = 40;
-            if (yPosition + imageHeight > pageHeight - margins.bottom - 10) {
+            if (yPosition + 200 > pageHeight - margins.bottom - 10) {
               pdf.addPage();
               pageNumber++;
               addPageNumber(pageNumber);
@@ -761,8 +772,9 @@ export default function Reports() {
                     const aspectRatio = originalWidth / originalHeight;
                     
                     // Definir largura máxima e calcular altura proporcionalmente
+                    // Aumentar significativamente o tamanho máximo para melhor legibilidade
                     const maxWidth = contentWidth - 20;
-                    const maxHeight = 60; // Altura máxima reduzida para economizar espaço
+                    const maxHeight = 180; // Altura máxima aumentada para melhor visualização dos comprovantes
                     
                     let finalWidth = Math.min(maxWidth, originalWidth);
                     let finalHeight = finalWidth / aspectRatio;
@@ -869,14 +881,7 @@ export default function Reports() {
           yPosition += 10;
         }
         
-        // Separador entre despesas
-        if (index < sortedExpenses.length - 1) {
-          yPosition += 5;
-          pdf.setDrawColor(200, 200, 200);
-          pdf.line(margins.left, yPosition, margins.left + contentWidth, yPosition);
-          pdf.setDrawColor(0, 0, 0);
-          yPosition += 15;
-        }
+        // Separador removido pois cada despesa agora está em página separada
       }
 
       // ===== 5. CONCLUSÕES E RECOMENDAÇÕES =====
