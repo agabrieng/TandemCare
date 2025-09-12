@@ -11,7 +11,7 @@ import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart }
 import { format, subDays, subMonths, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { useGlobalProgress } from "@/contexts/progress-context";
 
 interface Expense {
   id: string;
@@ -106,6 +106,8 @@ export default function Reports() {
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const { showProgress, updateProgress, hideProgress } = useGlobalProgress();
 
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
@@ -208,7 +210,7 @@ export default function Reports() {
       const dateInRange = expenseDate >= start && expenseDate <= end;
       
       const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(expense.category);
-      const childMatch = selectedChildren.length === 0 || selectedChildren.includes(expense.childId);
+      const childMatch = selectedChildren.length === 0 || selectedChildren.includes(expense.child?.id || expense.childId);
       const statusMatch = selectedStatus.length === 0 || selectedStatus.includes(expense.status);
       
       return dateInRange && categoryMatch && childMatch && statusMatch;
@@ -254,8 +256,20 @@ export default function Reports() {
   };
 
   const handleGeneratePDF = async () => {
+    let timeoutIds: NodeJS.Timeout[] = [];
+    
     try {
+      // Iniciar progresso
+      showProgress("Preparando relatório...", "Gerando Relatório PDF");
+      
+      const timeoutId = setTimeout(() => {}, 500);
+      timeoutIds.push(timeoutId);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simular delay inicial
+      
+      updateProgress(10, "Coletando dados...");
       const report = generateReport();
+      
+      updateProgress(20, "Configurando documento PDF...");
       const pdf = new jsPDF('p', 'mm', 'A4'); // Formato A4 - norma ABNT
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -274,6 +288,7 @@ export default function Reports() {
       };
 
       // ===== PÁGINA DE CAPA (Padrão ABNT) =====
+      updateProgress(30, "Criando página de capa...");
       pdf.setFont("times", "bold");
       pdf.setFontSize(14);
       
@@ -300,6 +315,7 @@ export default function Reports() {
       pdf.text(`Data: ${format(new Date(), 'MMMM \'de\' yyyy', { locale: ptBR })}`, pageWidth / 2, yPosition + 10, { align: "center" });
 
       // ===== SUMÁRIO (ABNT) =====
+      updateProgress(40, "Gerando sumário...");
       pdf.addPage();
       pageNumber = 2;
       addPageNumber(pageNumber);
@@ -345,6 +361,7 @@ export default function Reports() {
       });
 
       // ===== 1. RESUMO EXECUTIVO =====
+      updateProgress(50, "Criando resumo executivo...");
       pdf.addPage();
       pageNumber = 3;
       addPageNumber(pageNumber);
@@ -421,6 +438,7 @@ export default function Reports() {
       });
 
       // ===== 2. ANÁLISE FINANCEIRA =====
+      updateProgress(60, "Analisando dados financeiros...");
       pdf.addPage();
       pageNumber = 4;
       addPageNumber(pageNumber);
@@ -490,6 +508,7 @@ export default function Reports() {
       });
 
       // ===== 3. DETALHAMENTO DAS DESPESAS =====
+      updateProgress(70, "Detalhando despesas...");
       pdf.addPage();
       pageNumber = 5;
       addPageNumber(pageNumber);
@@ -565,6 +584,7 @@ export default function Reports() {
       });
 
       // ===== 4. EXTRATO DE DESPESAS COM COMPROVANTES =====
+      updateProgress(80, "Processando comprovantes...");
       pdf.addPage();
       pageNumber++;
       addPageNumber(pageNumber);
@@ -1079,13 +1099,30 @@ export default function Reports() {
       pdf.text(`Data de geração: ${format(new Date(), 'dd/MM/yyyy \'às\' HH:mm \'h\'', { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
 
       // Salvar o PDF
+      updateProgress(90, "Finalizando documento...");
       const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
+      updateProgress(95, "Preparando download...");
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simular processamento final
+      
       pdf.save(fileName);
-
-      alert("PDF no padrão ABNT gerado com sucesso! O relatório foi baixado.");
+      
+      updateProgress(100, "Relatório PDF gerado com sucesso!");
+      
+      // Finalizar progresso após um breve delay
+      const finalTimeoutId = setTimeout(() => {
+        hideProgress();
+        alert("PDF no padrão ABNT gerado com sucesso! O relatório foi baixado.");
+      }, 1000);
+      timeoutIds.push(finalTimeoutId);
+      
     } catch (error) {
+      hideProgress();
       console.error("Erro ao gerar PDF:", error);
       alert("Erro ao gerar PDF. Verifique o console para mais detalhes.");
+    } finally {
+      // Cleanup all timeouts to prevent memory leaks
+      timeoutIds.forEach(id => clearTimeout(id));
     }
   };
 
