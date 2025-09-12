@@ -92,6 +92,8 @@ export const receipts = pgTable("receipts", {
   filePath: varchar("file_path", { length: 255 }).notNull(), // object storage path
   fileType: varchar("file_type", { length: 50 }), // 'image/jpeg', 'application/pdf'
   fileName: varchar("file_name", { length: 255 }),
+  originalFileName: varchar("original_file_name", { length: 255 }), // nome original do arquivo (antes da conversão)
+  originalFileType: varchar("original_file_type", { length: 50 }), // tipo original do arquivo (ex: 'application/pdf')
   uploadedAt: timestamp("uploaded_at").defaultNow(),
 });
 

@@ -289,6 +289,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filePath: objectPath,
         fileType: req.body.fileType || 'application/pdf',
         fileName: req.body.fileName || 'receipt',
+        originalFileName: req.body.originalFileName || null,
+        originalFileType: req.body.originalFileType || null,
       });
 
       const receipt = await storage.createReceipt(receiptData);

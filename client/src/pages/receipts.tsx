@@ -221,6 +221,8 @@ export default function Receipts() {
         receiptURL: uploadedFile.uploadURL,
         fileType: uploadedFile.type || 'application/pdf',
         fileName: uploadedFile.name || 'receipt',
+        originalFileName: uploadedFile.meta?.originalFileName || null,
+        originalFileType: uploadedFile.meta?.originalFileType || null,
       });
     }
   };

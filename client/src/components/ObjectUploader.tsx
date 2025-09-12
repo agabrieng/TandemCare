@@ -7,6 +7,88 @@ import "@uppy/dashboard/dist/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Configure PDF.js worker locally to avoid CDN issues
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
+
+/**
+ * Converts a PDF file to a JPEG image
+ * @param file - The PDF file to convert
+ * @returns Promise<File> - The converted JPEG file with metadata
+ */
+async function convertPdfToImage(file: File): Promise<File> {
+  console.log("Convertendo PDF para imagem:", file.name);
+  
+  // Read file as array buffer
+  const arrayBuffer = await file.arrayBuffer();
+  
+  // Load PDF document
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  console.log("PDF carregado com", pdf.numPages, "páginas");
+  
+  // Render first page only (MVP)
+  const page = await pdf.getPage(1);
+  
+  // Calculate scale for good quality (around 150-200 DPI)
+  const viewport = page.getViewport({ scale: 2.0 });
+  
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('Could not get canvas context');
+  }
+  
+  canvas.height = viewport.height;
+  canvas.width = viewport.width;
+  
+  // Render PDF page to canvas
+  const renderContext = {
+    canvasContext: context,
+    viewport: viewport,
+    canvas: canvas,
+  };
+  
+  await page.render(renderContext).promise;
+  console.log("PDF renderizado no canvas");
+  
+  // Convert canvas to blob
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Failed to convert canvas to blob'));
+          return;
+        }
+        
+        // Create new file with converted image
+        // Generate filename: replace .pdf with .jpg
+        const originalName = file.name;
+        const nameWithoutExt = originalName.replace(/\.pdf$/i, '');
+        const newFileName = `${nameWithoutExt}.jpg`;
+        
+        // Create new File object with metadata
+        const convertedFile = new File([blob], newFileName, {
+          type: 'image/jpeg',
+          lastModified: file.lastModified,
+        });
+        
+        // Add metadata about original file
+        (convertedFile as any).originalFileName = originalName;
+        (convertedFile as any).originalFileType = file.type;
+        
+        console.log("Conversão concluída:", newFileName);
+        resolve(convertedFile);
+      },
+      'image/jpeg',
+      0.8 // Quality setting
+    );
+  });
+}
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -90,6 +172,42 @@ export function ObjectUploader({
           // Always use current organizationParams value from ref
           return onGetUploadParameters(organizationParamsRef.current);
         },
+      })
+      .on("file-added", async (file) => {
+        // Intercept PDF files and convert to images
+        if (file.type === 'application/pdf') {
+          console.log("PDF detectado, iniciando conversão:", file.name);
+          
+          try {
+            // Convert PDF to image
+            const fileObj = new File([file.data], file.name || 'document.pdf', {
+              type: file.type || 'application/pdf',
+              lastModified: Date.now(),
+            });
+            
+            const convertedFile = await convertPdfToImage(fileObj);
+            
+            // Remove original PDF file from Uppy
+            uppy.removeFile(file.id);
+            
+            // Add converted image file to Uppy
+            uppy.addFile({
+              name: convertedFile.name,
+              type: convertedFile.type,
+              data: convertedFile,
+              meta: {
+                originalFileName: (convertedFile as any).originalFileName,
+                originalFileType: (convertedFile as any).originalFileType,
+              },
+            });
+            
+            console.log("PDF convertido e substituído com sucesso");
+          } catch (error) {
+            console.error("Erro ao converter PDF:", error);
+            // Keep original file if conversion fails
+            uppy.info(`Erro ao converter PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, 'error', 5000);
+          }
+        }
       })
       .on("complete", (result) => {
         onComplete?.(result);
