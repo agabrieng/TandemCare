@@ -35,7 +35,7 @@ export function PWAInstallPrompt() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="h-11 w-11 sm:h-6 sm:w-6"
             onClick={handleDismiss}
             data-testid="button-dismiss-install"
           >
@@ -50,16 +50,16 @@ export function PWAInstallPrompt() {
         <div className="flex gap-2">
           <Button 
             onClick={handleInstall} 
-            className="flex-1 text-xs h-8"
+            className="flex-1 text-base sm:text-xs min-h-11 sm:min-h-8"
             data-testid="button-install-pwa"
           >
-            <Download className="h-3 w-3 mr-1" />
+            <Download className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
             Instalar
           </Button>
           <Button 
             variant="outline" 
             onClick={handleDismiss}
-            className="text-xs h-8"
+            className="text-base sm:text-xs min-h-11 sm:min-h-8 px-4"
             data-testid="button-not-now"
           >
             Agora não

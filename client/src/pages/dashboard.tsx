@@ -151,12 +151,12 @@ export default function Dashboard() {
             <p className="text-muted-foreground text-sm sm:text-base">Visão geral das suas finanças familiares</p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-initial" data-testid="button-future-balance">
-              <Filter className="w-4 h-4 sm:mr-2" />
+            <Button variant="outline" size="default" className="flex-1 sm:flex-initial min-h-11 sm:min-h-9" data-testid="button-future-balance">
+              <Filter className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden sm:inline">Filtros</span>
             </Button>
-            <Button size="sm" className="flex-1 sm:flex-initial" data-testid="button-add-expense">
-              <Plus className="w-4 h-4 sm:mr-2" />
+            <Button size="default" className="flex-1 sm:flex-initial min-h-11 sm:min-h-9" data-testid="button-add-expense">
+              <Plus className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden sm:inline">Nova Despesa</span>
             </Button>
           </div>
@@ -270,12 +270,12 @@ export default function Dashboard() {
             <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
               <CardTitle className="text-base sm:text-xl">Despesas Recentes</CardTitle>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
-                  <Search className="w-4 h-4 sm:mr-2" />
+                <Button variant="outline" size="default" className="flex-1 sm:flex-initial min-h-11 sm:min-h-9">
+                  <Search className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Buscar</span>
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
-                  <Filter className="w-4 h-4 sm:mr-2" />
+                <Button variant="outline" size="default" className="flex-1 sm:flex-initial min-h-11 sm:min-h-9">
+                  <Filter className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Filtrar</span>
                 </Button>
               </div>
