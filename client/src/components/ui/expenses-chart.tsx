@@ -120,24 +120,20 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
             </div>
 
             {/* Legend */}
-            <div className="space-y-2 sm:space-y-3 max-h-48 overflow-y-auto">
+            <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 pt-2">
               {data.map((item) => (
-                <div key={item.category} className="flex items-center justify-between py-3 sm:py-2 hover-elevate rounded-md px-3 -mx-1" style={{minHeight: '44px'}}>
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <div 
-                      className="w-4 h-4 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: getCategoryColor(item.category) }}
-                    />
-                    <span className="text-base sm:text-sm text-foreground capitalize truncate font-medium">{item.category}</span>
-                  </div>
-                  <div className="text-right ml-4 flex-shrink-0">
-                    <div className="text-base sm:text-sm font-semibold text-foreground">
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <div className="text-sm sm:text-xs text-muted-foreground font-medium">
-                      {item.percentage.toFixed(1)}%
-                    </div>
-                  </div>
+                <div key={item.category} className="flex items-center gap-1.5 bg-muted/50 hover-elevate rounded-md px-2 py-1.5 text-sm whitespace-nowrap min-w-fit">
+                  <div 
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: getCategoryColor(item.category) }}
+                  />
+                  <span className="text-foreground capitalize font-medium">{item.category}</span>
+                  <span className="text-foreground font-semibold">
+                    {formatCurrency(item.amount)}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {item.percentage.toFixed(1)}%
+                  </span>
                 </div>
               ))}
             </div>
