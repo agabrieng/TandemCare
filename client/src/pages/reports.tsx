@@ -140,10 +140,10 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
     const canvas = document.createElement('canvas');
     // Aumentar resolução para melhor qualidade
     const scale = 2;
-    canvas.width = 600 * scale;
-    canvas.height = 450 * scale;
-    canvas.style.width = '600px';
-    canvas.style.height = '450px';
+    canvas.width = 800 * scale;
+    canvas.height = 600 * scale;
+    canvas.style.width = '800px';
+    canvas.style.height = '600px';
     
     const ctx = canvas.getContext('2d')!;
     ctx.scale(scale, scale);
@@ -172,7 +172,7 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
         datasets: [{
           data: data,
           backgroundColor: colors.slice(0, labels.length),
-          borderWidth: 4,
+          borderWidth: 5,
           borderColor: '#ffffff',
           hoverBorderWidth: 5,
           hoverBorderColor: '#ffffff',
@@ -186,23 +186,24 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
             position: 'right',
             labels: {
               font: {
-                size: 16,
+                size: 26,
                 family: 'Times, serif',
-                weight: '500'
+                weight: 500
               },
-              padding: 15,
+              padding: 25,
               usePointStyle: true,
               pointStyle: 'circle',
               // Adicionar valores na legenda para melhor legibilidade em P&B
-              generateLabels: function(chart) {
+              generateLabels: function(chart: any) {
                 const data = chart.data;
-                if (data.labels.length && data.datasets.length) {
+                if (data.labels && data.labels.length && data.datasets.length) {
                   const dataset = data.datasets[0];
-                  const total = dataset.data.reduce((sum: number, value: number) => sum + value, 0);
+                  const validData = dataset.data.filter((val: any) => val !== null && val !== undefined);
+                  const total = validData.reduce((sum: number, value: number) => sum + (value || 0), 0);
                   
-                  return data.labels.map((label, i) => {
-                    const value = dataset.data[i];
-                    const percentage = ((value / total) * 100).toFixed(1);
+                  return data.labels.map((label: string, i: number) => {
+                    const value = dataset.data[i] || 0;
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
                     const amount = value.toLocaleString('pt-BR', { 
                       style: 'currency', 
                       currency: 'BRL' 
@@ -210,10 +211,10 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
                     
                     return {
                       text: `${label}: ${amount} (${percentage}%)`,
-                      fillStyle: dataset.backgroundColor[i],
+                      fillStyle: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[i] : dataset.backgroundColor,
                       strokeStyle: dataset.borderColor,
                       lineWidth: dataset.borderWidth,
-                      pointStyle: 'circle',
+                      pointStyle: 'circle' as const,
                       hidden: false,
                       index: i
                     };
@@ -227,7 +228,7 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
             display: true,
             text: 'Distribuição por Categoria',
             font: {
-              size: 20,
+              size: 32,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -239,7 +240,7 @@ const generatePieChart = async (categoryTotals: Record<string, number>): Promise
           }
         },
         layout: {
-          padding: 20
+          padding: 30
         },
         elements: {
           arc: {
@@ -264,10 +265,10 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
     const canvas = document.createElement('canvas');
     // Aumentar resolução para melhor qualidade
     const scale = 2;
-    canvas.width = 700 * scale;
-    canvas.height = 400 * scale;
-    canvas.style.width = '700px';
-    canvas.style.height = '400px';
+    canvas.width = 900 * scale;
+    canvas.height = 500 * scale;
+    canvas.style.width = '900px';
+    canvas.style.height = '500px';
     
     const ctx = canvas.getContext('2d')!;
     ctx.scale(scale, scale);
@@ -306,9 +307,9 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
           pointBackgroundColor: '#000080',
           pointBorderColor: '#ffffff',
           pointBorderWidth: 4,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 4, // Linha mais grossa para impressão
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 5, // Linha mais grossa para impressão
           pointHoverBorderWidth: 5
         }]
       },
@@ -324,11 +325,11 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             position: 'top',
             labels: {
               font: {
-                size: 16,
+                size: 26,
                 family: 'Times, serif',
-                weight: '500'
+                weight: 500
               },
-              padding: 18,
+              padding: 25,
               usePointStyle: true
             }
           },
@@ -336,7 +337,7 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             display: true,
             text: 'Acumulado Anual de Despesas',
             font: {
-              size: 20,
+              size: 32,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -352,16 +353,16 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
             beginAtZero: true,
             grid: {
               color: 'rgba(0, 0, 0, 0.2)', // Grid mais escuro para P&B
-              drawBorder: true,
+
               lineWidth: 1
             },
             ticks: {
               font: {
-                size: 13,
+                size: 22,
                 family: 'Times, serif'
               },
               color: '#000000',
-              padding: 10,
+              padding: 15,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
@@ -370,12 +371,12 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
           x: {
             grid: {
               color: 'rgba(0, 0, 0, 0.15)',
-              drawBorder: true,
+
               lineWidth: 1
             },
             ticks: {
               font: {
-                size: 13,
+                size: 22,
                 family: 'Times, serif'
               },
               color: '#000000',
@@ -385,7 +386,7 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
           }
         },
         layout: {
-          padding: 20
+          padding: 30
         }
       }
     });
@@ -404,10 +405,10 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
     const canvas = document.createElement('canvas');
     // Aumentar resolução para melhor qualidade
     const scale = 2;
-    canvas.width = 700 * scale;
-    canvas.height = 400 * scale;
-    canvas.style.width = '700px';
-    canvas.style.height = '400px';
+    canvas.width = 900 * scale;
+    canvas.height = 500 * scale;
+    canvas.style.width = '900px';
+    canvas.style.height = '500px';
     
     const ctx = canvas.getContext('2d')!;
     ctx.scale(scale, scale);
@@ -454,11 +455,11 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             position: 'top',
             labels: {
               font: {
-                size: 16,
+                size: 26,
                 family: 'Times, serif',
-                weight: '500'
+                weight: 500
               },
-              padding: 18,
+              padding: 25,
               usePointStyle: true
             }
           },
@@ -466,7 +467,7 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             display: true,
             text: 'Despesas por Mês',
             font: {
-              size: 20,
+              size: 32,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -482,16 +483,16 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             beginAtZero: true,
             grid: {
               color: 'rgba(0, 0, 0, 0.2)', // Grid mais escuro para P&B
-              drawBorder: true,
+
               lineWidth: 1
             },
             ticks: {
               font: {
-                size: 13,
+                size: 22,
                 family: 'Times, serif'
               },
               color: '#000000',
-              padding: 10,
+              padding: 15,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
@@ -503,7 +504,7 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
             },
             ticks: {
               font: {
-                size: 13,
+                size: 22,
                 family: 'Times, serif'
               },
               color: '#000000',
@@ -513,7 +514,7 @@ const generateMonthlyBarChart = async (expenses: any[]): Promise<string> => {
           }
         },
         layout: {
-          padding: 20
+          padding: 30
         },
         elements: {
           bar: {
@@ -537,10 +538,10 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
     const canvas = document.createElement('canvas');
     // Aumentar resolução para melhor qualidade
     const scale = 2;
-    canvas.width = 700 * scale;
-    canvas.height = 400 * scale;
-    canvas.style.width = '700px';
-    canvas.style.height = '400px';
+    canvas.width = 900 * scale;
+    canvas.height = 500 * scale;
+    canvas.style.width = '900px';
+    canvas.style.height = '500px';
     
     const ctx = canvas.getContext('2d')!;
     ctx.scale(scale, scale);
@@ -582,12 +583,12 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             backgroundColor: 'rgba(0, 0, 0, 0.05)', // Fundo muito sutil
             fill: false, // Sem preenchimento para melhor legibilidade em P&B
             tension: 0.3,
-            pointRadius: 5,
+            pointRadius: 7,
             pointBackgroundColor: '#000000',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 3,
-            pointHoverRadius: 7,
-            borderWidth: 4, // Linha mais grossa
+            pointHoverRadius: 10,
+            borderWidth: 5, // Linha mais grossa
             pointHoverBorderWidth: 4,
             pointStyle: 'circle'
           },
@@ -598,12 +599,12 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             backgroundColor: 'rgba(75, 85, 99, 0.05)',
             fill: false, // Sem preenchimento para melhor legibilidade em P&B
             tension: 0.3,
-            pointRadius: 4,
+            pointRadius: 6,
             pointBackgroundColor: '#4B5563',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 3,
-            pointHoverRadius: 8,
-            borderWidth: 4,
+            pointHoverRadius: 11,
+            borderWidth: 5,
             pointHoverBorderWidth: 4,
             borderDash: [8, 4], // Linha tracejada para distinguir
             pointStyle: 'triangle'
@@ -622,11 +623,11 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             position: 'top',
             labels: {
               font: {
-                size: 16,
+                size: 26,
                 family: 'Times, serif',
-                weight: '500'
+                weight: 500
               },
-              padding: 18,
+              padding: 25,
               usePointStyle: true
             }
           },
@@ -634,7 +635,7 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             display: true,
             text: 'Tendência de Gastos Mensais',
             font: {
-              size: 20,
+              size: 32,
               weight: 'bold',
               family: 'Times, serif'
             },
@@ -650,16 +651,16 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
             beginAtZero: true,
             grid: {
               color: 'rgba(0, 0, 0, 0.2)', // Grid mais escuro para P&B
-              drawBorder: true,
+
               lineWidth: 1
             },
             ticks: {
               font: {
-                size: 13,
+                size: 22,
                 family: 'Times, serif'
               },
               color: '#000000',
-              padding: 10,
+              padding: 15,
               callback: function(value: any) {
                 return 'R$ ' + value.toLocaleString('pt-BR');
               }
@@ -668,12 +669,12 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
           x: {
             grid: {
               color: 'rgba(0, 0, 0, 0.15)',
-              drawBorder: true,
+
               lineWidth: 1
             },
             ticks: {
               font: {
-                size: 13,
+                size: 22,
                 family: 'Times, serif'
               },
               color: '#000000',
@@ -683,7 +684,7 @@ const generateTrendChart = async (expenses: any[]): Promise<string> => {
           }
         },
         layout: {
-          padding: 20
+          padding: 30
         }
       }
     });
