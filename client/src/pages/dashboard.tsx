@@ -144,18 +144,18 @@ export default function Dashboard() {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Page Header */}
-      <div className="border-b px-4 sm:px-6 py-4">
+      <div className="border-b px-3 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" data-testid="title-dashboard">Dashboard</h1>
             <p className="text-muted-foreground text-sm sm:text-base">Visão geral das suas finanças familiares</p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="outline" size="sm" className="sm:size-default" data-testid="button-future-balance">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-initial" data-testid="button-future-balance">
               <Filter className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Filtros</span>
             </Button>
-            <Button size="sm" className="sm:size-default" data-testid="button-add-expense">
+            <Button size="sm" className="flex-1 sm:flex-initial" data-testid="button-add-expense">
               <Plus className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Nova Despesa</span>
             </Button>
@@ -163,64 +163,64 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <main className="p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* Summary Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
+        <div className="grid gap-2 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
+          <Card className="hover-elevate">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Gasto</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-total-spent">
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-lg sm:text-2xl font-bold" data-testid="text-total-spent">
                 {formatCurrency(stats?.totalSpent || 0)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 +12.5% em relação ao mês anterior
               </p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+          <Card className="hover-elevate">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Pendentes</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-pending-amount">
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-lg sm:text-2xl font-bold" data-testid="text-pending-amount">
                 {formatCurrency(stats?.pendingAmount || 0)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 {expenses?.filter((e: any) => e.status === 'pendente').length || 0} despesas
               </p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Filhos</CardTitle>
+          <Card className="hover-elevate">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Filhos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-children-count">
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-lg sm:text-2xl font-bold" data-testid="text-children-count">
                 {stats?.childrenCount?.toString() || "0"}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 Cadastrados no sistema
               </p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Comprovantes</CardTitle>
+          <Card className="hover-elevate">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Comprovantes</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-receipts-count">
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-lg sm:text-2xl font-bold" data-testid="text-receipts-count">
                 {stats?.receiptsCount?.toString() || "0"}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 100% documentado
               </p>
             </CardContent>
@@ -228,42 +228,33 @@ export default function Dashboard() {
         </div>
 
         {/* Charts and Recent Activities */}
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BarChart3 className="mr-2 w-5 h-5" />
-                Despesas por Categoria
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ExpensesChart 
-                data={stats?.categoryBreakdown || []}
-                userCategoryColors={categoryColors.userColorMap}
-                fallbackColor={categoryColors.fallbackColor}
-                data-testid="chart-expenses-by-category"
-              />
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+          <ExpensesChart 
+            data={stats?.categoryBreakdown || []}
+            userCategoryColors={categoryColors.userColorMap}
+            fallbackColor={categoryColors.fallbackColor}
+            data-testid="chart-expenses-by-category"
+            className="hover-elevate"
+          />
           
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="mr-2 w-5 h-5" />
+          <Card className="hover-elevate">
+            <CardHeader className="px-4 sm:px-6">
+              <CardTitle className="flex items-center text-base sm:text-lg">
+                <Clock className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />
                 Atividades Recentes
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-4 sm:px-6">
+              <div className="space-y-3 sm:space-y-4">
                 {(stats?.recentExpenses || []).slice(0, 5).map((expense: any, index: number) => (
-                  <div key={expense.id || index} className="flex items-center justify-between border-b border-border pb-3 last:border-0">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{expense.description}</p>
+                  <div key={expense.id || index} className="flex items-center justify-between border-b border-border pb-3 last:border-0 min-h-[44px] py-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{expense.description}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatDateForBrazil(expense.expenseDate)} • {expense.category}
                       </p>
                     </div>
-                    <div className="text-sm font-medium">
+                    <div className="text-sm font-medium text-right ml-3">
                       {formatCurrency(Number(expense.amount))}
                     </div>
                   </div>
@@ -274,16 +265,16 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Expenses Table */}
-        <Card data-testid="table-recent-expenses">
-          <CardHeader>
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-              <CardTitle className="text-lg sm:text-xl">Despesas Recentes</CardTitle>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
+        <Card className="hover-elevate" data-testid="table-recent-expenses">
+          <CardHeader className="px-4 sm:px-6">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <CardTitle className="text-base sm:text-xl">Despesas Recentes</CardTitle>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
                   <Search className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Buscar</span>
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-initial">
                   <Filter className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Filtrar</span>
                 </Button>

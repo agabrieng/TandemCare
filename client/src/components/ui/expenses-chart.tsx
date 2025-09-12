@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ExpensesChartProps {
   data: Array<{
@@ -17,6 +18,7 @@ interface ExpensesChartProps {
 export function ExpensesChart({ data, userCategoryColors, fallbackColor, categoryColors, className, ...props }: ExpensesChartProps) {
   // Extrair props customizadas para evitar warnings do React
   const { ...cardProps } = props;
+  const isMobile = useIsMobile();
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -78,10 +80,10 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
   return (
     <Card className={className} {...cardProps}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Gastos por Categoria</CardTitle>
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <CardTitle className="text-base sm:text-lg">Gastos por Categoria</CardTitle>
           <Select defaultValue="30">
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -96,15 +98,15 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
         {data.length > 0 ? (
           <div className="space-y-4">
             {/* Chart */}
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={isMobile ? 40 : 60}
+                    outerRadius={isMobile ? 80 : 100}
                     paddingAngle={2}
                     dataKey="value"
                   >
@@ -118,17 +120,17 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
             </div>
 
             {/* Legend */}
-            <div className="space-y-2">
+            <div className="space-y-2 sm:space-y-3">
               {data.map((item) => (
-                <div key={item.category} className="flex items-center justify-between py-1">
-                  <div className="flex items-center space-x-2">
+                <div key={item.category} className="flex items-center justify-between py-2 hover-elevate rounded-md px-2 -mx-2">
+                  <div className="flex items-center space-x-2 min-w-0 flex-1">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-3 h-3 rounded-full flex-shrink-0" 
                       style={{ backgroundColor: getCategoryColor(item.category) }}
                     />
-                    <span className="text-sm text-foreground capitalize">{item.category}</span>
+                    <span className="text-sm text-foreground capitalize truncate">{item.category}</span>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right ml-3">
                     <div className="text-sm font-medium text-foreground">
                       {formatCurrency(item.amount)}
                     </div>
@@ -141,10 +143,10 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            <div className="text-center">
-              <p>Nenhuma despesa encontrada</p>
-              <p className="text-sm">Adicione algumas despesas para ver os gráficos</p>
+          <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
+            <div className="text-center p-4">
+              <p className="text-sm sm:text-base">Nenhuma despesa encontrada</p>
+              <p className="text-xs sm:text-sm mt-1">Adicione algumas despesas para ver os gráficos</p>
             </div>
           </div>
         )}
