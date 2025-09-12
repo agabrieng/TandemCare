@@ -380,8 +380,7 @@ export default function Expenses() {
 
       // Child filter
       if (selectedChild !== "all-children" && selectedChild) {
-        const childName = `${expense.child.firstName}${expense.child.lastName ? ` ${expense.child.lastName}` : ''}`;
-        if (childName !== selectedChild) return false;
+        if (expense.child.id !== selectedChild) return false;
       }
 
       // Year filter
@@ -633,8 +632,8 @@ export default function Expenses() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all-children">Todos os filhos</SelectItem>
-                          {uniqueValues.children.map(child => (
-                            <SelectItem key={child} value={child}>{child}</SelectItem>
+                          {children?.map((child: any) => (
+                            <SelectItem key={child.id} value={child.id}>{child.firstName} {child.lastName || ""}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
