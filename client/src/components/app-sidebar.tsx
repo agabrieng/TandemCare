@@ -194,6 +194,27 @@ export function AppSidebar() {
                     )}
                   </Link>
                 </SidebarMenuButton>
+                {state === "expanded" && (
+                  <div className="opacity-90 px-3 pb-1">
+                    <p className="text-xs text-muted-foreground">Preferências e conta</p>
+                  </div>
+                )}
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={handleLogout}
+                  tooltip={state === "collapsed" ? "Sair" : undefined}
+                  className="group relative rounded-lg px-3 py-2.5 hover:bg-destructive/90 hover:text-destructive-foreground transition-all duration-200"
+                  data-testid="button-logout"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium group-hover:text-destructive-foreground transition-colors duration-200">
+                      Sair
+                    </span>
+                  </div>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -204,64 +225,30 @@ export function AppSidebar() {
         {user && (
           <SidebarMenu>
             <SidebarMenuItem>
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton 
-                      size="lg" 
-                      className="group relative rounded-xl p-3 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200 data-[state=open]:bg-sidebar-accent flex-1"
-                    >
-                      <div className="relative">
-                        <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
-                          <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
-                          <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
-                            {getUserInitials(user?.firstName, user?.lastName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        </div>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold group-hover:text-sidebar-accent-foreground transition-colors duration-200" data-testid="text-user-name">
-                          {user?.firstName && user?.lastName 
-                            ? `${user?.firstName} ${user?.lastName}` 
-                            : user?.firstName || "Usuário"
-                          }
-                        </span>
-                        <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
-                          {user?.email}
-                        </span>
-                      </div>
-                      <ChevronUp className="ml-auto size-4" />
-                    </SidebarMenuButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl shadow-xl border-2 z-50" 
-                    side="right" 
-                    align="start" 
-                    sideOffset={4}
-                  >
-                    <DropdownMenuItem className="group rounded-lg p-3 hover:bg-accent transition-all duration-200 cursor-pointer">
-                      <User className="mr-3 h-4 w-4" />
-                      <span className="font-medium">Ver Perfil</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="group rounded-lg p-3 hover:bg-accent transition-all duration-200 cursor-pointer">
-                      <Link href="/settings" onClick={handleNavClick}>
-                        <Settings className="mr-3 h-4 w-4" />
-                        <span className="font-medium">Configurações</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleLogout}
-                  data-testid="button-logout"
-                  className="h-10 w-10 rounded-xl hover:bg-destructive/90 hover:text-destructive-foreground text-muted-foreground hover:text-white transition-all duration-200 group"
-                  title="Sair da Conta"
-                >
-                  <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
-                </Button>
-              </div>
+              <SidebarMenuButton 
+                size="lg" 
+                className="group relative rounded-xl p-3 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200"
+              >
+                <div className="relative">
+                  <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
+                    <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
+                    <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
+                      {getUserInitials(user?.firstName, user?.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold group-hover:text-sidebar-accent-foreground transition-colors duration-200" data-testid="text-user-name">
+                    {user?.firstName && user?.lastName 
+                      ? `${user?.firstName} ${user?.lastName}` 
+                      : user?.firstName || "Usuário"
+                    }
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
+                    {user?.email}
+                  </span>
+                </div>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         )}
