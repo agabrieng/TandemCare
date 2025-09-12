@@ -110,7 +110,7 @@ const loadFileFromStorage = async (filePath: string): Promise<{ data: string; ty
 };
 
 // Função para comprimir imagem e reduzir tamanho
-const compressImage = async (imageData: string, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
+const compressImage = async (imageData: string, maxWidth: number = 1600, quality: number = 0.85): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
@@ -1464,8 +1464,8 @@ export default function Reports() {
                   const isImage = fileData.type.startsWith('image/');
                   
                   if (isImage) {
-                    // Processar como imagem com compressão
-                    const compressedImageData = await compressImage(fileData.data, 600, 0.6);
+                    // Processar como imagem com alta qualidade para melhor legibilidade
+                    const compressedImageData = await compressImage(fileData.data, 1200, 0.85);
                     
                     // Criar uma imagem temporária para obter as dimensões
                     const tempImg = new Image();
@@ -1484,7 +1484,7 @@ export default function Reports() {
                     // Definir largura máxima e calcular altura proporcionalmente
                     // Aumentar significativamente o tamanho máximo para melhor legibilidade
                     const maxWidth = contentWidth - 20;
-                    const maxHeight = 180; // Altura máxima aumentada para melhor visualização dos comprovantes
+                    const maxHeight = 220; // Altura máxima aumentada para melhor visualização dos comprovantes
                     
                     let finalWidth = Math.min(maxWidth, originalWidth);
                     let finalHeight = finalWidth / aspectRatio;
