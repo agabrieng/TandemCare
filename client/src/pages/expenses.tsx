@@ -105,14 +105,14 @@ export default function Expenses() {
   const filters = {
     category: selectedCategory || null,
     status: selectedStatus || null,
-    childId: selectedChild || null
+    childId: selectedChild && selectedChild !== "all-children" ? selectedChild : null
   };
 
   // Build query parameters for filtering
   const queryParams = new URLSearchParams();
   if (selectedCategory) queryParams.append('category', selectedCategory);
   if (selectedStatus) queryParams.append('status', selectedStatus);
-  if (selectedChild) queryParams.append('childId', selectedChild);
+  if (selectedChild && selectedChild !== "all-children") queryParams.append('childId', selectedChild);
 
   const { data: expenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ["/api/expenses", filters],
