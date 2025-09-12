@@ -74,29 +74,59 @@ interface LegalCase {
   lawyer?: Lawyer;
 }
 
-// Função auxiliar para carregar imagem do object storage via API
-const loadImageFromStorage = async (filePath: string): Promise<string | null> => {
+// Função auxiliar para carregar arquivo do object storage via API
+const loadFileFromStorage = async (filePath: string): Promise<{ data: string; type: string } | null> => {
   try {
     const response = await fetch(`/api/object-storage/image?path=${encodeURIComponent(filePath)}`);
     
     if (!response.ok) {
-      console.warn(`Erro ao buscar imagem: ${response.status} - ${response.statusText}`);
+      console.warn(`Erro ao buscar arquivo: ${response.status} - ${response.statusText}`);
       return null;
     }
     
     const blob = await response.blob();
+    const contentType = response.headers.get('content-type') || blob.type;
     
     // Converter blob para base64
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = () => resolve({ 
+        data: reader.result as string, 
+        type: contentType 
+      });
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error(`Erro ao carregar imagem ${filePath}:`, error);
+    console.error(`Erro ao carregar arquivo ${filePath}:`, error);
     return null;
   }
+};
+
+// Função para comprimir imagem e reduzir tamanho
+const compressImage = async (imageData: string, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calcular novas dimensões mantendo aspect ratio
+      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      
+      // Desenhar imagem redimensionada
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Converter para JPEG com qualidade reduzida
+      const compressedData = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressedData);
+    };
+    
+    img.onerror = () => resolve(imageData); // Fallback para imagem original
+    img.src = imageData;
+  });
 };
 
 export default function Reports() {
@@ -702,54 +732,116 @@ export default function Reports() {
               yPosition = margins.top + 20;
             }
             
-            // Tentar carregar a imagem real
+            // Tentar carregar o arquivo real (imagem ou PDF)
             if (receipt.filePath) {
               try {
-                const imageData = await loadImageFromStorage(receipt.filePath);
+                const fileData = await loadFileFromStorage(receipt.filePath);
                 
-                if (imageData) {
-                  // Criar uma imagem temporária para obter as dimensões originais
-                  const tempImg = new Image();
-                  tempImg.src = imageData;
+                if (fileData) {
+                  const isImage = fileData.type.startsWith('image/');
+                  const isPDF = fileData.type === 'application/pdf' || receipt.fileType === 'application/pdf';
                   
-                  await new Promise((resolve) => {
-                    tempImg.onload = resolve;
-                    tempImg.onerror = resolve;
-                  });
-                  
-                  // Calcular dimensões proporcionais
-                  const originalWidth = tempImg.width || 800;
-                  const originalHeight = tempImg.height || 600;
-                  const aspectRatio = originalWidth / originalHeight;
-                  
-                  // Definir largura máxima e calcular altura proporcionalmente
-                  const maxWidth = contentWidth - 20;
-                  const maxHeight = 80; // Altura máxima para não ocupar muito espaço
-                  
-                  let finalWidth = maxWidth;
-                  let finalHeight = maxWidth / aspectRatio;
-                  
-                  // Se a altura calculada exceder o máximo, recalcular baseado na altura
-                  if (finalHeight > maxHeight) {
-                    finalHeight = maxHeight;
-                    finalWidth = maxHeight * aspectRatio;
+                  if (isImage) {
+                    // Processar como imagem com compressão
+                    const compressedImageData = await compressImage(fileData.data, 600, 0.6);
+                    
+                    // Criar uma imagem temporária para obter as dimensões
+                    const tempImg = new Image();
+                    tempImg.src = compressedImageData;
+                    
+                    await new Promise((resolve) => {
+                      tempImg.onload = resolve;
+                      tempImg.onerror = resolve;
+                    });
+                    
+                    // Calcular dimensões proporcionais
+                    const originalWidth = tempImg.width || 600;
+                    const originalHeight = tempImg.height || 400;
+                    const aspectRatio = originalWidth / originalHeight;
+                    
+                    // Definir largura máxima e calcular altura proporcionalmente
+                    const maxWidth = contentWidth - 20;
+                    const maxHeight = 60; // Altura máxima reduzida para economizar espaço
+                    
+                    let finalWidth = Math.min(maxWidth, originalWidth);
+                    let finalHeight = finalWidth / aspectRatio;
+                    
+                    // Se a altura calculada exceder o máximo, recalcular baseado na altura
+                    if (finalHeight > maxHeight) {
+                      finalHeight = maxHeight;
+                      finalWidth = maxHeight * aspectRatio;
+                    }
+                    
+                    // Verificar se cabe na página
+                    if (yPosition + finalHeight > pageHeight - margins.bottom - 10) {
+                      pdf.addPage();
+                      pageNumber++;
+                      addPageNumber(pageNumber);
+                      yPosition = margins.top + 20;
+                    }
+                    
+                    // Centralizar a imagem se ela for menor que a largura máxima
+                    const imageX = finalWidth < maxWidth ? 
+                      margins.left + 10 + (maxWidth - finalWidth) / 2 : 
+                      margins.left + 10;
+                    
+                    pdf.addImage(compressedImageData, 'JPEG', imageX, yPosition, finalWidth, finalHeight);
+                    yPosition += finalHeight + 5;
+                    
+                  } else if (isPDF) {
+                    // Processar como PDF - criar representação visual
+                    const pdfHeight = 30;
+                    
+                    // Verificar se cabe na página
+                    if (yPosition + pdfHeight > pageHeight - margins.bottom - 10) {
+                      pdf.addPage();
+                      pageNumber++;
+                      addPageNumber(pageNumber);
+                      yPosition = margins.top + 20;
+                    }
+                    
+                    // Criar caixa para representar PDF
+                    pdf.setDrawColor(220, 53, 69); // Cor vermelha para PDF
+                    pdf.setFillColor(248, 249, 250);
+                    pdf.rect(margins.left + 10, yPosition, contentWidth - 20, pdfHeight, 'FD');
+                    
+                    // Ícone e texto para PDF
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(220, 53, 69);
+                    pdf.text('📄 DOCUMENTO PDF', margins.left + 15, yPosition + 8);
+                    
+                    pdf.setTextColor(70, 70, 70);
+                    pdf.text(`Nome: ${receipt.fileName || 'documento.pdf'}`, margins.left + 15, yPosition + 16);
+                    pdf.text('✓ Comprovante em PDF anexado ao relatório', margins.left + 15, yPosition + 24);
+                    
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFontSize(10);
+                    yPosition += pdfHeight + 5;
+                    
+                  } else {
+                    // Arquivo de tipo desconhecido
+                    const fileHeight = 25;
+                    
+                    if (yPosition + fileHeight > pageHeight - margins.bottom - 10) {
+                      pdf.addPage();
+                      pageNumber++;
+                      addPageNumber(pageNumber);
+                      yPosition = margins.top + 20;
+                    }
+                    
+                    pdf.setDrawColor(108, 117, 125);
+                    pdf.setFillColor(248, 249, 250);
+                    pdf.rect(margins.left + 10, yPosition, contentWidth - 20, fileHeight, 'FD');
+                    
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(108, 117, 125);
+                    pdf.text(`📎 ARQUIVO: ${receipt.fileName || 'documento'}`, margins.left + 15, yPosition + 8);
+                    pdf.text(`Tipo: ${fileData.type || 'desconhecido'}`, margins.left + 15, yPosition + 16);
+                    
+                    pdf.setTextColor(0, 0, 0);
+                    pdf.setFontSize(10);
+                    yPosition += fileHeight + 5;
                   }
-                  
-                  // Verificar se cabe na página
-                  if (yPosition + finalHeight > pageHeight - margins.bottom - 10) {
-                    pdf.addPage();
-                    pageNumber++;
-                    addPageNumber(pageNumber);
-                    yPosition = margins.top + 20;
-                  }
-                  
-                  // Centralizar a imagem se ela for menor que a largura máxima
-                  const imageX = finalWidth < maxWidth ? 
-                    margins.left + 10 + (maxWidth - finalWidth) / 2 : 
-                    margins.left + 10;
-                  
-                  pdf.addImage(imageData, 'JPEG', imageX, yPosition, finalWidth, finalHeight);
-                  yPosition += finalHeight + 10;
                 } else {
                   // Fallback para placeholder se não conseguir carregar
                   pdf.setDrawColor(150, 150, 150);
@@ -763,10 +855,10 @@ export default function Reports() {
                   
                   pdf.setTextColor(0, 0, 0);
                   pdf.setFontSize(10);
-                  yPosition += imageHeight + 15;
+                  yPosition += imageHeight + 10;
                 }
               } catch (error) {
-                console.error("Erro ao processar imagem:", error);
+                console.error("Erro ao processar arquivo:", error);
                 // Fallback para placeholder em caso de erro
                 pdf.setDrawColor(150, 150, 150);
                 pdf.setFillColor(245, 245, 245);
@@ -779,7 +871,7 @@ export default function Reports() {
                 
                 pdf.setTextColor(0, 0, 0);
                 pdf.setFontSize(10);
-                yPosition += imageHeight + 15;
+                yPosition += imageHeight + 10;
               }
             } else {
               // Placeholder quando não há filePath
