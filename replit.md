@@ -6,6 +6,17 @@ The application serves as a centralized platform where parents can register expe
 
 # Recent Changes
 
+## Date: 2025-09-12
+- **COMPLETED**: Implemented major accessibility improvements for PDF report charts
+  - **Enhanced font sizes**: Titles increased to 32px, legends to 26px, axis labels to 22px (100% larger than before)
+  - **Larger canvas dimensions**: Pie chart 800x600px, other charts 900x500px for better print quality
+  - **Improved visual elements**: Larger point markers (7px radius), thicker borders (5px), increased hover effects
+  - **Better spacing**: Increased padding throughout charts (30px layout, 25px legend, 15px axis)
+  - **Black & white optimization**: High-contrast colors, solid vs dashed line patterns, no gradients
+  - **Legal document compliance**: All chart elements now clearly visible when printed in black and white
+  - **Fixed month sorting bug**: Corrected chronological ordering using date-fns Portuguese locale parsing
+  - **Result**: Charts are now fully accessible and professional for legal documentation use
+
 ## Date: 2025-09-11
 - **RESOLVED**: Fixed critical date formatting bug across all application screens
   - Root cause: timezone conversion in `new Date().toLocaleDateString()` causing dates to display one day earlier
