@@ -79,11 +79,11 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
 
   return (
     <Card className={className} {...cardProps}>
-      <CardHeader>
+      <CardHeader className="px-4 sm:px-6">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <CardTitle className="text-base sm:text-lg">Gastos por Categoria</CardTitle>
           <Select defaultValue="30">
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-full sm:w-40 text-base">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -94,19 +94,19 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
           </Select>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         {data.length > 0 ? (
           <div className="space-y-4">
             {/* Chart */}
-            <div className="h-48 sm:h-64">
+            <div className="h-56 sm:h-72 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={isMobile ? 40 : 60}
-                    outerRadius={isMobile ? 80 : 100}
+                    innerRadius={isMobile ? 45 : 70}
+                    outerRadius={isMobile ? 90 : 120}
                     paddingAngle={2}
                     dataKey="value"
                   >
@@ -120,21 +120,21 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
             </div>
 
             {/* Legend */}
-            <div className="space-y-2 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3 max-h-48 overflow-y-auto">
               {data.map((item) => (
-                <div key={item.category} className="flex items-center justify-between py-2 hover-elevate rounded-md px-2 -mx-2">
-                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <div key={item.category} className="flex items-center justify-between py-3 sm:py-2 hover-elevate rounded-md px-3 -mx-1" style={{minHeight: '44px'}}>
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
                     <div 
-                      className="w-3 h-3 rounded-full flex-shrink-0" 
+                      className="w-4 h-4 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
                       style={{ backgroundColor: getCategoryColor(item.category) }}
                     />
-                    <span className="text-sm text-foreground capitalize truncate">{item.category}</span>
+                    <span className="text-base sm:text-sm text-foreground capitalize truncate font-medium">{item.category}</span>
                   </div>
-                  <div className="text-right ml-3">
-                    <div className="text-sm font-medium text-foreground">
+                  <div className="text-right ml-4 flex-shrink-0">
+                    <div className="text-base sm:text-sm font-semibold text-foreground">
                       {formatCurrency(item.amount)}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-sm sm:text-xs text-muted-foreground font-medium">
                       {item.percentage.toFixed(1)}%
                     </div>
                   </div>
@@ -143,10 +143,10 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-56 sm:h-72 md:h-80 text-muted-foreground">
             <div className="text-center p-4">
-              <p className="text-sm sm:text-base">Nenhuma despesa encontrada</p>
-              <p className="text-xs sm:text-sm mt-1">Adicione algumas despesas para ver os gráficos</p>
+              <p className="text-base sm:text-lg font-medium">Nenhuma despesa encontrada</p>
+              <p className="text-sm sm:text-base mt-2 text-muted-foreground">Adicione algumas despesas para ver os gráficos</p>
             </div>
           </div>
         )}
