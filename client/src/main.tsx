@@ -59,6 +59,9 @@ function App() {
         <Route path="/children" component={Children} />
         <Route path="/expenses" component={Expenses} />
         <Route path="/receipts" component={Receipts} />
+        <Route path="/comprovantes">
+          <Redirect to="/receipts" />
+        </Route>
         <Route path="/reports" component={Reports} />
         <Route path="/legal-data" component={LegalData} />
         <Route path="/settings" component={Settings} />
