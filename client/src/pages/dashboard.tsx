@@ -11,6 +11,8 @@ import { StatsCard } from "@/components/ui/stats-card";
 import { ExpensesChart } from "@/components/ui/expenses-chart";
 import { RecentActivities } from "@/components/ui/recent-activities";
 import { ExpensesTable } from "@/components/ui/expenses-table";
+import { ProgressIndicator } from "@/components/ui/progress-indicator";
+import { useLoadingProgress } from "@/hooks/use-progress";
 import { formatDateForBrazil } from "@/lib/date-utils";
 import { Plus, Filter, DollarSign, Clock, Users, FileText, Search, PlusCircle, Download, Upload, BarChart3 } from "lucide-react";
 
@@ -45,6 +47,7 @@ interface Category {
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const { progressState, simulateProgress } = useLoadingProgress();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -114,7 +117,29 @@ export default function Dashboard() {
     return { userColorMap, fallbackColor };
   }, [categories]);
 
-  if (isLoading || statsLoading) {
+  // Simular progresso quando carregando dados
+  useEffect(() => {
+    if (statsLoading || expensesLoading || categoriesLoading) {
+      simulateProgress(1500, "Carregando dados do dashboard...");
+    }
+  }, [statsLoading, expensesLoading, categoriesLoading, simulateProgress]);
+
+  if (isLoading || statsLoading || expensesLoading || categoriesLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-[400px] flex items-center justify-center">
+          <ProgressIndicator 
+            progress={progressState.isLoading ? progressState.progress : 75} 
+            message={progressState.isLoading ? progressState.message : "Carregando dashboard..."} 
+            showPercentage={true}
+            className="max-w-md"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
         <div className="animate-pulse space-y-6">

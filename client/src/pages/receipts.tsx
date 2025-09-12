@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { ProgressIndicator } from "@/components/ui/progress-indicator";
+import { useLoadingProgress } from "@/hooks/use-progress";
 import { FileText, Upload, Search, Eye, Trash2, Download, Plus, Filter, CalendarIcon, User, DollarSign, FileIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -83,6 +85,7 @@ export default function Receipts() {
   const [selectedExpense, setSelectedExpense] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const { progressState, simulateProgress } = useLoadingProgress();
   
   // Filter states
   const [selectedYear, setSelectedYear] = useState<string>("all-years");
@@ -115,6 +118,13 @@ export default function Receipts() {
     queryKey: ["/api/auth/user"],
     retry: false,
   });
+
+  // Simular progresso quando carregando dados
+  useEffect(() => {
+    if (expensesLoading) {
+      simulateProgress(1300, "Carregando comprovantes e despesas...");
+    }
+  }, [expensesLoading, simulateProgress]);
 
   const createReceiptMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -383,14 +393,13 @@ export default function Receipts() {
   if (expensesLoading) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-48"></div>
-          <div className="h-32 bg-muted rounded-lg"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-64 bg-muted rounded-lg"></div>
-            ))}
-          </div>
+        <div className="min-h-[400px] flex items-center justify-center">
+          <ProgressIndicator 
+            progress={progressState.isLoading ? progressState.progress : 75} 
+            message={progressState.isLoading ? progressState.message : "Carregando comprovantes..."} 
+            showPercentage={true}
+            className="max-w-md"
+          />
         </div>
       </div>
     );

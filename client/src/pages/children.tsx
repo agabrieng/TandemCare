@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,8 @@ import { Plus, Users, Calendar, Edit, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChildForm } from "@/components/ui/child-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProgressIndicator } from "@/components/ui/progress-indicator";
+import { useLoadingProgress } from "@/hooks/use-progress";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -28,11 +30,19 @@ export default function Children() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
   const { toast } = useToast();
+  const { progressState, simulateProgress } = useLoadingProgress();
 
   const { data: children = [], isLoading } = useQuery<Child[]>({
     queryKey: ["/api/children"],
     retry: false,
   });
+
+  // Simular progresso quando carregando dados
+  useEffect(() => {
+    if (isLoading) {
+      simulateProgress(1200, "Carregando informações dos filhos...");
+    }
+  }, [isLoading, simulateProgress]);
 
   const createChildMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -246,13 +256,13 @@ export default function Children() {
   if (isLoading) {
     return (
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="animate-pulse space-y-4 sm:space-y-6">
-          <div className="h-8 bg-muted rounded w-48"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-48 bg-muted rounded-lg"></div>
-            ))}
-          </div>
+        <div className="min-h-[400px] flex items-center justify-center">
+          <ProgressIndicator 
+            progress={progressState.isLoading ? progressState.progress : 75} 
+            message={progressState.isLoading ? progressState.message : "Carregando filhos..."} 
+            showPercentage={true}
+            className="max-w-md"
+          />
         </div>
       </div>
     );
