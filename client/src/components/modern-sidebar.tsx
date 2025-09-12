@@ -17,9 +17,17 @@ import {
   X,
   Wallet,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ModernSidebarProps {
   isOpen: boolean;
@@ -254,41 +262,70 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
 
           {/* User Profile */}
           <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
-            <div className={cn(
-              "flex items-center rounded-xl bg-accent hover-elevate",
-              isCollapsed ? "md:justify-center md:p-2 p-3 gap-3" : "p-3 gap-3"
-            )}>
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={user?.avatar} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                  {getUserInitials(user?.firstName, user?.lastName)}
-                </AvatarFallback>
-              </Avatar>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-foreground truncate">
-                    {user?.firstName || 'Usuário'}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {user?.email || 'user@example.com'}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className={cn(
+                    "flex items-center w-full rounded-xl bg-accent hover-elevate p-3",
+                    isCollapsed ? "md:justify-center" : "justify-start gap-3"
+                  )}
+                  data-testid="button-user-menu"
+                >
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                      {getUserInitials(user?.firstName, user?.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {!isCollapsed && (
+                    <>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="text-sm font-medium text-foreground truncate" data-testid="text-user-name">
+                          {user?.firstName || 'Usuário'}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
+                          {user?.email || 'user@example.com'}
+                        </div>
+                      </div>
+                      <ChevronUp className="h-4 w-4 opacity-60" />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                side="top" 
+                align="start" 
+                sideOffset={8} 
+                className="w-64 p-2"
+              >
+                <div className="flex items-center gap-3 p-2">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                      {getUserInitials(user?.firstName, user?.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground truncate" data-testid="text-user-name">
+                      {user?.firstName || 'Usuário'}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
+                      {user?.email || 'user@example.com'}
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-            
-            <Button
-              variant="ghost"
-              size={isCollapsed ? "icon" : "sm"}
-              onClick={handleLogout}
-              className={cn(
-                "mt-3 text-muted-foreground hover:text-destructive",
-                isCollapsed ? "md:w-full md:justify-center w-full justify-start gap-2" : "w-full justify-start gap-2"
-              )}
-              data-testid="button-logout"
-            >
-              <LogOut className="w-4 h-4" />
-              {!isCollapsed && "Sair"}
-            </Button>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  data-testid="menuitem-logout"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </aside>
