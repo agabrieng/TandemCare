@@ -138,8 +138,8 @@ const convertPdfToImage = async (pdfData: string, maxWidth: number = 600): Promi
     // Importar PDF.js dinamicamente
     const pdfjsLib = await import('pdfjs-dist');
     
-    // Configurar worker usando URL local/CDN estável
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+    // Usar CDN mais confiável para o worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     
     // Remover o prefixo data:application/pdf;base64, se existir
     const base64Data = pdfData.includes(',') ? pdfData.split(',')[1] : pdfData;
@@ -153,12 +153,13 @@ const convertPdfToImage = async (pdfData: string, maxWidth: number = 600): Promi
     }
     console.log('PDF bytes length:', bytes.length);
     
-    // Carregar o PDF
+    // Carregar o PDF com configurações mais permissivas
     console.log('Carregando documento PDF...');
     const loadingTask = pdfjsLib.getDocument({ 
       data: bytes,
-      cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
-      cMapPacked: true,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true
     });
     const pdf = await loadingTask.promise;
     console.log('PDF carregado. Número de páginas:', pdf.numPages);
