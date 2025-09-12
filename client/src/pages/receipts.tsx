@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -78,6 +79,7 @@ const monthNames = [
 ];
 
 export default function Receipts() {
+  const isMobile = useIsMobile();
   const [selectedExpense, setSelectedExpense] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -95,6 +97,7 @@ export default function Receipts() {
   const [openChildren, setOpenChildren] = useState<Record<string, boolean>>({});
   const [openYears, setOpenYears] = useState<Record<string, boolean>>({});
   const [openMonths, setOpenMonths] = useState<Record<string, boolean>>({});
+  const [allExpanded, setAllExpanded] = useState(false);
   
   const { toast } = useToast();
 
@@ -322,6 +325,40 @@ export default function Receipts() {
 
   const toggleMonth = (key: string) => {
     setOpenMonths(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Expand/collapse all functionality - especially useful on mobile
+  const expandAll = () => {
+    const childrenToExpand: Record<string, boolean> = {};
+    const yearsToExpand: Record<string, boolean> = {};
+    const monthsToExpand: Record<string, boolean> = {};
+    
+    Object.entries(hierarchicalData).forEach(([childName, yearData]) => {
+      const childKey = `child-${childName}`;
+      childrenToExpand[childKey] = true;
+      
+      Object.entries(yearData).forEach(([year, monthData]) => {
+        const yearKey = `${childKey}-year-${year}`;
+        yearsToExpand[yearKey] = true;
+        
+        Object.keys(monthData).forEach((month) => {
+          const monthKey = `${yearKey}-month-${month}`;
+          monthsToExpand[monthKey] = true;
+        });
+      });
+    });
+    
+    setOpenChildren(childrenToExpand);
+    setOpenYears(yearsToExpand);
+    setOpenMonths(monthsToExpand);
+    setAllExpanded(true);
+  };
+  
+  const collapseAll = () => {
+    setOpenChildren({});
+    setOpenYears({});
+    setOpenMonths({});
+    setAllExpanded(false);
   };
 
   // Clear all filters
@@ -586,26 +623,26 @@ export default function Receipts() {
             </CollapsibleContent>
           </Collapsible>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-4">
+          <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
+            <Card className={`${isMobile ? 'shadow-sm' : ''}`}>
+              <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
                 <div className="flex items-center space-x-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+                  <FileText className={`text-blue-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                   <div>
-                    <p className="text-sm font-medium">Total de Comprovantes</p>
-                    <p className="text-2xl font-bold" data-testid="text-total-receipts">{allReceipts.length}</p>
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Total de Comprovantes</p>
+                    <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`} data-testid="text-total-receipts">{allReceipts.length}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
+            <Card className={`${isMobile ? 'shadow-sm' : ''}`}>
+              <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
                 <div className="flex items-center space-x-2">
-                  <Upload className="w-5 h-5 text-green-600" />
+                  <Upload className={`text-green-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                   <div>
-                    <p className="text-sm font-medium">Despesas com Comprovante</p>
-                    <p className="text-2xl font-bold" data-testid="text-expenses-with-receipts">
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Despesas com Comprovante</p>
+                    <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`} data-testid="text-expenses-with-receipts">
                       {filteredExpenses.filter((e: any) => e.receipts && e.receipts.length > 0).length}
                     </p>
                   </div>
@@ -613,13 +650,13 @@ export default function Receipts() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
+            <Card className={`${isMobile ? 'shadow-sm' : ''}`}>
+              <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
                 <div className="flex items-center space-x-2">
-                  <FileText className="w-5 h-5 text-yellow-600" />
+                  <FileText className={`text-yellow-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                   <div>
-                    <p className="text-sm font-medium">Sem Comprovante</p>
-                    <p className="text-2xl font-bold" data-testid="text-expenses-without-receipts">
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>Sem Comprovante</p>
+                    <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`} data-testid="text-expenses-without-receipts">
                       {filteredExpenses.filter((e: any) => !e.receipts || e.receipts.length === 0).length}
                     </p>
                   </div>
@@ -629,126 +666,170 @@ export default function Receipts() {
           </div>
         </div>
 
+        {/* Expand/Collapse All Controls - More prominent on mobile */}
+        {Object.keys(hierarchicalData).length > 0 && (
+          <div className={`flex items-center justify-between ${isMobile ? 'mb-4 p-3 bg-muted/50 rounded-lg' : 'mb-6'}`}>
+            <div className="flex items-center gap-2">
+              <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-muted-foreground`}>Despesas Organizadas</h3>
+              {isMobile && (
+                <Badge variant="secondary" className="text-xs">
+                  {Object.keys(hierarchicalData).length} {Object.keys(hierarchicalData).length === 1 ? 'filho' : 'filhos'}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size={isMobile ? "sm" : "sm"}
+                onClick={allExpanded ? collapseAll : expandAll}
+                className={`${isMobile ? 'h-8 px-3 text-xs' : ''}`}
+                data-testid="button-toggle-all-sections"
+              >
+                {allExpanded ? (
+                  <>
+                    <ChevronDown className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+                    {isMobile ? 'Recolher' : 'Recolher Tudo'}
+                  </>
+                ) : (
+                  <>
+                    <ChevronRight className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1`} />
+                    {isMobile ? 'Expandir' : 'Expandir Tudo'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+        
         {/* Hierarchical Receipts View */}
-        <div className="space-y-6">
+        <div className={`space-y-4 ${isMobile ? 'sm:space-y-3' : 'lg:space-y-6'}`}>
           {Object.keys(hierarchicalData).length > 0 ? (
             Object.entries(hierarchicalData).map(([childName, yearData]) => {
               const childKey = `child-${childName}`;
               const isChildOpen = openChildren[childKey];
               
               return (
-                <Card key={childKey} data-testid={`card-child-${childName}`}>
+                <Card key={childKey} data-testid={`card-child-${childName}`} className={`${isMobile ? 'shadow-sm' : ''}`}>
                   <Collapsible open={isChildOpen} onOpenChange={() => toggleChild(childKey)}>
-                    <CollapsibleTrigger className="w-full">
-                      <CardHeader className="hover-elevate">
+                    <CollapsibleTrigger className="w-full" asChild>
+                      <CardHeader className={`hover-elevate cursor-pointer select-none ${isMobile ? 'p-4 sm:p-5' : 'p-6'} ${isMobile ? 'min-h-[4rem]' : ''}`}>
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center space-x-3">
-                            <User className="w-6 h-6 text-primary" />
+                            <User className={`text-primary ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
                             <div className="text-left">
-                              <CardTitle className="text-xl">{childName}</CardTitle>
-                              <CardDescription>
+                              <CardTitle className={`${isMobile ? 'text-lg sm:text-xl' : 'text-xl'} font-semibold`}>{childName}</CardTitle>
+                              <CardDescription className={`${isMobile ? 'text-xs sm:text-sm' : 'text-sm'} mt-1`}>
                                 {Object.values(yearData).reduce((total, monthData) => 
                                   total + Object.values(monthData).reduce((monthTotal, expenses) => 
                                     monthTotal + expenses.length, 0), 0)} despesas
                               </CardDescription>
                             </div>
                           </div>
-                          {isChildOpen ? 
-                            <ChevronDown className="w-5 h-5 text-muted-foreground" /> : 
-                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                          }
+                          <div className={`flex items-center justify-center ${isMobile ? 'w-8 h-8 min-w-8' : 'w-6 h-6'}`}>
+                            {isChildOpen ? 
+                              <ChevronDown className={`text-muted-foreground ${isMobile ? 'w-5 h-5' : 'w-5 h-5'}`} /> : 
+                              <ChevronRight className={`text-muted-foreground ${isMobile ? 'w-5 h-5' : 'w-5 h-5'}`} />
+                            }
+                          </div>
                         </div>
                       </CardHeader>
                     </CollapsibleTrigger>
                     
                     <CollapsibleContent>
-                      <CardContent className="pt-0">
-                        <div className="space-y-4">
+                      <CardContent className={`pt-0 ${isMobile ? 'px-4 pb-4' : 'px-6 pb-6'}`}>
+                        <div className={`space-y-3 ${isMobile ? 'sm:space-y-4' : ''}`}>
                           {Object.entries(yearData).map(([year, monthData]) => {
                             const yearKey = `${childKey}-year-${year}`;
                             const isYearOpen = openYears[yearKey];
                             
                             return (
-                              <Card key={yearKey} className="ml-4" data-testid={`card-year-${year}`}>
+                              <Card key={yearKey} className={`${isMobile ? 'ml-2 sm:ml-4' : 'ml-4'} shadow-sm`} data-testid={`card-year-${year}`}>
                                 <Collapsible open={isYearOpen} onOpenChange={() => toggleYear(yearKey)}>
-                                  <CollapsibleTrigger className="w-full">
-                                    <CardHeader className="py-3 hover-elevate">
+                                  <CollapsibleTrigger className="w-full" asChild>
+                                    <CardHeader className={`hover-elevate cursor-pointer select-none ${isMobile ? 'py-3 px-4 min-h-[3.5rem]' : 'py-3'}`}>
                                       <div className="flex items-center justify-between w-full">
                                         <div className="flex items-center space-x-3">
-                                          <CalendarIcon className="w-5 h-5 text-blue-600" />
+                                          <CalendarIcon className={`text-blue-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                           <div className="text-left">
-                                            <CardTitle className="text-lg">{year}</CardTitle>
-                                            <CardDescription>
+                                            <CardTitle className={`${isMobile ? 'text-base sm:text-lg' : 'text-lg'} font-semibold`}>{year}</CardTitle>
+                                            <CardDescription className={`${isMobile ? 'text-xs sm:text-sm' : 'text-sm'}`}>
                                               {Object.values(monthData).reduce((total, expenses) => 
                                                 total + expenses.length, 0)} despesas
                                             </CardDescription>
                                           </div>
                                         </div>
-                                        {isYearOpen ? 
-                                          <ChevronDown className="w-4 h-4 text-muted-foreground" /> : 
-                                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                        }
+                                        <div className={`flex items-center justify-center ${isMobile ? 'w-7 h-7 min-w-7' : 'w-6 h-6'}`}>
+                                          {isYearOpen ? 
+                                            <ChevronDown className={`text-muted-foreground ${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} /> : 
+                                            <ChevronRight className={`text-muted-foreground ${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
+                                          }
+                                        </div>
                                       </div>
                                     </CardHeader>
                                   </CollapsibleTrigger>
                                   
                                   <CollapsibleContent>
-                                    <CardContent className="pt-0">
-                                      <div className="space-y-3">
+                                    <CardContent className={`pt-0 ${isMobile ? 'px-4 pb-3' : 'px-6 pb-4'}`}>
+                                      <div className={`space-y-2 ${isMobile ? 'sm:space-y-3' : ''}`}>
                                         {Object.entries(monthData).map(([month, expenses]) => {
                                           const monthKey = `${yearKey}-month-${month}`;
                                           const isMonthOpen = openMonths[monthKey];
                                           
                                           return (
-                                            <Card key={monthKey} className="ml-4" data-testid={`card-month-${month}`}>
+                                            <Card key={monthKey} className={`${isMobile ? 'ml-2 sm:ml-4' : 'ml-4'} shadow-sm`} data-testid={`card-month-${month}`}>
                                               <Collapsible open={isMonthOpen} onOpenChange={() => toggleMonth(monthKey)}>
-                                                <CollapsibleTrigger className="w-full">
-                                                  <CardHeader className="py-2 hover-elevate">
+                                                <CollapsibleTrigger className="w-full" asChild>
+                                                  <CardHeader className={`hover-elevate cursor-pointer select-none ${isMobile ? 'py-3 px-4 min-h-[3rem]' : 'py-2'}`}>
                                                     <div className="flex items-center justify-between w-full">
                                                       <div className="flex items-center space-x-3">
-                                                        <FileText className="w-4 h-4 text-green-600" />
+                                                        <FileText className={`text-green-600 ${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
                                                         <div className="text-left">
-                                                          <CardTitle className="text-md">{monthNames[parseInt(month)]}</CardTitle>
-                                                          <CardDescription>
+                                                          <CardTitle className={`${isMobile ? 'text-sm sm:text-base' : 'text-base'} font-medium`}>{monthNames[parseInt(month)]}</CardTitle>
+                                                          <CardDescription className={`${isMobile ? 'text-xs' : 'text-sm'}`}>
                                                             {expenses.length} despesas
                                                           </CardDescription>
                                                         </div>
                                                       </div>
-                                                      {isMonthOpen ? 
-                                                        <ChevronDown className="w-4 h-4 text-muted-foreground" /> : 
-                                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                                      }
+                                                      <div className={`flex items-center justify-center ${isMobile ? 'w-7 h-7 min-w-7' : 'w-5 h-5'}`}>
+                                                        {isMonthOpen ? 
+                                                          <ChevronDown className={`text-muted-foreground ${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} /> : 
+                                                          <ChevronRight className={`text-muted-foreground ${isMobile ? 'w-4 h-4' : 'w-4 h-4'}`} />
+                                                        }
+                                                      </div>
                                                     </div>
                                                   </CardHeader>
                                                 </CollapsibleTrigger>
                                                 
                                                 <CollapsibleContent>
-                                                  <CardContent className="pt-0">
-                                                    <div className="space-y-3">
+                                                  <CardContent className={`pt-0 ${isMobile ? 'px-4 pb-3' : 'px-6 pb-4'}`}>
+                                                    <div className={`space-y-2 ${isMobile ? 'sm:space-y-3' : ''}`}>
                                                       {expenses.map((expense: any) => (
-                                                        <Card key={expense.id} className="ml-4" data-testid={`card-expense-${expense.id}`}>
-                                                          <CardHeader className="pb-3">
-                                                            <div className="flex items-start justify-between">
+                                                        <Card key={expense.id} className={`${isMobile ? 'ml-2 sm:ml-4' : 'ml-4'} shadow-sm`} data-testid={`card-expense-${expense.id}`}>
+                                                          <CardHeader className={`${isMobile ? 'p-4 pb-3' : 'pb-3'}`}>
+                                                            <div className={`${isMobile ? 'block space-y-3' : 'flex items-start justify-between'}`}>
                                                               <div className="flex-1">
-                                                                <CardTitle className="text-base">{expense.description}</CardTitle>
-                                                                <CardDescription className="mt-1">
-                                                                  {formatDateForBrazil(expense.expenseDate)} • {formatCurrency(expense.amount)}
+                                                                <CardTitle className={`${isMobile ? 'text-sm sm:text-base' : 'text-base'} font-medium leading-tight`}>{expense.description}</CardTitle>
+                                                                <CardDescription className={`${isMobile ? 'text-xs mt-1' : 'text-sm mt-1'} text-muted-foreground`}>
+                                                                  {formatDateForBrazil(expense.expenseDate)} • <span className="font-semibold text-foreground">{formatCurrency(expense.amount)}</span>
                                                                 </CardDescription>
-                                                                <div className="flex items-center space-x-2 mt-2">
-                                                                  <Badge className={getCategoryColor(expense.category)} variant="secondary">
+                                                                <div className={`flex items-center gap-2 flex-wrap ${isMobile ? 'mt-2' : 'mt-2'}`}>
+                                                                  <Badge className={`${getCategoryColor(expense.category)} ${isMobile ? 'text-xs px-2 py-1' : ''}`} variant="secondary">
                                                                     {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
                                                                   </Badge>
-                                                                  <Badge className={getStatusColor(expense.status)} variant="secondary">
+                                                                  <Badge className={`${getStatusColor(expense.status)} ${isMobile ? 'text-xs px-2 py-1' : ''}`} variant="secondary">
                                                                     {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
                                                                   </Badge>
                                                                 </div>
                                                               </div>
-                                                              <div className="flex items-center space-x-2">
+                                                              <div className={`flex items-center ${isMobile ? 'justify-end gap-1 mt-3' : 'space-x-2 ml-4'}`}>
                                                                 {(!expense.receipts || expense.receipts.length === 0) && (
                                                                   <Button
                                                                     variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => {
+                                                                    size={isMobile ? "sm" : "sm"}
+                                                                    className={`${isMobile ? 'h-8 px-3 text-xs' : ''}`}
+                                                                    onClick={(e) => {
+                                                                      e.preventDefault();
+                                                                      e.stopPropagation();
                                                                       setSelectedExpense(expense.id);
                                                                       setIsUploadDialogOpen(true);
                                                                     }}
