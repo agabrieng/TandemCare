@@ -201,6 +201,21 @@ export function AppSidebar() {
                 )}
               </SidebarMenuItem>
 
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={handleLogout}
+                  tooltip={state === "collapsed" ? "Sair" : undefined}
+                  className="group relative rounded-lg px-3 py-2.5 hover:bg-destructive/90 hover:text-destructive-foreground transition-all duration-200"
+                  data-testid="button-logout"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium group-hover:text-destructive-foreground transition-colors duration-200">
+                      Sair
+                    </span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -210,41 +225,30 @@ export function AppSidebar() {
         {user && (
           <SidebarMenu>
             <SidebarMenuItem>
-              <div className="flex items-center gap-2">
-                <SidebarMenuButton 
-                  size="lg" 
-                  className="group relative rounded-xl p-3 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200 flex-1"
-                >
-                  <div className="relative">
-                    <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
-                      <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
-                      <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
-                        {getUserInitials(user?.firstName, user?.lastName)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold group-hover:text-sidebar-accent-foreground transition-colors duration-200" data-testid="text-user-name">
-                      {user?.firstName && user?.lastName 
-                        ? `${user?.firstName} ${user?.lastName}` 
-                        : user?.firstName || "Usuário"
-                      }
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
-                      {user?.email}
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-                
-                <SidebarMenuButton
-                  onClick={handleLogout}
-                  tooltip={state === "collapsed" ? "Sair" : undefined}
-                  className="group relative rounded-xl p-3 hover:bg-destructive/90 hover:text-destructive-foreground transition-all duration-200 h-16 w-16"
-                  data-testid="button-logout"
-                >
-                  <LogOut className="h-4 w-4" />
-                </SidebarMenuButton>
-              </div>
+              <SidebarMenuButton 
+                size="lg" 
+                className="group relative rounded-xl p-3 hover:bg-sidebar-accent hover:shadow-md transition-all duration-200"
+              >
+                <div className="relative">
+                  <Avatar className="h-10 w-10 rounded-xl border-2 border-transparent">
+                    <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
+                    <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-semibold">
+                      {getUserInitials(user?.firstName, user?.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold group-hover:text-sidebar-accent-foreground transition-colors duration-200" data-testid="text-user-name">
+                    {user?.firstName && user?.lastName 
+                      ? `${user?.firstName} ${user?.lastName}` 
+                      : user?.firstName || "Usuário"
+                    }
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground" data-testid="text-user-email">
+                    {user?.email}
+                  </span>
+                </div>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         )}
