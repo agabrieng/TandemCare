@@ -2825,7 +2825,21 @@ export default function Reports() {
               const linkHeight = 6;
               
               console.log(`[LINK FINAL] Linha ${index}: expense=${rowData.expenseId} da página ${summaryPageNo} para página ${targetPage}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
-              pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+              
+              // Criar link com sintaxe alternativa para maior compatibilidade
+              try {
+                pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+                
+                // Adicionar bordas visuais para debug (remover depois)
+                pdf.setDrawColor(255, 0, 0); // Vermelho
+                pdf.setLineWidth(0.5);
+                pdf.rect(rowData.x, linkY, rowData.width, linkHeight);
+                pdf.setDrawColor(0, 0, 0); // Voltar ao preto
+                
+                console.log(`[LINK SUCCESS] Link criado com sucesso para linha ${index}`);
+              } catch (error) {
+                console.log(`[LINK ERROR] Erro ao criar link para linha ${index}:`, error);
+              }
             } else {
               console.log(`[LINK FINAL] ERRO: Nenhuma página alvo para expense=${rowData.expenseId}`);
             }
