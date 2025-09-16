@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest } from "@/lib/queryClient";
 import { Camera, X } from "lucide-react";
 import type { UploadResult } from "@uppy/core";
+import type { Parent } from "@shared/schema";
 
 const childFormSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
@@ -18,6 +20,8 @@ const childFormSchema = z.object({
   dateOfBirth: z.string().optional(),
   relationship: z.string().default("pai/mãe"),
   profileImageUrl: z.string().optional(),
+  motherId: z.string().optional(),
+  fatherId: z.string().optional(),
 });
 
 type ChildFormData = z.infer<typeof childFormSchema>;
@@ -40,11 +44,14 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
   const [uploadedPhoto, setUploadedPhoto] = useState<UploadedPhoto | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [currentPhotoPreview, setCurrentPhotoPreview] = useState<string | null>(null);
+  const [parents, setParents] = useState<Parent[]>([]);
+  const [parentsLoading, setParentsLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ChildFormData>({
     resolver: zodResolver(childFormSchema),
@@ -54,12 +61,32 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
       dateOfBirth: initialData?.dateOfBirth || "",
       relationship: initialData?.relationship || "pai/mãe",
       profileImageUrl: initialData?.profileImageUrl || "",
+      motherId: initialData?.motherId || "",
+      fatherId: initialData?.fatherId || "",
     },
   });
 
   // Watch form values for the avatar preview
   const firstName = watch("firstName");
   const lastName = watch("lastName");
+
+  // Load available parents
+  useEffect(() => {
+    const loadParents = async () => {
+      try {
+        setParentsLoading(true);
+        const response = await apiRequest('GET', '/api/parents');
+        const parentsData = await response.json();
+        setParents(parentsData);
+      } catch (error) {
+        console.error('Erro ao carregar pais:', error);
+        setParents([]);
+      } finally {
+        setParentsLoading(false);
+      }
+    };
+    loadParents();
+  }, []);
 
   const handleGetUploadParameters = async () => {
     try {
@@ -249,6 +276,71 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
                 {errors.dateOfBirth.message}
               </p>
             )}
+          </div>
+
+          {/* Parent Selection */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Informações dos Pais</Label>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mother Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="motherId">Mãe</Label>
+                <Select
+                  value={watch("motherId") || ""}
+                  onValueChange={(value) => setValue("motherId", value === "" ? undefined : value)}
+                  disabled={parentsLoading}
+                >
+                  <SelectTrigger data-testid="select-mother">
+                    <SelectValue placeholder={parentsLoading ? "Carregando..." : "Selecione a mãe"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Não informar</SelectItem>
+                    {parents.map((parent) => (
+                      <SelectItem key={parent.id} value={parent.id}>
+                        {parent.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.motherId && (
+                  <p className="text-sm text-destructive" data-testid="error-mother-id">
+                    {errors.motherId.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Father Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="fatherId">Pai</Label>
+                <Select
+                  value={watch("fatherId") || ""}
+                  onValueChange={(value) => setValue("fatherId", value === "" ? undefined : value)}
+                  disabled={parentsLoading}
+                >
+                  <SelectTrigger data-testid="select-father">
+                    <SelectValue placeholder={parentsLoading ? "Carregando..." : "Selecione o pai"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Não informar</SelectItem>
+                    {parents.map((parent) => (
+                      <SelectItem key={parent.id} value={parent.id}>
+                        {parent.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.fatherId && (
+                  <p className="text-sm text-destructive" data-testid="error-father-id">
+                    {errors.fatherId.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              Selecione os pais desta criança. Se algum dos pais não estiver na lista, cadastre-o primeiro na seção "Pais".
+            </p>
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-2 sm:space-x-0 pt-4">
