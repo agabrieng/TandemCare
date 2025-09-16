@@ -917,14 +917,9 @@ export default function Reports() {
       pdf.text("INFORMAÇÕES CADASTRAIS", pageWidth / 2, yPosition, { align: "center" });
       
       // Obter crianças incluídas no relatório
-      console.log("Debug relatório - selectedChildren:", selectedChildren);
-      console.log("Debug relatório - children total:", children.length, children);
-      
       const reportChildren = selectedChildren.length > 0 
         ? children.filter(child => selectedChildren.includes(child.id))
         : children;
-      
-      console.log("Debug relatório - reportChildren final:", reportChildren.length, reportChildren);
       
       yPosition += 15;
       pdf.setFontSize(10);
@@ -932,8 +927,6 @@ export default function Reports() {
       
       // Para cada criança no relatório, mostrar os dados dos pais
       reportChildren.forEach((child, index) => {
-        console.log(`Debug PDF - Processando criança ${index + 1}/${reportChildren.length}:`, child.firstName, child.lastName);
-        
         if (index > 0) yPosition += 5; // Espaço entre crianças
         
         // Verificar se precisa de nova página (reservar espaço para informações completas)
@@ -941,18 +934,13 @@ export default function Reports() {
           pdf.addPage();
           addPageNumber(++pageNumber);
           yPosition = margins.top + 20;
-          console.log(`Debug PDF - Nova página criada para criança ${index + 1}`);
         }
         
         // Nome da criança
         const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
-        console.log(`Debug PDF - Nome completo da criança: "${childFullName}"`);
-        
         pdf.setFont("times", "bold");
         pdf.text(`Criança: ${childFullName}`, pageWidth / 2, yPosition, { align: "center" });
         yPosition += 8;
-        
-        console.log(`Debug PDF - Texto adicionado, yPosition atual: ${yPosition}`);
         
         pdf.setFont("times", "normal");
         
@@ -1018,11 +1006,7 @@ export default function Reports() {
             }
           }
         }
-        
-        console.log(`Debug PDF - Criança ${index + 1} processada completamente. yPosition final: ${yPosition}`);
       });
-      
-      console.log(`Debug PDF - Todas as ${reportChildren.length} crianças foram processadas.`);
       
       // Informações do rodapé da capa
       yPosition = Math.max(yPosition + 20, 260); // Garantir espaço mínimo
