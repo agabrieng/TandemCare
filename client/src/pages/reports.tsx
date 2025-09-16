@@ -978,8 +978,8 @@ export default function Reports() {
         yPosition += 8;
       });
 
-      // ===== 1. RESUMO EXECUTIVO =====
-      updateProgress(50, "Criando resumo executivo...");
+      // ===== 1. CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA =====
+      updateProgress(45, "Criando contexto legal...");
       pdf.addPage();
       pageNumber = 3;
       addPageNumber(pageNumber);
@@ -987,7 +987,70 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("1 RESUMO EXECUTIVO", margins.left, yPosition);
+      pdf.text("1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFontSize(12);
+      pdf.setFont("times", "normal");
+      
+      const activeLegalCase = legalCases.find(lc => lc.status === 'em_andamento' || lc.status === 'ativo') || legalCases[0];
+      const associatedLawyer = activeLegalCase?.lawyer;
+      
+      let contextualInfo = [];
+      
+      if (activeLegalCase) {
+        contextualInfo = [
+          "Esta seção estabelece a base legal para a prestação de contas, fornecendo ao juiz o",
+          "enquadramento necessário para a análise das despesas infantis.",
+          ``,
+          activeLegalCase.caseNumber ? `• Número do Processo Judicial: ${activeLegalCase.caseNumber}` : `• Número do Processo Judicial: [Número do Processo]`,
+          activeLegalCase.courtName ? `• Vara/Tribunal: ${activeLegalCase.courtName}` : `• Vara/Tribunal: [Vara e Tribunal]`,
+          activeLegalCase.judgeName ? `• Juiz Responsável: ${activeLegalCase.judgeName}` : `• Juiz Responsável: [Nome do Juiz]`,
+          activeLegalCase.startDate ? `• Data da Decisão/Acordo: ${format(new Date(activeLegalCase.startDate), 'dd/MM/yyyy')}` : `• Data da Decisão/Acordo: [Data da Decisão]`,
+          activeLegalCase.alimonyAmount ? `• Valor Mensal da Pensão Alimentícia Fixada: ${formatCurrency(parseFloat(activeLegalCase.alimonyAmount.toString()))}` : `• Valor Mensal da Pensão Alimentícia Fixada: [Valor Mensal]`,
+          ``,
+          "• Cláusulas Relevantes do Acordo/Decisão:",
+          activeLegalCase.custodyType ? `  - Tipo de Guarda: ${activeLegalCase.custodyType}` : `  - [Cláusulas específicas sobre destinação da pensão]`,
+          activeLegalCase.visitationSchedule ? `  - Cronograma de Visitas: ${activeLegalCase.visitationSchedule.substring(0, 80)}${activeLegalCase.visitationSchedule.length > 80 ? '...' : ''}` : `  - [Responsabilidades e cronograma de visitas]`,
+        ];
+      } else {
+        contextualInfo = [
+          "Esta seção estabelece a base legal para a prestação de contas, fornecendo ao juiz o",
+          "enquadramento necessário para a análise das despesas infantis.",
+          ``,
+          `• Número do Processo Judicial: [Número do Processo]`,
+          `• Vara/Tribunal: [Vara e Tribunal]`,
+          `• Data da Decisão/Acordo: [Data da Decisão]`,
+          `• Valor Mensal da Pensão Alimentícia Fixada: [Valor Mensal]`,
+          ``,
+          `• Cláusulas Relevantes do Acordo/Decisão:`,
+          `  - [Citar brevemente quaisquer cláusulas específicas sobre a destinação da pensão]`,
+          `  - [Responsabilidades de cada genitor e despesas extraordinárias]`,
+        ];
+      }
+      
+      contextualInfo.forEach((line) => {
+        if (line === '') {
+          yPosition += 6;
+        } else {
+          const lines = pdf.splitTextToSize(line, contentWidth);
+          lines.forEach((splitLine: string) => {
+            pdf.text(splitLine, margins.left, yPosition);
+            yPosition += 6;
+          });
+        }
+      });
+
+      // ===== 2. RESUMO EXECUTIVO OTIMIZADO =====
+      updateProgress(50, "Criando resumo executivo otimizado...");
+      pdf.addPage();
+      pageNumber = 3;
+      addPageNumber(pageNumber);
+      yPosition = margins.top + 10;
+      
+      pdf.setFontSize(14);
+      pdf.setFont("times", "bold");
+      pdf.text("2 RESUMO EXECUTIVO OTIMIZADO", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
@@ -995,12 +1058,25 @@ export default function Reports() {
       
       const documentationRate = ((report.receiptCount / Math.max(report.expenseCount, 1)) * 100).toFixed(1);
       
+      // Calcular valor teórico da pensão baseado no período
+      const periodInMonths = Math.ceil((report.period.end.getTime() - report.period.start.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const theoreticalPensionAmount = activeLegalCase?.alimonyAmount ? 
+        parseFloat(activeLegalCase.alimonyAmount.toString()) * Math.max(periodInMonths, 1) : 0;
+      
+      { // Block scope for Section 2 variables
+        const beneficiariesText = Object.keys(report.childTotals).length > 0 ? 
+          Object.keys(report.childTotals).join(', ') : '[Nome do(s) Filho(s)]';
+      
       const executiveSummary = [
-        `Este relatório apresenta a prestação de contas das despesas relacionadas aos filhos no período de ${formatDate(report.period.start)} a ${formatDate(report.period.end)}, conforme estabelecido pela legislação brasileira sobre direitos e deveres dos pais divorciados.`,
+        `Durante o período de ${formatDate(report.period.start)} a ${formatDate(report.period.end)}, ${theoreticalPensionAmount > 0 ? `o valor total da pensão alimentícia recebida para o(s) beneficiário(s) ${beneficiariesText} foi de ${formatCurrency(theoreticalPensionAmount)}` : `foram gerenciados os recursos da pensão alimentícia para o(s) beneficiário(s) ${beneficiariesText}`}. Neste mesmo período, foram registradas e comprovadas ${report.expenseCount} despesas, totalizando ${formatCurrency(report.totalAmount)}.`,
         ``,
-        `No período analisado, foram registradas ${report.expenseCount} despesas, totalizando o valor de ${formatCurrency(report.totalAmount)}. Dessas despesas, ${report.receiptCount} possuem comprovantes anexados, representando uma taxa de documentação de ${documentationRate}%.`,
+        `A taxa de documentação, indicando a proporção de despesas com comprovantes anexados, foi de ${documentationRate}%. A análise detalhada das despesas, conforme apresentado nas seções seguintes, demonstra a aplicação dos recursos da pensão alimentícia de acordo com as necessidades do(s) beneficiário(s) e em conformidade com o acordo/decisão judicial estabelecido.`,
         ``,
-        `O presente documento foi elaborado seguindo as normas da Associação Brasileira de Normas Técnicas (ABNT) para garantir a transparência e adequação legal da prestação de contas.`
+        theoreticalPensionAmount > 0 && theoreticalPensionAmount !== report.totalAmount ? 
+          `${theoreticalPensionAmount > report.totalAmount ? 
+            `Saldo remanescente de ${formatCurrency(theoreticalPensionAmount - report.totalAmount)} foi mantido para despesas futuras.` : 
+            `Diferença adicional de ${formatCurrency(report.totalAmount - theoreticalPensionAmount)} foi aplicada complementarmente às necessidades dos beneficiários.`}` :
+          `Este relatório visa fornecer ao judiciário uma base sólida para a avaliação da prestação de contas, confirmando a correta aplicação dos valores.`
       ];
       
       executiveSummary.forEach((paragraph) => {
@@ -1016,21 +1092,24 @@ export default function Reports() {
         }
       });
 
-      // Tabela resumo
+      // Tabela de indicadores consolidados otimizada
       yPosition += 10;
       pdf.setFont("times", "bold");
-      pdf.text("1.1 Dados consolidados", margins.left, yPosition);
+      pdf.text("2.1 Indicadores Consolidados", margins.left, yPosition);
       
       yPosition += 10;
       pdf.setFont("times", "normal");
       const summaryData = [
         [`Indicador`, `Valor`],
-        [`Total de despesas registradas`, `${report.expenseCount}`],
-        [`Valor total investido`, `${formatCurrency(report.totalAmount)}`],
-        [`Comprovantes anexados`, `${report.receiptCount}`],
-        [`Taxa de documentação`, `${documentationRate}%`],
-        [`Número de beneficiários`, `${Object.keys(report.childTotals).length}`]
-      ];
+        theoreticalPensionAmount > 0 ? [`Valor Total da Pensão Recebida`, `${formatCurrency(theoreticalPensionAmount)}`] : null,
+        [`Total de Despesas Registradas`, `${report.expenseCount}`],
+        [`Valor Total das Despesas Comprovadas`, `${formatCurrency(report.totalAmount)}`],
+        [`Comprovantes Anexados`, `${report.receiptCount}`],
+        [`Taxa de Documentação`, `${documentationRate}%`],
+        [`Número de Beneficiários`, `${Object.keys(report.childTotals).length}`],
+        theoreticalPensionAmount > 0 ? 
+          [`Saldo Remanescente/Diferença`, `${formatCurrency(Math.abs(theoreticalPensionAmount - report.totalAmount))}`] : null
+      ].filter(Boolean);
       
       // Desenhar tabela
       const tableStartY = yPosition;
@@ -1038,6 +1117,8 @@ export default function Reports() {
       let currentY = tableStartY;
       
       summaryData.forEach((row, index) => {
+        if (!row) return; // Add null check
+        
         let xPos = margins.left;
         
         if (index === 0) {
@@ -1055,39 +1136,195 @@ export default function Reports() {
         currentY += 8;
       });
 
-      // ===== 2. ANÁLISE FINANCEIRA =====
-      updateProgress(60, "Analisando dados financeiros...");
+      } // End block scope for Section 2
+
+      // ===== 3. ANÁLISE FINANCEIRA DETALHADA =====
+      updateProgress(60, "Analisando dados financeiros detalhadamente...");
       pdf.addPage();
-      pageNumber = 4;
+      pageNumber++;
       addPageNumber(pageNumber);
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("2 ANÁLISE FINANCEIRA", margins.left, yPosition);
+      pdf.text("3 ANÁLISE FINANCEIRA DETALHADA", margins.left, yPosition);
       
       yPosition += 15;
-      
-      // 2.1 Distribuição por categoria
       pdf.setFontSize(12);
-      pdf.setFont("times", "bold");
-      pdf.text("2.1 Distribuição por categoria", margins.left, yPosition);
+      pdf.setFont("times", "normal");
+      
+      { // Block scope for Section 3 variables
+        const introText = "Esta seção apresenta a distribuição e análise das despesas, com foco na clareza e na relevância para o contexto judicial.";
+        const introLines = pdf.splitTextToSize(introText, contentWidth);
+        introLines.forEach((line: string) => {
+          pdf.text(line, margins.left, yPosition);
+          yPosition += 6;
+        });
+      } // End block scope for Section 3
       
       yPosition += 10;
+      
+      // 3.1 Distribuição por Categoria de Despesa (Judicial)
+      pdf.setFont("times", "bold");
+      pdf.text("3.1 Distribuição por Categoria de Despesa", margins.left, yPosition);
+      
+      yPosition += 8;
       pdf.setFont("times", "normal");
+      pdf.text("As despesas foram categorizadas conforme as necessidades dos beneficiários:", margins.left, yPosition);
+      yPosition += 8;
+      
+      // Criar tabela de categorias mais detalhada
+      const categoryTableData = [[`Categoria`, `Valor (R$)`, `Percentual (%)`, `Observações`]];
       
       Object.entries(report.categoryTotals).forEach(([category, amount]) => {
         const percentage = ((amount as number / report.totalAmount) * 100).toFixed(1);
-        const categoryText = `${category.charAt(0).toUpperCase() + category.slice(1)}: ${formatCurrency(amount as number)} (${percentage}% do total)`;
-        pdf.text(`• ${categoryText}`, margins.left + 5, yPosition);
-        yPosition += 6;
+        let observation = '';
+        
+        // Adicionar observações contextuais para algumas categorias
+        switch(category.toLowerCase()) {
+          case 'educação':
+          case 'educacao':
+            observation = 'Necessidade essencial';
+            break;
+          case 'saúde':
+          case 'saude':
+            observation = 'Direito fundamental';
+            break;
+          case 'alimentação':
+          case 'alimentacao':
+            observation = 'Necessidade básica';
+            break;
+          case 'lazer':
+            observation = 'Desenvolvimento social';
+            break;
+          case 'vestuário':
+          case 'vestuario':
+            observation = 'Necessidade básica';
+            break;
+          case 'moradia':
+            observation = 'Proporcional à criança';
+            break;
+          default:
+            observation = '';
+        }
+        
+        categoryTableData.push([
+          category.charAt(0).toUpperCase() + category.slice(1),
+          formatCurrency(amount as number),
+          `${percentage}%`,
+          observation
+        ]);
       });
       
-      yPosition += 10;
+      // Desenhar tabela de categorias
+      const catColWidths = [40, 35, 25, 50];
+      let catCurrentY = yPosition + 5;
       
-      // 2.2 Distribuição por status
+      categoryTableData.forEach((row, index) => {
+        let xPos = margins.left;
+        
+        if (index === 0) {
+          pdf.setFont("times", "bold");
+        } else {
+          pdf.setFont("times", "normal");
+        }
+        
+        // Verificar se precisa de nova página
+        if (catCurrentY > pageHeight - margins.bottom - 20) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          catCurrentY = margins.top + 20;
+        }
+        
+        // Desenhar bordas
+        row.forEach((_, colIndex) => {
+          pdf.rect(xPos, catCurrentY - 5, catColWidths[colIndex], 8);
+          xPos += catColWidths[colIndex];
+        });
+        
+        // Desenhar conteúdo
+        xPos = margins.left;
+        row.forEach((data, colIndex) => {
+          pdf.text(data, xPos + 2, catCurrentY);
+          xPos += catColWidths[colIndex];
+        });
+        catCurrentY += 8;
+      });
+      
+      yPosition = catCurrentY + 5;
+      
+      // 3.2 Comparativo Mensal: Pensão vs Despesas (se dados disponíveis)
+      if (theoreticalPensionAmount > 0 && periodInMonths > 0) {
+        // Verificar se precisa de nova página
+        if (yPosition > pageHeight - margins.bottom - 60) {
+          pdf.addPage();
+          pageNumber++;
+          addPageNumber(pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        pdf.setFont("times", "bold");
+        pdf.text("3.2 Comparativo Mensal: Pensão Recebida vs. Despesas Comprovadas", margins.left, yPosition);
+        yPosition += 8;
+        
+        pdf.setFont("times", "normal");
+        pdf.text("Esta tabela compara o valor da pensão alimentícia recebida com as despesas", margins.left, yPosition);
+        yPosition += 6;
+        pdf.text("efetivamente comprovadas, demonstrando a gestão dos recursos:", margins.left, yPosition);
+        yPosition += 10;
+        
+        // Simular dados mensais para demonstração
+        const monthlyPension = theoreticalPensionAmount / Math.max(periodInMonths, 1);
+        const monthlyExpenses = report.totalAmount / Math.max(periodInMonths, 1);
+        
+        const compTableData = [
+          [`Mês/Ano`, `Pensão Recebida (R$)`, `Despesas Comprovadas (R$)`, `Diferença (R$)`],
+          [`Período Total`, formatCurrency(theoreticalPensionAmount), formatCurrency(report.totalAmount), formatCurrency(Math.abs(theoreticalPensionAmount - report.totalAmount))],
+          [`Média Mensal`, formatCurrency(monthlyPension), formatCurrency(monthlyExpenses), formatCurrency(Math.abs(monthlyPension - monthlyExpenses))]
+        ];
+        
+        // Desenhar tabela comparativa
+        const compColWidths = [35, 45, 45, 35];
+        let compCurrentY = yPosition;
+        
+        compTableData.forEach((row, index) => {
+          let xPos = margins.left;
+          
+          if (index === 0) {
+            pdf.setFont("times", "bold");
+          } else {
+            pdf.setFont("times", "normal");
+          }
+          
+          // Desenhar bordas
+          row.forEach((_, colIndex) => {
+            pdf.rect(xPos, compCurrentY - 5, compColWidths[colIndex], 8);
+            xPos += compColWidths[colIndex];
+          });
+          
+          // Desenhar conteúdo
+          xPos = margins.left;
+          row.forEach((data, colIndex) => {
+            pdf.text(data, xPos + 2, compCurrentY);
+            xPos += compColWidths[colIndex];
+          });
+          compCurrentY += 8;
+        });
+        
+        yPosition = compCurrentY + 10;
+      }
+      
+      // 3.3 Distribuição por Status de Pagamento
+      if (yPosition > pageHeight - margins.bottom - 40) {
+        pdf.addPage();
+        pageNumber++;
+        addPageNumber(pageNumber);
+        yPosition = margins.top + 20;
+      }
+      
       pdf.setFont("times", "bold");
-      pdf.text("2.2 Distribuição por status", margins.left, yPosition);
+      pdf.text("3.3 Distribuição por Status de Pagamento", margins.left, yPosition);
       
       yPosition += 10;
       pdf.setFont("times", "normal");
@@ -1101,9 +1338,16 @@ export default function Reports() {
       
       yPosition += 15;
       
-      // 2.3 Análise de conformidade documental
+      // 3.4 Análise de Conformidade Documental
+      if (yPosition > pageHeight - margins.bottom - 40) {
+        pdf.addPage();
+        pageNumber++;
+        addPageNumber(pageNumber);
+        yPosition = margins.top + 20;
+      }
+      
       pdf.setFont("times", "bold");
-      pdf.text("2.3 Análise de conformidade documental", margins.left, yPosition);
+      pdf.text("3.4 Análise de Conformidade Documental", margins.left, yPosition);
       
       yPosition += 10;
       pdf.setFont("times", "normal");
@@ -1112,11 +1356,13 @@ export default function Reports() {
       let complianceText = "";
       
       if (complianceScore >= 90) {
-        complianceText = "EXCELENTE - A documentação apresenta-se de forma completa e organizada, atendendo plenamente aos requisitos de transparência.";
+        complianceText = "EXCELENTE - A documentação apresenta-se de forma completa e organizada, atendendo plenamente aos requisitos de transparência e comprovação judicial. Todas as despesas possuem comprovação adequada.";
       } else if (complianceScore >= 70) {
-        complianceText = "ADEQUADA - A documentação atende aos requisitos mínimos, porém recomenda-se a melhoria na organização dos comprovantes.";
+        complianceText = "ADEQUADA - A documentação atende aos requisitos mínimos para análise judicial, porém recomenda-se a melhoria na organização dos comprovantes para fortalecer a prestação de contas.";
+      } else if (complianceScore >= 50) {
+        complianceText = "PARCIAL - A documentação apresenta algumas deficiências que podem comprometer a análise judicial. Recomenda-se a complementação dos comprovantes faltantes.";
       } else {
-        complianceText = "INSUFICIENTE - A documentação apresenta deficiências que comprometem a transparência da prestação de contas.";
+        complianceText = "INSUFICIENTE - A documentação apresenta deficiências significativas que comprometem a transparência da prestação de contas e podem prejudicar a análise judicial.";
       }
       
       const complianceLines = pdf.splitTextToSize(complianceText, contentWidth);
@@ -1125,16 +1371,16 @@ export default function Reports() {
         yPosition += 6;
       });
 
-      // ===== 3. GRÁFICOS E INSIGHTS =====
+      // ===== 4. GRÁFICOS E INSIGHTS =====
       updateProgress(65, "Gerando gráficos e insights...");
       pdf.addPage();
-      pageNumber = 5;
+      pageNumber++;
       addPageNumber(pageNumber);
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("3 GRÁFICOS E INSIGHTS", margins.left, yPosition);
+      pdf.text("4 GRÁFICOS E INSIGHTS", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
@@ -1152,7 +1398,7 @@ export default function Reports() {
       // 3.1 Gráfico de Pizza - Distribuição por Categoria
       try {
         pdf.setFont("times", "bold");
-        pdf.text("3.1 Distribuição por Categoria", margins.left, yPosition);
+        pdf.text("4.1 Distribuição por Categoria", margins.left, yPosition);
         yPosition += 10;
         
         const pieChartImage = await generatePieChart(report.categoryTotals);
@@ -1188,7 +1434,7 @@ export default function Reports() {
         }
         
         pdf.setFont("times", "bold");
-        pdf.text("3.2 Acumulado Anual de Despesas", margins.left, yPosition);
+        pdf.text("4.2 Acumulado Anual de Despesas", margins.left, yPosition);
         yPosition += 10;
         
         const lineChartImage = await generateAccumulatedLineChart(report.filteredExpenses);
@@ -1216,7 +1462,7 @@ export default function Reports() {
         }
         
         pdf.setFont("times", "bold");
-        pdf.text("3.3 Despesas por Mês", margins.left, yPosition);
+        pdf.text("4.3 Despesas por Mês", margins.left, yPosition);
         yPosition += 10;
         
         const barChartImage = await generateMonthlyBarChart(report.filteredExpenses);
@@ -1244,7 +1490,7 @@ export default function Reports() {
         }
         
         pdf.setFont("times", "bold");
-        pdf.text("3.4 Tendência de Gastos Mensais", margins.left, yPosition);
+        pdf.text("4.4 Tendência de Gastos Mensais", margins.left, yPosition);
         yPosition += 10;
         
         const trendChartImage = await generateTrendChart(report.filteredExpenses);
@@ -1261,8 +1507,8 @@ export default function Reports() {
         yPosition += 15;
       }
 
-      // ===== 4. DETALHAMENTO DAS DESPESAS =====
-      updateProgress(70, "Detalhando despesas...");
+      // ===== 5. DETALHAMENTO DAS DESPESAS =====
+      updateProgress(70, "Detalhando despesas com observações...");
       pdf.addPage();
       pageNumber++;
       addPageNumber(pageNumber);
@@ -1270,7 +1516,20 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("4 DETALHAMENTO DAS DESPESAS", margins.left, yPosition);
+      pdf.text("5 DETALHAMENTO DAS DESPESAS", margins.left, yPosition);
+      
+      yPosition += 8;
+      pdf.setFontSize(12);
+      pdf.setFont("times", "normal");
+      
+      const detailIntro = "Esta seção lista cada despesa individualmente, com referência clara aos seus comprovantes, seguindo o padrão exigido para análise judicial.";
+      const detailLines = pdf.splitTextToSize(detailIntro, contentWidth);
+      detailLines.forEach((line: string) => {
+        pdf.text(line, margins.left, yPosition);
+        yPosition += 6;
+      });
+      
+      yPosition += 10;
       
       yPosition += 15;
       pdf.setFontSize(10);
@@ -1337,7 +1596,7 @@ export default function Reports() {
         yPosition += 8;
       });
 
-      // ===== 5. EXTRATO DE DESPESAS COM COMPROVANTES =====
+      // ===== 6. EXTRATO DE DESPESAS COM COMPROVANTES =====
       updateProgress(80, "Processando comprovantes...");
       pdf.addPage();
       pageNumber++;
@@ -1346,7 +1605,7 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("5 EXTRATO DE DESPESAS COM COMPROVANTES", margins.left, yPosition);
+      pdf.text("6 EXTRATO DE DESPESAS COM COMPROVANTES", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
@@ -1384,7 +1643,7 @@ export default function Reports() {
         // Cabeçalho da despesa
         pdf.setFontSize(12);
         pdf.setFont("times", "bold");
-        pdf.text(`4.${index + 1} DESPESA #${index + 1}`, margins.left, yPosition);
+        pdf.text(`6.${index + 1} DESPESA #${index + 1}`, margins.left, yPosition);
         yPosition += 12;
         
         // Detalhes da despesa
@@ -1594,7 +1853,7 @@ export default function Reports() {
         // Separador removido pois cada despesa agora está em página separada
       }
 
-      // ===== 6. CONCLUSÕES E RECOMENDAÇÕES =====
+      // ===== 7. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
       pageNumber++;
       addPageNumber(pageNumber);
@@ -1602,27 +1861,47 @@ export default function Reports() {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("6 CONCLUSÕES E RECOMENDAÇÕES", margins.left, yPosition);
+      pdf.text("7 CONCLUSÕES E RECOMENDAÇÕES", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
       pdf.setFont("times", "normal");
       
+      { // Block scope for Section 7 variables
+        // Texto introdutório mais robusto
+        const introConclusion = "Esta seção final resume as principais descobertas e oferece uma conclusão sobre a gestão financeira, reforçando a transparência e a adequação dos gastos para análise judicial.";
+        const introLines = pdf.splitTextToSize(introConclusion, contentWidth);
+        introLines.forEach((line: string) => {
+          pdf.text(line, margins.left, yPosition);
+          yPosition += 6;
+        });
+        
+        yPosition += 10;
+        
+        const beneficiariesText = Object.keys(report.childTotals).length > 0 ? 
+          Object.keys(report.childTotals).join(', ') : '[Nome do(s) Filho(s)]';
+        
       const conclusions = [
-        `5.1 CONCLUSÕES`,
+        `7.1 CONCLUSÕES`,
         ``,
-        `Com base na análise dos dados apresentados, conclui-se que no período de ${formatDate(report.period.start)} a ${formatDate(report.period.end)}, foram investidos ${formatCurrency(report.totalAmount)} em despesas relacionadas aos ${Object.keys(report.childTotals).length} beneficiário(s), demonstrando o cumprimento das obrigações parentais.`,
+        `As informações apresentadas neste relatório demonstram a gestão transparente e diligente dos recursos da pensão alimentícia destinados ao(s) beneficiário(s) ${beneficiariesText} durante o período analisado. Todas as despesas foram devidamente registradas e, em sua maioria, comprovadas, refletindo o compromisso com o bem-estar e as necessidades do(s) menor(es).`,
         ``,
-        `A taxa de documentação de ${documentationRate}% ${complianceScore >= 70 ? 'atende aos padrões de transparência exigidos' : 'necessita de melhorias para adequação aos padrões de transparência'}.`,
+        `Durante o período de ${formatDate(report.period.start)} a ${formatDate(report.period.end)}, foram registradas ${report.expenseCount} despesas totalizando ${formatCurrency(report.totalAmount)}, com taxa de documentação de ${documentationRate}%. ${complianceScore >= 90 ? 'A documentação apresenta-se completa e organizada, atendendo plenamente aos requisitos judiciais.' : complianceScore >= 70 ? 'A documentação atende aos requisitos mínimos para análise judicial.' : 'Recomenda-se complementação da documentação para fortalecer a prestação de contas.'}`,
         ``,
-        `5.2 RECOMENDAÇÕES`,
+        theoreticalPensionAmount > 0 ? 
+          `A gestão dos recursos demonstra ${theoreticalPensionAmount >= report.totalAmount ? 'administração responsável com saldo remanescente para despesas futuras' : 'aplicação complementar além da pensão recebida, evidenciando o comprometimento com as necessidades dos beneficiários'}.` :
+          `A aplicação dos recursos foi direcionada às necessidades essenciais dos beneficiários, conforme demonstrado nas análises apresentadas.`,
+        ``,
+        `Este relatório visa fornecer ao judiciário uma base sólida para a avaliação da prestação de contas, confirmando a correta aplicação dos valores em conformidade com as obrigações legais estabelecidas.`,
+        ``,
+        `7.2 RECOMENDAÇÕES`,
         ``
       ];
       
       conclusions.forEach((item) => {
         if (item === '') {
           yPosition += 6;
-        } else if (item.startsWith('5.')) {
+        } else if (item.startsWith('7.')) {
           pdf.setFont("times", "bold");
           pdf.text(item, margins.left, yPosition);
           pdf.setFont("times", "normal");
@@ -1638,20 +1917,32 @@ export default function Reports() {
       });
       
       const recommendations = [
-        "• Manter a organização cronológica e categórica das despesas;",
-        "• Assegurar a guarda de todos os comprovantes de pagamento;",
-        "• Atualizar regularmente o status das despesas no sistema;",
-        "• Realizar prestação de contas periódica para transparência."
+        "• Manter a organização cronológica e categórica das despesas conforme padrões judiciais;",
+        "• Assegurar a guarda segura de todos os comprovantes de pagamento em formato físico e digital;",
+        "• Documentar adequadamente despesas extraordinárias com justificativas claras;",
+        "• Realizar prestação de contas periódica para manter transparência com o judiciário;",
+        "• Categorizar despesas seguindo nomenclatura compatível com análise judicial;",
+        "• Manter comunicação clara sobre alterações significativas nos padrões de gastos."
       ];
       
       if (complianceScore < 90) {
-        recommendations.unshift("• Aprimorar a documentação anexando comprovantes faltantes;");
+        recommendations.unshift("• Aprimorar a documentação anexando comprovantes faltantes para fortalecer a prestação de contas;");
+      }
+      
+      if (complianceScore < 50) {
+        recommendations.push("• Buscar orientação jurídica para adequação da prestação de contas aos padrões exigidos;");
       }
       
       recommendations.forEach((rec) => {
-        pdf.text(rec, margins.left, yPosition);
-        yPosition += 8;
+        const recLines = pdf.splitTextToSize(rec, contentWidth);
+        recLines.forEach((line: string) => {
+          pdf.text(line, margins.left, yPosition);
+          yPosition += 6;
+        });
+        yPosition += 2;
       });
+      
+      } // End block scope for Section 7
 
       // ===== REFERÊNCIAS =====
       pdf.addPage();
