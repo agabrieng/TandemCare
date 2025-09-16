@@ -962,7 +962,7 @@ export default function Reports() {
       pdf.setFont("times", "normal");
       
       const activeLegalCase = legalCases.find(lc => lc.status === 'em_andamento' || lc.status === 'ativo') || legalCases[0];
-      const associatedLawyer = activeLegalCase?.lawyer;
+      const associatedLawyer = activeLegalCase?.lawyerId ? lawyers.find(l => l.id === activeLegalCase.lawyerId) : null;
       
       let contextualInfo = [];
       
@@ -1947,18 +1947,14 @@ export default function Reports() {
         }
       });
 
-      // ===== CONTRACAPA =====
+      // ===== DADOS JURÍDICOS E LEGAIS =====
       pdf.addPage();
       pageNumber++;
       addPageNumber(pageNumber);
-      yPosition = margins.top + 10;
+      yPosition = margins.top + 30;
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("CONTRACAPA", pageWidth / 2, yPosition, { align: "center" });
-      
-      yPosition += 20;
-      pdf.setFontSize(12);
       pdf.text("DADOS JURÍDICOS E LEGAIS", pageWidth / 2, yPosition, { align: "center" });
       
       yPosition += 20;
@@ -2026,7 +2022,7 @@ export default function Reports() {
           primaryCase.caseNumber ? `Número: ${primaryCase.caseNumber}` : '',
           primaryCase.courtName ? `Vara: ${primaryCase.courtName}` : '',
           primaryCase.judgeName ? `Juiz: ${primaryCase.judgeName}` : '',
-          `Status: ${primaryCase.status.charAt(0).toUpperCase() + primaryCase.status.slice(1)}`,
+          `Status: ${primaryCase.status ? primaryCase.status.charAt(0).toUpperCase() + primaryCase.status.slice(1) : 'Não informado'}`,
           primaryCase.startDate ? `Data de Início: ${format(new Date(primaryCase.startDate), 'dd/MM/yyyy')}` : '',
           primaryCase.expectedEndDate ? `Previsão de Conclusão: ${format(new Date(primaryCase.expectedEndDate), 'dd/MM/yyyy')}` : '',
           primaryCase.custodyType ? `Tipo de Guarda: ${primaryCase.custodyType}` : '',
