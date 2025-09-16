@@ -761,8 +761,8 @@ export default function Reports() {
         return { start: subYears(now, 1), end: now };
       case "custom":
         return {
-          start: startDate ? new Date(startDate) : subDays(now, 30),
-          end: endDate ? new Date(endDate) : now
+          start: startDate ? normalizeStart(parseLocalDate(startDate)) : subDays(now, 30),
+          end: endDate ? normalizeEnd(parseLocalDate(endDate)) : now
         };
       default:
         return { start: subDays(now, 30), end: now };
@@ -780,6 +780,22 @@ export default function Reports() {
     return format(date, 'dd/MM/yyyy', { locale: ptBR });
   };
 
+  // Função auxiliar para analisar datas no formato YYYY-MM-DD como datas locais ao invés de UTC
+  const parseLocalDate = (dateString: string): Date => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Normalizar início do dia (00:00:00)
+  const normalizeStart = (date: Date): Date => {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+  };
+
+  // Normalizar fim do dia (23:59:59)
+  const normalizeEnd = (date: Date): Date => {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  };
+
   // Filter expenses based on selected criteria
   const getFilteredExpenses = () => {
     if (!expenses) return [];
@@ -787,7 +803,10 @@ export default function Reports() {
     const { start, end } = getDateRangeFilter();
     
     return expenses.filter((expense: any) => {
-      const expenseDate = new Date(expense.expenseDate);
+      // Se expenseDate é uma string no formato YYYY-MM-DD, analisar como data local
+      const expenseDate = typeof expense.expenseDate === 'string' && expense.expenseDate.match(/^\d{4}-\d{2}-\d{2}$/)
+        ? parseLocalDate(expense.expenseDate)
+        : new Date(expense.expenseDate);
       const dateInRange = expenseDate >= start && expenseDate <= end;
       
       const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(expense.category);
@@ -935,8 +954,7 @@ export default function Reports() {
       
       // Informações do rodapé da capa
       yPosition = 260; // Posição fixa para o rodapé
-      pdf.text("Local: Brasil", pageWidth / 2, yPosition, { align: "center" });
-      pdf.text(`Data: ${format(new Date(), 'MMMM \'de\' yyyy', { locale: ptBR })}`, pageWidth / 2, yPosition + 10, { align: "center" });
+      pdf.text(`${format(new Date(), 'MMMM/yyyy', { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
 
       // ===== PÁGINA DEDICADA PARA INFORMAÇÕES DOS FILHOS =====
       updateProgress(35, "Criando página de informações dos filhos...");
