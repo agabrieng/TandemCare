@@ -884,11 +884,15 @@ export default function Reports() {
       // Estrutura para mapear onde cada seção realmente aparece
       const sectionPageMap: Record<string, number> = {};
 
-      // Função para adicionar numeração de páginas (ABNT - superior direito)
-      // Será usada apenas na segunda passada após inserir o sumário
-      const addPageNumber = (pageNum: number) => {
+      // Função pura para adicionar numeração de páginas (ABNT - superior direito)  
+      // Usada APENAS na segunda passada final
+      const addPageNumberOnly = (pageNum: number) => {
+        // Aplicar configurações específicas para numeração
         pdf.setFontSize(10);
         pdf.setFont("times", "normal");
+        pdf.setTextColor(0, 0, 0);
+        
+        // Adicionar apenas o número da página
         pdf.text(pageNum.toString(), pageWidth - margins.right - 10, 20, { align: "right" });
       };
 
@@ -1219,7 +1223,7 @@ export default function Reports() {
           // Necessário quebra de página - adicionar nova página
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           
           // Resetar posições e contadores na nova página
           yPosition = margins.top + 15;
@@ -1509,7 +1513,7 @@ export default function Reports() {
         if (catCurrentY > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           catCurrentY = margins.top + 20;
         }
         
@@ -1536,7 +1540,7 @@ export default function Reports() {
         if (yPosition > pageHeight - margins.bottom - 60) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
         
@@ -1595,7 +1599,7 @@ export default function Reports() {
       if (yPosition > pageHeight - margins.bottom - 40) {
         pdf.addPage();
         pageNumber++;
-        addPageNumber(pageNumber);
+
         yPosition = margins.top + 20;
       }
       
@@ -1618,7 +1622,7 @@ export default function Reports() {
       if (yPosition > pageHeight - margins.bottom - 40) {
         pdf.addPage();
         pageNumber++;
-        addPageNumber(pageNumber);
+
         yPosition = margins.top + 20;
       }
       
@@ -1685,7 +1689,7 @@ export default function Reports() {
         if (yPosition + pieChartHeight > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
         
@@ -1705,7 +1709,7 @@ export default function Reports() {
         if (yPosition + 110 > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
         
@@ -1733,7 +1737,7 @@ export default function Reports() {
         if (yPosition + 110 > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
         
@@ -1761,7 +1765,7 @@ export default function Reports() {
         if (yPosition + 110 > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
         
@@ -1835,7 +1839,7 @@ export default function Reports() {
         if (yPosition > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
           
           // Recriar cabeçalho
@@ -1904,7 +1908,7 @@ export default function Reports() {
         if (index > 0) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
         
@@ -1912,7 +1916,7 @@ export default function Reports() {
         if (yPosition > pageHeight - margins.bottom - 100) {
           pdf.addPage();
           pageNumber++;
-          addPageNumber(pageNumber);
+
           yPosition = margins.top + 20;
         }
 
@@ -1957,7 +1961,7 @@ export default function Reports() {
             if (yPosition > pageHeight - margins.bottom - 20) {
               pdf.addPage();
               pageNumber++;
-              addPageNumber(pageNumber);
+    
               yPosition = margins.top + 20;
             }
             
@@ -1986,7 +1990,7 @@ export default function Reports() {
             if (yPosition + 200 > pageHeight - margins.bottom - 10) {
               pdf.addPage();
               pageNumber++;
-              addPageNumber(pageNumber);
+    
               yPosition = margins.top + 20;
             }
             
@@ -2034,7 +2038,7 @@ export default function Reports() {
                     if (yPosition + finalHeight > pageHeight - margins.bottom - 10) {
                       pdf.addPage();
                       pageNumber++;
-                      addPageNumber(pageNumber);
+            
                       yPosition = margins.top + 20;
                     }
                     
@@ -2053,7 +2057,7 @@ export default function Reports() {
                     if (yPosition + fileHeight > pageHeight - margins.bottom - 10) {
                       pdf.addPage();
                       pageNumber++;
-                      addPageNumber(pageNumber);
+            
                       yPosition = margins.top + 20;
                     }
                     
@@ -2258,7 +2262,7 @@ export default function Reports() {
       // ===== DADOS JURÍDICOS E LEGAIS =====
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["DADOS JURÍDICOS E LEGAIS"] = pageNumber;
       yPosition = margins.top + 30;
       
       pdf.setFontSize(14);
@@ -2422,7 +2426,7 @@ export default function Reports() {
             if (yPosition > pageHeight - margins.bottom - 15) {
               pdf.addPage();
               pageNumber++;
-              addPageNumber(pageNumber);
+    
               yPosition = margins.top + 20;
             }
             
@@ -2439,7 +2443,7 @@ export default function Reports() {
       if (yPosition > pageHeight - margins.bottom - 30) {
         pdf.addPage();
         pageNumber++;
-        addPageNumber(pageNumber);
+
         yPosition = margins.top + 20;
       }
       
@@ -2453,17 +2457,28 @@ export default function Reports() {
       // ===== INSERIR SUMÁRIO COM NUMERAÇÃO CORRETA =====
       updateProgress(88, "Gerando sumário com numeração correta...");
       
-      // Calcular a posição de inserção do sumário (após informações dos filhos)
-      const summaryPageIndex = 2; // posição 3 (0-indexed)
+      // CALCULAR DETERMINÍSTICAMENTE a posição do sumário:
+      // Deve ser após: capa (página 1) + todas as páginas de "INFORMAÇÕES DOS FILHOS"
+      // A seção "CONTEXTO LEGAL" é a primeira seção numerada e deve vir logo após o sumário
       
-      // Inserir uma nova página na posição correta
+      const totalPagesBeforeSummary = pdf.getNumberOfPages();
+      
+      // Encontrar onde começa "CONTEXTO LEGAL" - primeira seção do conteúdo principal
+      const contextualLegalPageIndex = sectionPageMap["CONTEXTO LEGAL"] - 1; // Converter para índice 0-based
+      
+      // DETERMINÍSTICO: O sumário deve ser inserido EXATAMENTE antes da seção "CONTEXTO LEGAL"
+      // Isso garante que ele fique após todas as páginas de "INFORMAÇÕES DOS FILHOS"
+      const summaryPageIndex = contextualLegalPageIndex;
+      
+      // Inserir uma nova página na posição correta (antes do CONTEXTO LEGAL)
       pdf.insertPage(summaryPageIndex + 1);
       
-      // Ajustar todos os números das páginas no mapeamento após a inserção
+      // Ajustar todos os números das páginas no mapeamento após a inserção do sumário
       const adjustedSectionPageMap: Record<string, number> = {};
       for (const [section, originalPage] of Object.entries(sectionPageMap)) {
-        // Se a página original era >= à posição de inserção, incrementar +1
-        adjustedSectionPageMap[section] = originalPage >= (summaryPageIndex + 1) ? originalPage + 1 : originalPage;
+        // TODAS as seções do conteúdo principal são movidas +1 após inserção do sumário
+        // (porque o sumário foi inserido antes de todas elas)
+        adjustedSectionPageMap[section] = originalPage + 1;
       }
       
       // Ir para a página do sumário e gerar o conteúdo
@@ -2478,41 +2493,53 @@ export default function Reports() {
       pdf.setFontSize(12);
       pdf.setFont("times", "normal");
       
-      // Criar array de itens do sumário com numeração correta
-      const summaryItemsWithCorrectPages = [
-        { text: "1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", page: adjustedSectionPageMap["CONTEXTO LEGAL"] },
-        { text: "2 RESUMO EXECUTIVO", page: adjustedSectionPageMap["RESUMO EXECUTIVO"] },
-        { text: "3 ANÁLISE FINANCEIRA", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
-        { text: "3.1 Distribuição por categoria", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
-        { text: "3.2 Distribuição por status", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
-        { text: "3.3 Análise de conformidade documental", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
-        { text: "4 GRÁFICOS E INSIGHTS", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
-        { text: "4.1 Distribuição por categoria", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
-        { text: "4.2 Acumulado anual de despesas", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
-        { text: "4.3 Despesas por mês", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
-        { text: "4.4 Tendência de gastos", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
-        { text: "5 DETALHAMENTO DAS DESPESAS", page: adjustedSectionPageMap["DETALHAMENTO DAS DESPESAS"] },
-        { text: "6 EXTRATO DE DESPESAS COM COMPROVANTES", page: adjustedSectionPageMap["EXTRATO DE DESPESAS COM COMPROVANTES"] },
-        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: adjustedSectionPageMap["CONCLUSÕES E RECOMENDAÇÕES"] },
-        { text: "REFERÊNCIAS", page: adjustedSectionPageMap["REFERÊNCIAS"] }
-      ];
+      // NUMERAÇÃO PADRÃO ABNT: A primeira página numerada é "CONTEXTO LEGAL" = página 1
+      const firstNumberedPageForSummary = adjustedSectionPageMap["CONTEXTO LEGAL"];
       
-      // Renderizar cada item do sumário
+      const calculateDisplayPage = (absolutePage: number) => {
+        if (!absolutePage || absolutePage < firstNumberedPageForSummary) {
+          // Páginas preliminares (capa, informações dos filhos, sumário) não aparecem no sumário
+          return null; 
+        }
+        // CONTEXTO LEGAL é página 1, páginas seguintes são 2, 3, etc.
+        return absolutePage - firstNumberedPageForSummary + 1;
+      };
+      
+      // Criar array de itens do sumário com numeração ABNT correta
+      // VERIFICAÇÃO: Incluindo "DADOS JURÍDICOS E LEGAIS" conforme solicitado
+      const summaryItemsWithCorrectPages = [
+        { text: "1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", page: calculateDisplayPage(adjustedSectionPageMap["CONTEXTO LEGAL"]) },
+        { text: "2 RESUMO EXECUTIVO", page: calculateDisplayPage(adjustedSectionPageMap["RESUMO EXECUTIVO"]) },
+        { text: "3 ANÁLISE FINANCEIRA", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "3.1 Distribuição por categoria", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "3.2 Distribuição por status", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "3.3 Análise de conformidade documental", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "4 GRÁFICOS E INSIGHTS", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.1 Distribuição por categoria", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.2 Acumulado anual de despesas", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.3 Despesas por mês", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.4 Tendência de gastos", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "5 DETALHAMENTO DAS DESPESAS", page: calculateDisplayPage(adjustedSectionPageMap["DETALHAMENTO DAS DESPESAS"]) },
+        { text: "6 EXTRATO DE DESPESAS COM COMPROVANTES", page: calculateDisplayPage(adjustedSectionPageMap["EXTRATO DE DESPESAS COM COMPROVANTES"]) },
+        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: calculateDisplayPage(adjustedSectionPageMap["CONCLUSÕES E RECOMENDAÇÕES"]) },
+        { text: "REFERÊNCIAS", page: calculateDisplayPage(adjustedSectionPageMap["REFERÊNCIAS"]) },
+        { text: "DADOS JURÍDICOS E LEGAIS", page: calculateDisplayPage(adjustedSectionPageMap["DADOS JURÍDICOS E LEGAIS"]) }
+      ].filter(item => item.page !== null); // Filtrar itens com página válida
+      
+      // Renderizar cada item do sumário com formatação padrão ABNT
       summaryItemsWithCorrectPages.forEach((item) => {
-        if (!item.page) return; // Pular itens sem página definida
-        
         // Texto do item alinhado à esquerda
         pdf.text(item.text, margins.left, yPosition);
         
         // Pontos de preenchimento
         const textWidth = pdf.getTextWidth(item.text);
-        const pageStr = item.page.toString();
+        const pageStr = item.page!.toString(); // ! porque já filtramos null
         const pageNumWidth = pdf.getTextWidth(pageStr);
-        const availableSpace = contentWidth - textWidth - pageNumWidth;
+        const availableSpace = contentWidth - textWidth - pageNumWidth - 4; // Margem de segurança
         const dotCount = Math.floor(availableSpace / pdf.getTextWidth('.'));
         const dots = '.'.repeat(Math.max(dotCount, 3));
         
-        pdf.text(dots, margins.left + textWidth, yPosition);
+        pdf.text(dots, margins.left + textWidth + 2, yPosition);
         
         // Número da página alinhado à direita
         pdf.text(pageStr, margins.left + contentWidth - pageNumWidth, yPosition);
@@ -2520,25 +2547,41 @@ export default function Reports() {
         yPosition += 8;
       });
 
-      // ===== SEGUNDA PASSADA: RENUMERAR TODAS AS PÁGINAS =====
-      updateProgress(92, "Renumerando todas as páginas...");
+      // ===== SEGUNDA PASSADA: NUMERAÇÃO ABNT ROBUSTA E DETERMINÍSTICA =====
+      updateProgress(92, "Aplicando numeração conforme padrão ABNT...");
       
       const totalPages = pdf.getNumberOfPages();
       
-      // Limpar todas as numerações existentes e aplicar as corretas
+      // PADRÃO ABNT: Primeira página numerada é "CONTEXTO LEGAL" = página 1
+      const firstNumberedPageAbsolute = adjustedSectionPageMap["CONTEXTO LEGAL"];
+      
+      console.log(`[ABNT Debug] Total de páginas: ${totalPages}`);
+      console.log(`[ABNT Debug] Primeira página numerada (CONTEXTO LEGAL): ${firstNumberedPageAbsolute}`);
+      console.log(`[ABNT Debug] Páginas preliminares (sem numeração): 1 até ${firstNumberedPageAbsolute - 1}`);
+      
+      // Limpar TODAS as numerações existentes primeiro
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         
-        // Limpar área da numeração anterior (opcional, mas garante limpeza)
+        // Limpar área da numeração completamente
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(pageWidth - margins.right - 20, 15, 20, 10, 'F');
-        
-        // Aplicar numeração correta
-        pdf.setFontSize(10);
-        pdf.setFont("times", "normal");
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(i.toString(), pageWidth - margins.right - 10, 20, { align: "right" });
+        pdf.rect(pageWidth - margins.right - 25, 10, 25, 15, 'F');
       }
+      
+      // Aplicar numeração ABNT: apenas páginas >= CONTEXTO LEGAL
+      for (let i = firstNumberedPageAbsolute; i <= totalPages; i++) {
+        pdf.setPage(i);
+        
+        // Calcular número da página no padrão ABNT (CONTEXTO LEGAL = 1)
+        const displayPageNumber = i - firstNumberedPageAbsolute + 1;
+        
+        // Aplicar numeração no canto superior direito (padrão ABNT)
+        addPageNumberOnly(displayPageNumber);
+        
+        console.log(`[ABNT Debug] Página absoluta ${i} → numerada como ${displayPageNumber}`);
+      }
+      
+      console.log(`[ABNT Debug] Numeração ABNT aplicada com sucesso!`);
 
       // Gerar o PDF como blob
       updateProgress(90, "Finalizando documento...");
