@@ -1933,21 +1933,6 @@ export default function Reports() {
       
       yPosition += 6;
       
-      // Adicionar nota sobre links clicáveis
-      pdf.setFontSize(10);
-      pdf.setFont("times", "italic");
-      pdf.setTextColor(0, 0, 255); // Azul
-      const linkNote = "Nota: Clique na data de qualquer despesa na tabela abaixo para ir diretamente aos detalhes da despesa na seção 6.";
-      const linkNoteLines = pdf.splitTextToSize(linkNote, contentWidth);
-      linkNoteLines.forEach((line: string) => {
-        pdf.text(line, margins.left, yPosition);
-        yPosition += 5;
-      });
-      
-      pdf.setTextColor(0, 0, 0); // Voltar para preto
-      pdf.setFont("times", "normal");
-      pdf.setFontSize(12);
-      yPosition += 8;
       
       yPosition += 15;
       pdf.setFontSize(10);
@@ -1973,32 +1958,6 @@ export default function Reports() {
       
       pdf.setFont("times", "normal");
       
-      // Calcular páginas mais precisamente considerando comprovantes
-      const expensePageMap = new Map<string, number>();
-      let predictedPageNumber = pageNumber + 1; // Seção 6 começará na próxima página
-      predictedPageNumber++; // Página de introdução da seção 6
-      
-      sortedExpenses.forEach((expense: any, index: number) => {
-        // Registrar página da despesa
-        expensePageMap.set(expense.id, predictedPageNumber);
-        
-        // Cada despesa sempre começa em uma nova página (exceto a primeira)
-        if (index > 0) {
-          predictedPageNumber++;
-        }
-        
-        // Se tem comprovantes com arquivos de imagem, pode precisar de páginas extras
-        if (expense.receipts && expense.receipts.length > 0) {
-          const imagesCount = expense.receipts.filter((r: any) => 
-            r.filePath && (r.fileType?.startsWith('image/') || r.fileName?.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i))
-          ).length;
-          
-          // Cada imagem pode adicionar até 1 página extra
-          if (imagesCount > 0) {
-            predictedPageNumber += Math.min(imagesCount, 2); // Máximo 2 páginas extras por despesa
-          }
-        }
-      });
       
       sortedExpenses.forEach((expense: any) => {
         // Calcular altura necessária para esta linha com quebras de texto
@@ -2059,12 +2018,8 @@ export default function Reports() {
             cellY += extraSpace / 2;
           }
           
-          // Configurar cor de link (azul) apenas para a coluna Data (index 0)
-          if (index === 0) {
-            pdf.setTextColor(0, 0, 255); // Azul para indicar link clicável na coluna Data
-          } else {
-            pdf.setTextColor(0, 0, 0); // Preto para as outras colunas
-          }
+          // Configurar cor padrão para todas as colunas
+          pdf.setTextColor(0, 0, 0); // Preto para todas as colunas
           
           lines.forEach((line: string, lineIndex: number) => {
             pdf.text(line, cellX, cellY + (lineIndex * 4.5));
@@ -2073,21 +2028,6 @@ export default function Reports() {
           xPos += tableColWidths[index];
         });
         
-        // Voltar cor do texto para preto
-        pdf.setTextColor(0, 0, 0);
-        
-        // Adicionar link clicável apenas na coluna Data que leva para a página da despesa na seção 6
-        const targetPage = expensePageMap.get(expense.id);
-        if (targetPage) {
-          const linkArea = {
-            x: margins.left, // Início da coluna Data
-            y: yPosition - 5,
-            width: tableColWidths[0], // Largura apenas da coluna Data
-            height: rowHeight
-          };
-          
-          pdf.link(linkArea.x, linkArea.y, linkArea.width, linkArea.height, { pageNumber: targetPage });
-        }
         
         yPosition += rowHeight;
       });
