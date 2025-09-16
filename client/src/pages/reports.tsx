@@ -939,7 +939,7 @@ export default function Reports() {
       
       // Subtítulo
       yPosition += 12;
-      pdf.setFontSize(16);
+      pdf.setFontSize(12);
       pdf.text("DESPESAS OBRIGATÓRIAS E NÃO OBRIGATÓRIAS", pageWidth / 2, yPosition, { align: "center" });
       
       // Subtítulo adicional - Padrão ABNT
