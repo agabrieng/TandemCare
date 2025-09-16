@@ -2011,6 +2011,10 @@ export default function Reports() {
           pdf.setFont("times", "normal");
         }
 
+        // CAPTURAR COORDENADAS EXATAS DA LINHA ANTES DE RENDERIZAR
+        const yTop = yPosition; // Topo exato da linha SEM offsets
+        const rowWidth = tableColWidths.reduce((sum, width) => sum + width, 0);
+        
         xPos = margins.left;
         
         // Preparar dados das células
@@ -2057,20 +2061,20 @@ export default function Reports() {
         pdf.setTextColor(0, 0, 0);
         
         // Adicionar indicador visual de link no final da linha
-        const linkIconX = margins.left + tableColWidths.reduce((sum, width) => sum + width, 0) + 2;
+        const linkIconX = margins.left + rowWidth + 2;
         pdf.setTextColor(0, 0, 255); // Azul para o ícone de link
         pdf.setFontSize(8);
         pdf.text("🔗", linkIconX, yPosition);
         pdf.setFontSize(10);
         pdf.setTextColor(0, 0, 0);
         
-        // Capturar coordenadas desta linha para adicionar link depois
+        // Armazenar coordenadas exatas da linha para links
         tableRowData.push({
           expenseId: expense.id,
           page: pageNumber,
           x: margins.left,
-          y: yPosition - 5,
-          width: tableColWidths.reduce((sum, width) => sum + width, 0),
+          y: yTop, // Topo exato sem offsets arbitrários
+          width: rowWidth,
           height: rowHeight
         });
         
@@ -2353,8 +2357,13 @@ export default function Reports() {
           // Ir para a página onde esta linha da tabela está localizada
           pdf.setPage(rowData.page);
           
-          // Adicionar o link usando as coordenadas exatas capturadas
-          pdf.link(rowData.x, rowData.y, rowData.width, rowData.height, { pageNumber: targetPage });
+          // Aplicar padding simétrico para evitar sobreposição
+          const padding = 1;
+          const linkY = rowData.y + padding;
+          const linkHeight = Math.max(6, rowData.height - 2 * padding);
+          
+          // Adicionar o link usando coordenadas exatas com padding
+          pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
         }
       });
 
