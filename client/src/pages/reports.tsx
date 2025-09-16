@@ -14,7 +14,7 @@ import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
-import type { Category } from "@shared/schema";
+import type { Category, Lawyer, LegalCase } from "@shared/schema";
 // PDF.js será carregado dinamicamente
 
 // Registrar os componentes do Chart.js
@@ -47,38 +47,6 @@ interface DashboardStats {
   recentExpenses: any[];
 }
 
-interface Lawyer {
-  id: string;
-  fullName: string;
-  oabNumber?: string;
-  oabState?: string;
-  lawFirm?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  specializations: string[];
-  notes?: string;
-}
-
-interface LegalCase {
-  id: string;
-  lawyerId?: string;
-  caseType: string;
-  caseNumber?: string;
-  courtName?: string;
-  judgeName?: string;
-  startDate?: string;
-  expectedEndDate?: string;
-  status: string;
-  childrenInvolved: string[];
-  custodyType?: string;
-  alimonyAmount?: string;
-  visitationSchedule?: string;
-  importantDates?: any;
-  documents: string[];
-  notes?: string;
-  lawyer?: Lawyer;
-}
 
 // Função auxiliar para carregar arquivo do object storage via API
 const loadFileFromStorage = async (filePath: string): Promise<{ data: string; type: string } | null> => {

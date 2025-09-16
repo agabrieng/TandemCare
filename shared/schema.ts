@@ -67,6 +67,7 @@ export const expenses = pgTable("expenses", {
   expenseDate: text("expense_date").notNull(), // Store as YYYY-MM-DD string to avoid timezone issues
   category: varchar("category", { length: 100 }).notNull(), // 'educação', 'saúde', 'alimentação', etc.
   status: varchar("status", { length: 50 }).notNull().default("pendente"), // 'pendente', 'pago', 'reembolsado'
+  observations: text("observations").default(""), // observações/justificativas para contexto judicial
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

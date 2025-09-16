@@ -26,6 +26,7 @@ const expenseFormSchema = z.object({
   customCategory: z.string().optional(),
   childId: z.string().min(1, "Filho é obrigatório"),
   status: z.string().default("pendente"),
+  observations: z.string().optional(),
 }).refine((data) => {
   // If category is "outros", customCategory is required
   if (data.category.toLowerCase() === "outros" && !data.customCategory?.trim()) {
@@ -105,6 +106,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
       customCategory: (initialData as any)?.customCategory || "",
       childId: initialData?.childId || "",
       status: initialData?.status || "pendente",
+      observations: initialData?.observations || "",
     },
   });
 
@@ -333,6 +335,22 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Observações/Justificativas Section */}
+          <div className="space-y-3">
+            <Label htmlFor="observations" className="text-sm font-medium">Observações/Justificativas (Opcional)</Label>
+            <Textarea
+              id="observations"
+              {...register("observations")}
+              placeholder="Adicione observações ou justificativas para contexto judicial..."
+              rows={2}
+              className="text-base"
+              data-testid="input-expense-observations"
+            />
+            <p className="text-xs text-muted-foreground">
+              Campo útil para análise judicial: justificativas sobre gastos extraordinários, emergências, etc.
+            </p>
           </div>
 
           {/* Comprovantes Section */}
