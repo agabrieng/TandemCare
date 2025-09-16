@@ -239,10 +239,10 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
     
     // Organizar dados por mês
     const monthlyData: Record<string, number> = {};
-    const expensesForStats = expenses.sort((a, b) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime());
+    const sortedExpenses = expenses.sort((a, b) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime());
     
     let accumulated = 0;
-    expensesForStats.forEach(expense => {
+    sortedExpenses.forEach(expense => {
       const date = new Date(expense.expenseDate);
       const monthKey = format(date, 'MMM/yyyy', { locale: ptBR });
       accumulated += parseFloat(expense.amount);
@@ -1973,16 +1973,17 @@ export default function Reports() {
       
       pdf.setFont("times", "normal");
       
-      // Mapas para links corretos
-      const expensePageMap = new Map<string, number>(); // Primeira página de cada despesa na seção 6
-      const tableRowData: Array<{
-        expenseId: string;
-        page: number;
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }> = []; // Coordenadas das linhas da tabela para adicionar links depois
+      // Calcular antecipadamente as páginas onde cada despesa estará na seção 6
+      const expensePageMap = new Map<string, number>();
+      let predictedPageNumber = pageNumber + 1; // Seção 6 começará na próxima página
+      predictedPageNumber++; // Página de introdução da seção 6
+      
+      sortedExpenses.forEach((expense: any, index: number) => {
+        if (index > 0) {
+          predictedPageNumber++; // Cada despesa (exceto a primeira) terá sua própria página
+        }
+        expensePageMap.set(expense.id, predictedPageNumber);
+      });
       
       sortedExpenses.forEach((expense: any) => {
         // Calcular altura necessária para esta linha com quebras de texto
@@ -2011,11 +2012,6 @@ export default function Reports() {
           pdf.setFont("times", "normal");
         }
 
-        const rowWidth = tableColWidths.reduce((sum, width) => sum + width, 0);
-        
-        // CAPTURAR COORDENADAS EXATAS ALINHADAS COM AS BORDAS DAS CÉLULAS
-        const cellTop = yPosition - 5; // Alinhar com onde realmente desenho as bordas
-        
         xPos = margins.left;
         
         // Preparar dados das células
@@ -2062,22 +2058,25 @@ export default function Reports() {
         pdf.setTextColor(0, 0, 0);
         
         // Adicionar indicador visual de link no final da linha
-        const linkIconX = margins.left + rowWidth + 2;
+        const linkIconX = margins.left + tableColWidths.reduce((sum, width) => sum + width, 0) + 2;
         pdf.setTextColor(0, 0, 255); // Azul para o ícone de link
         pdf.setFontSize(8);
         pdf.text("🔗", linkIconX, yPosition);
         pdf.setFontSize(10);
         pdf.setTextColor(0, 0, 0);
         
-        // NOTA: Não adicionar link ainda pois não temos a página de destino até a seção 6 estar completa
-        tableRowData.push({
-          expenseId: expense.id,
-          page: pageNumber,
-          x: margins.left,
-          y: cellTop,
-          width: rowWidth,
-          height: rowHeight
-        });
+        // Adicionar link clicável na linha inteira que leva para a página da despesa na seção 6
+        const targetPage = expensePageMap.get(expense.id);
+        if (targetPage) {
+          const linkArea = {
+            x: margins.left,
+            y: yPosition - 5,
+            width: tableColWidths.reduce((sum, width) => sum + width, 0),
+            height: rowHeight
+          };
+          
+          pdf.link(linkArea.x, linkArea.y, linkArea.width, linkArea.height, { pageNumber: targetPage });
+        }
         
         yPosition += rowHeight;
       });
@@ -2124,12 +2123,6 @@ export default function Reports() {
           pageNumber++;
 
           yPosition = margins.top + 20;
-        }
-
-        // REGISTRAR APENAS A PRIMEIRA PÁGINA ONDE ESTA DESPESA ESTÁ LOCALIZADA
-        if (!expensePageMap.has(expense.id)) {
-          expensePageMap.set(expense.id, pageNumber);
-          console.log(`[LINK DEBUG] Mapeando expense.id=${expense.id} para targetPage=${pageNumber}`);
         }
 
         // Cabeçalho da despesa
@@ -2252,8 +2245,6 @@ export default function Reports() {
                       pageNumber++;
             
                       yPosition = margins.top + 20;
-                      // Atualizar o mapa de páginas se a quebra de página mudou a localização da despesa
-                      expensePageMap.set(expense.id, pageNumber);
                     }
                     
                     // Centralizar a imagem se ela for menor que a largura máxima
@@ -2273,8 +2264,6 @@ export default function Reports() {
                       pageNumber++;
             
                       yPosition = margins.top + 20;
-                      // Atualizar o mapa de páginas se a quebra de página mudou a localização da despesa
-                      expensePageMap.set(expense.id, pageNumber);
                     }
                     
                     pdf.setDrawColor(108, 117, 125);
@@ -2348,9 +2337,6 @@ export default function Reports() {
         
         // Separador removido pois cada despesa agora está em página separada
       }
-
-      // Links serão criados no final após numeração ABNT
-      updateProgress(85, "Preparando criação de links...");
 
       // ===== 7. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
@@ -2801,60 +2787,6 @@ export default function Reports() {
       }
       
       console.log(`[ABNT Debug] Numeração ABNT aplicada com sucesso!`);
-
-      // ===== CRIAR TODOS OS LINKS COMO ÚLTIMO PASSO =====
-      updateProgress(88, "Criando links finais da tabela...");
-      
-      // Encontrar a página da tabela (seção 5) - A tabela está na ANÁLISE FINANCEIRA, não no DETALHAMENTO
-      const summaryPageNo = sectionPageMap["ANÁLISE FINANCEIRA"];
-      console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
-      console.log(`[LINK FINAL] Mapeamento completo de seções:`, sectionPageMap);
-      console.log(`[LINK FINAL] Dados da tabela encontrados:`, tableRowData.length, "linhas");
-      
-      if (summaryPageNo) {
-        // Ir para a página da tabela
-        pdf.setPage(summaryPageNo);
-        
-        // Criar links para cada linha em ordem crescente de Y
-        tableRowData
-          .sort((a, b) => a.y - b.y) // Garantir ordem crescente de Y
-          .forEach((rowData, index) => {
-            const targetPage = expensePageMap.get(rowData.expenseId);
-            
-            if (targetPage) {
-              // CRÍTICO: Garantir contexto correto da página antes de cada link
-              pdf.setPage(summaryPageNo);
-              
-              const padding = 1;
-              const linkY = rowData.y + padding;
-              const linkHeight = 6;
-              
-              console.log(`[LINK FINAL] Linha ${index}: expense=${rowData.expenseId} da página ${summaryPageNo} para página ${targetPage}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
-              
-              // Criar link com sintaxe completa para compatibilidade
-              try {
-                // Sintaxe completa com top/left obrigatórios para algumas versões do jsPDF
-                pdf.link(rowData.x, linkY, rowData.width, linkHeight, { 
-                  pageNumber: targetPage,
-                  top: 0,
-                  left: 0 
-                });
-                
-                // Adicionar bordas visuais para debug
-                pdf.setDrawColor(255, 0, 0); // Vermelho
-                pdf.setLineWidth(0.5);
-                pdf.rect(rowData.x, linkY, rowData.width, linkHeight);
-                pdf.setDrawColor(0, 0, 0); // Voltar ao preto
-                
-                console.log(`[LINK SUCCESS] Link criado com sucesso para linha ${index} (página atual: ${summaryPageNo})`);
-              } catch (error) {
-                console.log(`[LINK ERROR] Erro ao criar link para linha ${index}:`, error);
-              }
-            } else {
-              console.log(`[LINK FINAL] ERRO: Nenhuma página alvo para expense=${rowData.expenseId}`);
-            }
-          });
-      }
 
       // Gerar o PDF como blob
       updateProgress(90, "Finalizando documento...");
