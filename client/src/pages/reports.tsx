@@ -1754,7 +1754,48 @@ export default function Reports() {
         pdf.text("4.2 Acumulado Anual de Despesas", margins.left, yPosition);
         yPosition += 10;
         
-        const lineChartImage = await generateAccumulatedLineChart(report.filteredExpenses);
+        // Para o gráfico acumulado anual, usar dados de 12 meses completos, ignorando o filtro de data
+        const getFullYearExpensesForChart = (allExpenses: any[], childrenFilter: string[]) => {
+          if (!allExpenses) return [];
+          
+          // Filtrar apenas por children (mantém filtro de criança), ignorando data
+          const filteredByChild = allExpenses.filter((expense: any) => {
+            const childMatch = childrenFilter.length === 0 || childrenFilter.includes(expense.child?.id || expense.childId);
+            return childMatch;
+          });
+          
+          if (filteredByChild.length === 0) return [];
+          
+          // Pegar a data mais recente e calcular 12 meses completos (alinhado ao mês)
+          const sortedByDate = [...filteredByChild].sort((a, b) => {
+            const dateA = typeof a.expenseDate === 'string' && a.expenseDate.match(/^\d{4}-\d{2}-\d{2}$/)
+              ? parseLocalDate(a.expenseDate)
+              : new Date(a.expenseDate);
+            const dateB = typeof b.expenseDate === 'string' && b.expenseDate.match(/^\d{4}-\d{2}-\d{2}$/)
+              ? parseLocalDate(b.expenseDate)
+              : new Date(b.expenseDate);
+            return dateA.getTime() - dateB.getTime();
+          });
+          
+          const mostRecentDate = typeof sortedByDate[sortedByDate.length - 1].expenseDate === 'string' 
+            && sortedByDate[sortedByDate.length - 1].expenseDate.match(/^\d{4}-\d{2}-\d{2}$/)
+            ? parseLocalDate(sortedByDate[sortedByDate.length - 1].expenseDate)
+            : new Date(sortedByDate[sortedByDate.length - 1].expenseDate);
+            
+          // Alinhar ao final do mês mais recente e calcular 12 meses para trás
+          const endOfRecentMonth = new Date(mostRecentDate.getFullYear(), mostRecentDate.getMonth() + 1, 0);
+          const startOfPeriod = new Date(endOfRecentMonth.getFullYear(), endOfRecentMonth.getMonth() - 11, 1);
+          
+          return sortedByDate.filter((expense: any) => {
+            const expenseDate = typeof expense.expenseDate === 'string' && expense.expenseDate.match(/^\d{4}-\d{2}-\d{2}$/)
+              ? parseLocalDate(expense.expenseDate)
+              : new Date(expense.expenseDate);
+            return expenseDate >= startOfPeriod && expenseDate <= endOfRecentMonth;
+          });
+        };
+        
+        const fullYearExpenses = getFullYearExpensesForChart(expenses, selectedChildren);
+        const lineChartImage = await generateAccumulatedLineChart(fullYearExpenses);
         const lineChartWidth = 140;
         const lineChartHeight = 84;
         
