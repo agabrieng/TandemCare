@@ -1469,9 +1469,12 @@ export default function Reports() {
       
       yPosition += 10;
       
-      // 3.1 Distribuição por Categoria de Despesa (Judicial)
+      // Numeração dinâmica das seções - inicia em 3.1
+      let currentSectionNumber = 1;
+      
+      // Distribuição por Categoria de Despesa (numeração dinâmica)
       pdf.setFont("times", "bold");
-      pdf.text("3.1 Distribuição por Categoria de Despesa", margins.left, yPosition);
+      pdf.text(`3.${currentSectionNumber} Distribuição por Categoria de Despesa`, margins.left, yPosition);
       
       yPosition += 8;
       pdf.setFont("times", "normal");
@@ -1559,6 +1562,9 @@ export default function Reports() {
       
       yPosition = catCurrentY + 5;
       
+      // Incrementar após renderizar a seção 3.1
+      currentSectionNumber++;
+      
       // 3.2 Comparativo Mensal: Pensão vs Despesas (se dados disponíveis)
       if (theoreticalPensionAmount > 0 && periodInMonths > 0) {
         // Verificar se precisa de nova página
@@ -1570,7 +1576,7 @@ export default function Reports() {
         }
         
         pdf.setFont("times", "bold");
-        pdf.text("3.2 Comparativo Mensal: Pensão Recebida vs. Despesas Comprovadas", margins.left, yPosition);
+        pdf.text(`3.${currentSectionNumber} Comparativo Mensal: Pensão Recebida vs. Despesas Comprovadas`, margins.left, yPosition);
         yPosition += 8;
         
         pdf.setFont("times", "normal");
@@ -1618,9 +1624,12 @@ export default function Reports() {
         });
         
         yPosition = compCurrentY + 10;
+        
+        // Incrementar numeração após exibir esta seção
+        currentSectionNumber++;
       }
       
-      // 3.3 Distribuição por Status de Pagamento
+      // Seção de Distribuição por Status de Pagamento
       if (yPosition > pageHeight - margins.bottom - 40) {
         pdf.addPage();
         pageNumber++;
@@ -1629,7 +1638,7 @@ export default function Reports() {
       }
       
       pdf.setFont("times", "bold");
-      pdf.text("3.3 Distribuição por Status de Pagamento", margins.left, yPosition);
+      pdf.text(`3.${currentSectionNumber} Distribuição por Status de Pagamento`, margins.left, yPosition);
       
       yPosition += 10;
       pdf.setFont("times", "normal");
@@ -1643,7 +1652,10 @@ export default function Reports() {
       
       yPosition += 15;
       
-      // 3.4 Análise de Conformidade Documental
+      // Incrementar após renderizar a seção anterior
+      currentSectionNumber++;
+      
+      // Seção de Análise de Conformidade Documental
       if (yPosition > pageHeight - margins.bottom - 40) {
         pdf.addPage();
         pageNumber++;
@@ -1652,7 +1664,7 @@ export default function Reports() {
       }
       
       pdf.setFont("times", "bold");
-      pdf.text("3.4 Análise de Conformidade Documental", margins.left, yPosition);
+      pdf.text(`3.${currentSectionNumber} Análise de Conformidade Documental`, margins.left, yPosition);
       
       yPosition += 10;
       pdf.setFont("times", "normal");
