@@ -59,8 +59,9 @@ export default function Parents() {
     mutationFn: async (data: InsertParent) => {
       await apiRequest("POST", "/api/parents", data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/parents"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/parents"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/parents"] });
       setIsAddDialogOpen(false);
       toast({
         title: "Sucesso",
@@ -91,8 +92,9 @@ export default function Parents() {
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertParent> }) => {
       await apiRequest("PUT", `/api/parents/${id}`, data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/parents"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/parents"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/parents"] });
       setEditingParent(null);
       toast({
         title: "Sucesso",
@@ -123,8 +125,9 @@ export default function Parents() {
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/parents/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/parents"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/parents"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/parents"] });
       toast({
         title: "Sucesso",
         description: "Pai/Mãe removido com sucesso!",
