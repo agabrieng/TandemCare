@@ -780,6 +780,13 @@ export default function Reports() {
     return format(date, 'dd/MM/yyyy', { locale: ptBR });
   };
 
+  // Função específica para formatar datas de período de relatório, garantindo que sejam tratadas como locais
+  const formatReportPeriodDate = (date: Date) => {
+    // Criar uma nova data normalizada para evitar problemas de UTC
+    const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return format(normalizedDate, 'dd/MM/yyyy', { locale: ptBR });
+  };
+
   // Função auxiliar para analisar datas no formato YYYY-MM-DD como datas locais ao invés de UTC
   const parseLocalDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split('-').map(Number);
@@ -945,7 +952,7 @@ export default function Reports() {
       yPosition = 160;
       pdf.setFontSize(12);
       pdf.setFont("times", "normal");
-      pdf.text(`Período analisado: ${formatDate(report.period.start)} a ${formatDate(report.period.end)}`, pageWidth / 2, yPosition, { align: "center" });
+      pdf.text(`Período analisado: ${formatReportPeriodDate(report.period.start)} a ${formatReportPeriodDate(report.period.end)}`, pageWidth / 2, yPosition, { align: "center" });
       
       // Data e hora de geração do relatório
       yPosition += 20;
@@ -1366,7 +1373,7 @@ export default function Reports() {
           Object.keys(report.childTotals).join(', ') : '[Nome do(s) Filho(s)]';
       
       const executiveSummary = [
-        `Durante o período de ${formatDate(report.period.start)} a ${formatDate(report.period.end)}, ${theoreticalPensionAmount > 0 ? `o valor total da pensão alimentícia recebida para o(s) beneficiário(s) ${beneficiariesText} foi de ${formatCurrency(theoreticalPensionAmount)}` : `foram gerenciados os recursos da pensão alimentícia para o(s) beneficiário(s) ${beneficiariesText}`}. Neste mesmo período, foram registradas e comprovadas ${report.expenseCount} despesas, totalizando ${formatCurrency(report.totalAmount)}.`,
+        `Durante o período de ${formatReportPeriodDate(report.period.start)} a ${formatReportPeriodDate(report.period.end)}, ${theoreticalPensionAmount > 0 ? `o valor total da pensão alimentícia recebida para o(s) beneficiário(s) ${beneficiariesText} foi de ${formatCurrency(theoreticalPensionAmount)}` : `foram gerenciados os recursos da pensão alimentícia para o(s) beneficiário(s) ${beneficiariesText}`}. Neste mesmo período, foram registradas e comprovadas ${report.expenseCount} despesas, totalizando ${formatCurrency(report.totalAmount)}.`,
         ``,
         `A taxa de documentação, indicando a proporção de despesas com comprovantes anexados, foi de ${documentationRate}%. A análise detalhada das despesas, conforme apresentado nas seções seguintes, demonstra a aplicação dos recursos da pensão alimentícia de acordo com as necessidades do(s) beneficiário(s) e em conformidade com o acordo/decisão judicial estabelecido.`,
         ``,
@@ -2184,7 +2191,7 @@ export default function Reports() {
         ``,
         `As informações apresentadas neste relatório demonstram a gestão transparente e diligente dos recursos da pensão alimentícia destinados ao(s) beneficiário(s) ${beneficiariesText} durante o período analisado. Todas as despesas foram devidamente registradas e, em sua maioria, comprovadas, refletindo o compromisso com o bem-estar e as necessidades do(s) menor(es).`,
         ``,
-        `Durante o período de ${formatDate(report.period.start)} a ${formatDate(report.period.end)}, foram registradas ${report.expenseCount} despesas totalizando ${formatCurrency(report.totalAmount)}, com taxa de documentação de ${documentationRate}%. ${complianceScore >= 90 ? 'A documentação apresenta-se completa e organizada, atendendo plenamente aos requisitos judiciais.' : complianceScore >= 70 ? 'A documentação atende aos requisitos mínimos para análise judicial.' : 'Recomenda-se complementação da documentação para fortalecer a prestação de contas.'}`,
+        `Durante o período de ${formatReportPeriodDate(report.period.start)} a ${formatReportPeriodDate(report.period.end)}, foram registradas ${report.expenseCount} despesas totalizando ${formatCurrency(report.totalAmount)}, com taxa de documentação de ${documentationRate}%. ${complianceScore >= 90 ? 'A documentação apresenta-se completa e organizada, atendendo plenamente aos requisitos judiciais.' : complianceScore >= 70 ? 'A documentação atende aos requisitos mínimos para análise judicial.' : 'Recomenda-se complementação da documentação para fortalecer a prestação de contas.'}`,,
         ``,
         theoreticalPensionAmount > 0 ? 
           `A gestão dos recursos demonstra ${theoreticalPensionAmount >= report.totalAmount ? 'administração responsável com saldo remanescente para despesas futuras' : 'aplicação complementar além da pensão recebida, evidenciando o comprometimento com as necessidades dos beneficiários'}.` :
@@ -2865,7 +2872,7 @@ export default function Reports() {
                   Preview do Relatório
                 </CardTitle>
                 <CardDescription>
-                  Período: {formatDate(report.period.start)} até {formatDate(report.period.end)}
+                  Período: {formatReportPeriodDate(report.period.start)} até {formatReportPeriodDate(report.period.end)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
