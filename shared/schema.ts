@@ -308,6 +308,7 @@ export const insertLegalCaseSchema = createInsertSchema(legalCases).omit({
 
 export const insertParentSchema = createInsertSchema(parents).omit({
   id: true,
+  userId: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
