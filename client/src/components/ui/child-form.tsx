@@ -289,15 +289,15 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
               <div className="space-y-2">
                 <Label htmlFor="motherId">Mãe</Label>
                 <Select
-                  value={watch("motherId") ?? ""}
-                  onValueChange={(value) => setValue("motherId", value === "" ? undefined : value)}
+                  value={watch("motherId") ?? "none"}
+                  onValueChange={(value) => setValue("motherId", value === "none" ? undefined : value)}
                   disabled={parentsLoading}
                 >
                   <SelectTrigger data-testid="select-mother">
                     <SelectValue placeholder={parentsLoading ? "Carregando..." : "Selecione a mãe"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Não informar</SelectItem>
+                    <SelectItem value="none">Não informar</SelectItem>
                     {parents.map((parent) => (
                       <SelectItem key={parent.id} value={parent.id}>
                         {parent.fullName}
@@ -316,15 +316,15 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
               <div className="space-y-2">
                 <Label htmlFor="fatherId">Pai</Label>
                 <Select
-                  value={watch("fatherId") ?? ""}
-                  onValueChange={(value) => setValue("fatherId", value === "" ? undefined : value)}
+                  value={watch("fatherId") ?? "none"}
+                  onValueChange={(value) => setValue("fatherId", value === "none" ? undefined : value)}
                   disabled={parentsLoading}
                 >
                   <SelectTrigger data-testid="select-father">
                     <SelectValue placeholder={parentsLoading ? "Carregando..." : "Selecione o pai"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Não informar</SelectItem>
+                    <SelectItem value="none">Não informar</SelectItem>
                     {parents.map((parent) => (
                       <SelectItem key={parent.id} value={parent.id}>
                         {parent.fullName}
