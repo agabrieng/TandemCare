@@ -239,27 +239,13 @@ export default function Parents() {
             <p className="text-sm text-muted-foreground mb-4">
               Adicione informações dos pais das crianças para usar nos relatórios.
             </p>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button data-testid="button-add-first-parent">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Primeiro Pai/Mãe
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Adicionar Novo Pai/Mãe</DialogTitle>
-                  <DialogDescription>
-                    Preencha as informações cadastrais do pai ou da mãe da criança.
-                  </DialogDescription>
-                </DialogHeader>
-                <ParentForm
-                  onSubmit={(data: InsertParent) => createParentMutation.mutate(data)}
-                  onCancel={() => setIsAddDialogOpen(false)}
-                  isLoading={createParentMutation.isPending}
-                />
-              </DialogContent>
-            </Dialog>
+            <Button 
+              data-testid="button-add-first-parent"
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Primeiro Pai/Mãe
+            </Button>
           </CardContent>
         </Card>
       ) : (
