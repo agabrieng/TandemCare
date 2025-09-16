@@ -899,10 +899,20 @@ export default function Reports() {
       pdf.text("PARA FILHOS DE PAIS DIVORCIADOS", pageWidth / 2, yPosition + 7, { align: "center" });
       
       // Título principal (centralizado, maiúsculo, negrito)
-      yPosition = 120;
+      yPosition = 110;
       pdf.setFontSize(16);
       pdf.text("RELATÓRIO DE PRESTAÇÃO DE CONTAS", pageWidth / 2, yPosition, { align: "center" });
-      pdf.text("DE DESPESAS INFANTIS", pageWidth / 2, yPosition + 10, { align: "center" });
+      
+      // Subtítulo
+      yPosition += 12;
+      pdf.setFontSize(14);
+      pdf.text("DE DESPESAS INFANTIS", pageWidth / 2, yPosition, { align: "center" });
+      
+      // Subtítulo adicional - Padrão ABNT
+      yPosition += 10;
+      pdf.setFontSize(11);
+      pdf.setFont("times", "normal");
+      pdf.text("Conforme Normas ABNT para Prestação de Contas Judicial", pageWidth / 2, yPosition, { align: "center" });
       
       // Período de análise
       yPosition = 160;
@@ -910,113 +920,133 @@ export default function Reports() {
       pdf.setFont("times", "normal");
       pdf.text(`Período analisado: ${formatDate(report.period.start)} a ${formatDate(report.period.end)}`, pageWidth / 2, yPosition, { align: "center" });
       
-      // ===== INFORMAÇÕES CADASTRAIS =====
-      yPosition = 190;
-      pdf.setFontSize(11);
+      // Data e hora de geração do relatório
+      yPosition += 20;
+      pdf.setFontSize(10);
+      pdf.text(`Data e hora de geração: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
+      
+      // Informações do rodapé da capa
+      yPosition = 260; // Posição fixa para o rodapé
+      pdf.text("Local: Brasil", pageWidth / 2, yPosition, { align: "center" });
+      pdf.text(`Data: ${format(new Date(), 'MMMM \'de\' yyyy', { locale: ptBR })}`, pageWidth / 2, yPosition + 10, { align: "center" });
+
+      // ===== PÁGINA DEDICADA PARA INFORMAÇÕES DOS FILHOS =====
+      updateProgress(35, "Criando página de informações dos filhos...");
+      pdf.addPage();
+      pageNumber = 2;
+      addPageNumber(pageNumber);
+      yPosition = margins.top + 10;
+      
+      pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("INFORMAÇÕES CADASTRAIS", pageWidth / 2, yPosition, { align: "center" });
+      pdf.text("INFORMAÇÕES DOS FILHOS ENVOLVIDOS NO RELATÓRIO", pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 20;
+      pdf.setFontSize(12);
+      pdf.setFont("times", "normal");
       
       // Obter crianças incluídas no relatório
       const reportChildren = selectedChildren.length > 0 
         ? children.filter(child => selectedChildren.includes(child.id))
         : children;
       
-      yPosition += 15;
-      pdf.setFontSize(10);
-      pdf.setFont("times", "normal");
+      // Calcular altura necessária por criança para evitar quebras de página
+      const estimatedHeightPerChild = 70; // Estimativa conservadora
+      const availableHeight = pageHeight - margins.top - margins.bottom - 60; // Espaço disponível
+      const maxChildrenPerPage = Math.floor(availableHeight / estimatedHeightPerChild);
       
-      // Para cada criança no relatório, mostrar os dados dos pais
-      reportChildren.forEach((child, index) => {
-        if (index > 0) yPosition += 5; // Espaço entre crianças
-        
-        // Verificar se precisa de nova página (reservar espaço para informações completas)
-        if (yPosition > pageHeight - 80) {
+      // Dividir crianças em grupos para evitar quebras
+      for (let i = 0; i < reportChildren.length; i += maxChildrenPerPage) {
+        if (i > 0) {
+          // Adicionar nova página se necessário
           pdf.addPage();
-          addPageNumber(++pageNumber);
+          pageNumber++;
+          addPageNumber(pageNumber);
           yPosition = margins.top + 20;
         }
         
-        // Nome da criança
-        const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
-        pdf.setFont("times", "bold");
-        pdf.text(`Criança: ${childFullName}`, pageWidth / 2, yPosition, { align: "center" });
-        yPosition += 8;
+        const childrenGroup = reportChildren.slice(i, i + maxChildrenPerPage);
         
-        pdf.setFont("times", "normal");
-        
-        // Buscar pai e mãe específicos
-        const father = parents.find(parent => parent.id === child.fatherId);
-        const mother = parents.find(parent => parent.id === child.motherId);
-        
-        if (!father && !mother) {
-          pdf.text("Dados dos pais não cadastrados", pageWidth / 2, yPosition, { align: "center" });
-          yPosition += 8;
-        } else {
-          // Mostrar informações do pai
-          if (father) {
-            pdf.text(`Pai: ${father.fullName}`, pageWidth / 2, yPosition, { align: "center" });
-            yPosition += 6;
-            
-            if (father.cpf) {
-              pdf.text(`CPF: ${father.cpf}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-            }
-            
-            if (father.city && father.state) {
-              pdf.text(`Endereço: ${father.city} - ${father.state}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-            }
-            
-            if (father.phone) {
-              pdf.text(`Telefone: ${father.phone}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-            }
-            
-            if (father.email) {
-              pdf.text(`Email: ${father.email}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-            }
-            
-            yPosition += 5; // Espaço entre pai e mãe
-          }
+        childrenGroup.forEach((child, groupIndex) => {
+          if (groupIndex > 0) yPosition += 10; // Espaço entre crianças
           
-          // Mostrar informações da mãe
-          if (mother) {
-            pdf.text(`Mãe: ${mother.fullName}`, pageWidth / 2, yPosition, { align: "center" });
-            yPosition += 6;
-            
-            if (mother.cpf) {
-              pdf.text(`CPF: ${mother.cpf}`, pageWidth / 2, yPosition, { align: "center" });
+          // Nome da criança
+          const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
+          pdf.setFont("times", "bold");
+          pdf.text(`Criança: ${childFullName}`, pageWidth / 2, yPosition, { align: "center" });
+          yPosition += 10;
+          
+          pdf.setFont("times", "normal");
+          
+          // Buscar pai e mãe específicos
+          const father = parents.find(parent => parent.id === child.fatherId);
+          const mother = parents.find(parent => parent.id === child.motherId);
+          
+          if (!father && !mother) {
+            pdf.text("Dados dos pais não cadastrados", pageWidth / 2, yPosition, { align: "center" });
+            yPosition += 8;
+          } else {
+            // Mostrar informações do pai
+            if (father) {
+              pdf.text(`Pai: ${father.fullName}`, pageWidth / 2, yPosition, { align: "center" });
               yPosition += 6;
+              
+              if (father.cpf) {
+                pdf.text(`CPF: ${father.cpf}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              if (father.city && father.state) {
+                pdf.text(`Endereço: ${father.city} - ${father.state}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              if (father.phone) {
+                pdf.text(`Telefone: ${father.phone}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              if (father.email) {
+                pdf.text(`Email: ${father.email}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              yPosition += 3; // Espaço entre pai e mãe
             }
             
-            if (mother.city && mother.state) {
-              pdf.text(`Endereço: ${mother.city} - ${mother.state}`, pageWidth / 2, yPosition, { align: "center" });
+            // Mostrar informações da mãe
+            if (mother) {
+              pdf.text(`Mãe: ${mother.fullName}`, pageWidth / 2, yPosition, { align: "center" });
               yPosition += 6;
-            }
-            
-            if (mother.phone) {
-              pdf.text(`Telefone: ${mother.phone}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-            }
-            
-            if (mother.email) {
-              pdf.text(`Email: ${mother.email}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
+              
+              if (mother.cpf) {
+                pdf.text(`CPF: ${mother.cpf}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              if (mother.city && mother.state) {
+                pdf.text(`Endereço: ${mother.city} - ${mother.state}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              if (mother.phone) {
+                pdf.text(`Telefone: ${mother.phone}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
+              
+              if (mother.email) {
+                pdf.text(`Email: ${mother.email}`, pageWidth / 2, yPosition, { align: "center" });
+                yPosition += 6;
+              }
             }
           }
-        }
-      });
-      
-      // Informações do rodapé da capa
-      yPosition = Math.max(yPosition + 20, 260); // Garantir espaço mínimo
-      pdf.text("Local: Brasil", pageWidth / 2, yPosition, { align: "center" });
-      pdf.text(`Data: ${format(new Date(), 'MMMM \'de\' yyyy', { locale: ptBR })}`, pageWidth / 2, yPosition + 10, { align: "center" });
+        });
+      }
 
       // ===== SUMÁRIO (ABNT) =====
       updateProgress(40, "Gerando sumário...");
       pdf.addPage();
-      pageNumber = 2;
+      pageNumber++;
       addPageNumber(pageNumber);
       yPosition = margins.top + 10;
       
@@ -1029,20 +1059,21 @@ export default function Reports() {
       pdf.setFont("times", "normal");
       
       const summaryItems = [
-        { text: "1 RESUMO EXECUTIVO", page: "3" },
-        { text: "2 ANÁLISE FINANCEIRA", page: "4" },
-        { text: "2.1 Distribuição por categoria", page: "4" },
-        { text: "2.2 Distribuição por status", page: "4" },
-        { text: "2.3 Análise de conformidade documental", page: "4" },
-        { text: "3 GRÁFICOS E INSIGHTS", page: "5" },
-        { text: "3.1 Distribuição por categoria", page: "5" },
-        { text: "3.2 Acumulado anual de despesas", page: "5" },
-        { text: "3.3 Despesas por mês", page: "6" },
-        { text: "3.4 Tendência de gastos", page: "6" },
-        { text: "4 DETALHAMENTO DAS DESPESAS", page: "7" },
-        { text: "5 EXTRATO DE DESPESAS COM COMPROVANTES", page: "8" },
-        { text: "6 CONCLUSÕES E RECOMENDAÇÕES", page: "9" },
-        { text: "REFERÊNCIAS", page: "10" }
+        { text: "1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", page: (pageNumber + 1).toString() },
+        { text: "2 RESUMO EXECUTIVO", page: (pageNumber + 2).toString() },
+        { text: "3 ANÁLISE FINANCEIRA", page: (pageNumber + 3).toString() },
+        { text: "3.1 Distribuição por categoria", page: (pageNumber + 3).toString() },
+        { text: "3.2 Distribuição por status", page: (pageNumber + 3).toString() },
+        { text: "3.3 Análise de conformidade documental", page: (pageNumber + 3).toString() },
+        { text: "4 GRÁFICOS E INSIGHTS", page: (pageNumber + 4).toString() },
+        { text: "4.1 Distribuição por categoria", page: (pageNumber + 4).toString() },
+        { text: "4.2 Acumulado anual de despesas", page: (pageNumber + 4).toString() },
+        { text: "4.3 Despesas por mês", page: (pageNumber + 5).toString() },
+        { text: "4.4 Tendência de gastos", page: (pageNumber + 5).toString() },
+        { text: "5 DETALHAMENTO DAS DESPESAS", page: (pageNumber + 6).toString() },
+        { text: "6 EXTRATO DE DESPESAS COM COMPROVANTES", page: (pageNumber + 7).toString() },
+        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: (pageNumber + 8).toString() },
+        { text: "REFERÊNCIAS", page: (pageNumber + 9).toString() }
       ];
       
       summaryItems.forEach((item) => {
