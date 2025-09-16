@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart } from "lucide-react";
-import { format, parse, subDays, subMonths, subYears } from "date-fns";
+import { format, parse, subDays, subMonths, subYears, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
@@ -742,6 +742,7 @@ export default function Reports() {
     { value: "last30", label: "Últimos 30 dias" },
     { value: "last90", label: "Últimos 90 dias" },
     { value: "last6months", label: "Últimos 6 meses" },
+    { value: "currentyear", label: "Ano Atual" },
     { value: "lastyear", label: "Último ano" },
     { value: "custom", label: "Período personalizado" },
   ];
@@ -757,6 +758,8 @@ export default function Reports() {
         return { start: subDays(now, 90), end: now };
       case "last6months":
         return { start: subMonths(now, 6), end: now };
+      case "currentyear":
+        return { start: startOfYear(now), end: now };
       case "lastyear":
         return { start: subYears(now, 1), end: now };
       case "custom":
