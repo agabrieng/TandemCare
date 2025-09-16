@@ -239,10 +239,10 @@ const generateAccumulatedLineChart = async (expenses: any[]): Promise<string> =>
     
     // Organizar dados por mês
     const monthlyData: Record<string, number> = {};
-    const sortedExpenses = expenses.sort((a, b) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime());
+    const expensesForStats = expenses.sort((a, b) => new Date(a.expenseDate).getTime() - new Date(b.expenseDate).getTime());
     
     let accumulated = 0;
-    sortedExpenses.forEach(expense => {
+    expensesForStats.forEach(expense => {
       const date = new Date(expense.expenseDate);
       const monthKey = format(date, 'MMM/yyyy', { locale: ptBR });
       accumulated += parseFloat(expense.amount);
@@ -2132,6 +2132,9 @@ export default function Reports() {
           
           // IMEDIATAMENTE CRIAR O LINK CORRESPONDENTE NA TABELA DA SEÇÃO 5
           const rowData = tableRowData.find(row => row.expenseId === expense.id);
+          console.log(`[LINK DEBUG] Processando expense.id=${expense.id}, targetPage=${pageNumber}`);
+          console.log(`[LINK DEBUG] rowData encontrada:`, rowData ? `página=${rowData.page}, y=${rowData.y}, expenseId=${rowData.expenseId}` : 'null');
+          
           if (rowData) {
             // Salvar página atual usando a API correta do jsPDF
             const currentPage = pdf.internal.pages.length;
@@ -2143,10 +2146,13 @@ export default function Reports() {
             const linkY = rowData.y + padding;
             const linkHeight = Math.max(6, rowData.height - 2 * padding);
             
+            console.log(`[LINK DEBUG] Criando link: da página ${rowData.page} para página ${pageNumber}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
             pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: pageNumber });
             
             // Voltar para a página onde estávamos
             pdf.setPage(pageNumber);
+          } else {
+            console.log(`[LINK DEBUG] ERRO: Nenhuma rowData encontrada para expense.id=${expense.id}`);
           }
         }
 
