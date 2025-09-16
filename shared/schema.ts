@@ -43,6 +43,29 @@ export const children = pgTable("children", {
   lastName: varchar("last_name", { length: 100 }),
   dateOfBirth: date("date_of_birth"),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  fatherId: uuid("father_id"), // ID do pai
+  motherId: uuid("mother_id"), // ID da mãe
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Parents table - Dados cadastrais completos dos pais das crianças
+export const parents = pgTable("parents", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // usuário que cadastrou este pai/mãe
+  fullName: varchar("full_name", { length: 200 }).notNull(),
+  cpf: varchar("cpf", { length: 14 }), // formato: XXX.XXX.XXX-XX
+  rg: varchar("rg", { length: 20 }),
+  dateOfBirth: date("date_of_birth"),
+  profession: varchar("profession", { length: 150 }),
+  maritalStatus: varchar("marital_status", { length: 50 }), // 'solteiro', 'casado', 'divorciado', etc.
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 255 }),
+  address: text("address"), // endereço completo
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 5 }), // UF
+  zipCode: varchar("zip_code", { length: 10 }), // CEP
+  notes: text("notes"), // observações adicionais
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -145,11 +168,33 @@ export const usersRelations = relations(users, ({ many }) => ({
   categories: many(categories),
   lawyers: many(lawyers),
   legalCases: many(legalCases),
+  parents: many(parents),
 }));
 
-export const childrenRelations = relations(children, ({ many }) => ({
+export const childrenRelations = relations(children, ({ one, many }) => ({
   userChildren: many(userChildren),
   expenses: many(expenses),
+  father: one(parents, {
+    fields: [children.fatherId],
+    references: [parents.id],
+  }),
+  mother: one(parents, {
+    fields: [children.motherId],
+    references: [parents.id],
+  }),
+}));
+
+export const parentsRelations = relations(parents, ({ one, many }) => ({
+  user: one(users, {
+    fields: [parents.userId],
+    references: [users.id],
+  }),
+  childrenAsFather: many(children, {
+    relationName: "father"
+  }),
+  childrenAsMother: many(children, {
+    relationName: "mother"
+  }),
 }));
 
 export const userChildrenRelations = relations(userChildren, ({ one }) => ({
@@ -261,6 +306,17 @@ export const insertLegalCaseSchema = createInsertSchema(legalCases).omit({
   alimonyAmount: z.string().optional().refine((val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), "Alimony amount must be a positive number or empty"),
 });
 
+export const insertParentSchema = createInsertSchema(parents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  fullName: z.string().trim().min(1, "Nome completo é obrigatório"),
+  cpf: z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF deve estar no formato XXX.XXX.XXX-XX").optional(),
+  email: z.string().email("Email inválido").optional(),
+  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP deve estar no formato XXXXX-XXX").optional(),
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -278,6 +334,8 @@ export type InsertLawyer = z.infer<typeof insertLawyerSchema>;
 export type Lawyer = typeof lawyers.$inferSelect;
 export type InsertLegalCase = z.infer<typeof insertLegalCaseSchema>;
 export type LegalCase = typeof legalCases.$inferSelect;
+export type InsertParent = z.infer<typeof insertParentSchema>;
+export type Parent = typeof parents.$inferSelect;
 
 // Extended types for joined data
 export type ExpenseWithDetails = Expense & {
@@ -288,4 +346,6 @@ export type ExpenseWithDetails = Expense & {
 
 export type ChildWithParents = Child & {
   userChildren: (UserChild & { user: User })[];
+  father?: Parent;
+  mother?: Parent;
 };
