@@ -937,110 +937,286 @@ export default function Reports() {
       addPageNumber(pageNumber);
       yPosition = margins.top + 10;
       
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setFont("times", "bold");
       pdf.text("INFORMAÇÕES DOS FILHOS ENVOLVIDOS NO RELATÓRIO", pageWidth / 2, yPosition, { align: "center" });
       
-      yPosition += 20;
-      pdf.setFontSize(12);
-      pdf.setFont("times", "normal");
+      yPosition += 35;
       
       // Obter crianças incluídas no relatório
       const reportChildren = selectedChildren.length > 0 
         ? children.filter(child => selectedChildren.includes(child.id))
         : children;
       
-      // Calcular altura necessária por criança para evitar quebras de página
-      const estimatedHeightPerChild = 70; // Estimativa conservadora
-      const availableHeight = pageHeight - margins.top - margins.bottom - 60; // Espaço disponível
-      const maxChildrenPerPage = Math.floor(availableHeight / estimatedHeightPerChild);
+      // Configurações para cards
+      const cardWidth = 160;
+      const cardHeight = 115;
+      const cardMargin = 15;
+      const profileImageSize = 20;
       
-      // Dividir crianças em grupos para evitar quebras
-      for (let i = 0; i < reportChildren.length; i += maxChildrenPerPage) {
-        if (i > 0) {
-          // Adicionar nova página se necessário
+      // Calcular quantos cards cabem por linha
+      const cardsPerRow = Math.floor((contentWidth + cardMargin) / (cardWidth + cardMargin));
+      const totalCardWidth = cardsPerRow * cardWidth + (cardsPerRow - 1) * cardMargin;
+      const startX = margins.left + (contentWidth - totalCardWidth) / 2;
+      
+      // PRÉ-CARREGAR TODAS AS IMAGENS EM PARALELO PARA MELHOR PERFORMANCE
+      updateProgress(37, "Carregando fotos de perfil...");
+      const imageCache: Record<string, string> = {};
+      
+      const imagePromises = reportChildren
+        .filter(child => child.profileImageUrl)
+        .map(async (child) => {
+          try {
+            const imageData = await loadFileFromStorage(child.profileImageUrl!);
+            if (imageData) {
+              const compressedImage = await compressImage(imageData.data, 200, 0.85);
+              return { childId: child.id, image: compressedImage };
+            }
+          } catch (error) {
+            console.error(`Erro ao pré-carregar foto de ${child.firstName}:`, error);
+          }
+          return null;
+        });
+      
+      const loadedImages = await Promise.all(imagePromises);
+      loadedImages.forEach(result => {
+        if (result) {
+          imageCache[result.childId] = result.image;
+        }
+      });
+      
+      // Função para truncar texto com medição precisa
+      const truncateText = (text: string, maxWidth: number, fontSize: number): string => {
+        pdf.setFontSize(fontSize);
+        const textWidth = pdf.getTextWidth(text);
+        if (textWidth <= maxWidth) return text;
+        
+        let truncated = text;
+        while (pdf.getTextWidth(truncated + "...") > maxWidth && truncated.length > 0) {
+          truncated = truncated.slice(0, -1);
+        }
+        return truncated + "...";
+      };
+      
+      // Função para criar card de uma criança (agora síncrona)
+      const createChildCard = (child: any, x: number, y: number) => {
+        // Buscar pai e mãe específicos
+        const father = parents.find(parent => parent.id === child.fatherId);
+        const mother = parents.find(parent => parent.id === child.motherId);
+        
+        // Fundo do card com sombra sutil
+        pdf.setFillColor(248, 250, 252); // bg-slate-50
+        pdf.setDrawColor(226, 232, 240); // border-slate-200
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(x, y, cardWidth, cardHeight, 3, 3, 'FD');
+        
+        // Header do card com gradiente sutil
+        pdf.setFillColor(239, 246, 255); // bg-blue-50
+        pdf.setDrawColor(219, 234, 254); // border-blue-200
+        pdf.roundedRect(x, y, cardWidth, 28, 3, 3, 'FD');
+        
+        // Nome da criança no header
+        const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(30, 64, 175); // text-blue-800
+        
+        // Posição da foto de perfil e nome
+        let nameStartX = x + 6;
+        const maxNameWidth = cardWidth - 12;
+        
+        // Adicionar foto de perfil se disponível no cache
+        if (imageCache[child.id]) {
+          pdf.addImage(imageCache[child.id], 'JPEG', x + 4, y + 4, profileImageSize, profileImageSize);
+          nameStartX = x + 6 + profileImageSize + 4;
+        } else {
+          // Placeholder com iniciais se não houver foto
+          pdf.setFillColor(203, 213, 225); // bg-slate-300
+          pdf.setDrawColor(148, 163, 184); // border-slate-400
+          pdf.roundedRect(x + 4, y + 4, profileImageSize, profileImageSize, 2, 2, 'FD');
+          
+          // Iniciais centralizadas
+          const initials = child.firstName.charAt(0).toUpperCase() + 
+                          (child.lastName ? child.lastName.charAt(0).toUpperCase() : '');
+          pdf.setFont("times", "bold");
+          pdf.setFontSize(8);
+          pdf.setTextColor(71, 85, 105);
+          const initialsWidth = pdf.getTextWidth(initials);
+          pdf.text(initials, x + 4 + (profileImageSize - initialsWidth) / 2, y + 4 + profileImageSize / 2 + 2);
+          
+          nameStartX = x + 6 + profileImageSize + 4;
+        }
+        
+        // Nome da criança truncado
+        const nameMaxWidth = cardWidth - (nameStartX - x) - 6;
+        const truncatedName = truncateText(childFullName, nameMaxWidth, 10);
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(30, 64, 175);
+        pdf.text(truncatedName, nameStartX, y + 16);
+        
+        // Conteúdo do card
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(7);
+        pdf.setTextColor(71, 85, 105); // text-slate-600
+        
+        let contentY = y + 35;
+        const maxTextWidth = cardWidth - 16;
+        
+        // Informações do pai
+        if (father) {
+          // Verificar se há espaço suficiente
+          if (contentY + 20 <= y + cardHeight - 10) {
+            pdf.setFont("times", "bold");
+            pdf.setTextColor(51, 65, 85); // text-slate-700
+            pdf.text("👨 Pai:", x + 6, contentY);
+            contentY += 4;
+            
+            pdf.setFont("times", "normal");
+            pdf.setFontSize(6);
+            pdf.setTextColor(71, 85, 105);
+            
+            const fatherName = truncateText(father.fullName, maxTextWidth, 6);
+            pdf.text(fatherName, x + 6, contentY);
+            contentY += 3;
+            
+            // CPF truncado se disponível
+            if (father.cpf && contentY + 3 <= y + cardHeight - 15) {
+              const cpfText = truncateText(`CPF: ${father.cpf}`, maxTextWidth, 6);
+              pdf.text(cpfText, x + 6, contentY);
+              contentY += 3;
+            }
+            
+            // Telefone truncado se disponível
+            if (father.phone && contentY + 3 <= y + cardHeight - 15) {
+              const phoneText = truncateText(`📞 ${father.phone}`, maxTextWidth, 6);
+              pdf.text(phoneText, x + 6, contentY);
+              contentY += 3;
+            }
+            
+            // Email truncado se disponível e houver espaço
+            if (father.email && contentY + 3 <= y + cardHeight - 15) {
+              const emailText = truncateText(`✉ ${father.email}`, maxTextWidth, 6);
+              pdf.text(emailText, x + 6, contentY);
+              contentY += 3;
+            }
+            
+            contentY += 2;
+          }
+        }
+        
+        // Informações da mãe
+        if (mother && contentY + 15 <= y + cardHeight - 10) {
+          pdf.setFont("times", "bold");
+          pdf.setFontSize(7);
+          pdf.setTextColor(51, 65, 85);
+          pdf.text("👩 Mãe:", x + 6, contentY);
+          contentY += 4;
+          
+          pdf.setFont("times", "normal");
+          pdf.setFontSize(6);
+          pdf.setTextColor(71, 85, 105);
+          
+          const motherName = truncateText(mother.fullName, maxTextWidth, 6);
+          pdf.text(motherName, x + 6, contentY);
+          contentY += 3;
+          
+          // CPF truncado se disponível
+          if (mother.cpf && contentY + 3 <= y + cardHeight - 10) {
+            const cpfText = truncateText(`CPF: ${mother.cpf}`, maxTextWidth, 6);
+            pdf.text(cpfText, x + 6, contentY);
+            contentY += 3;
+          }
+          
+          // Telefone truncado se disponível
+          if (mother.phone && contentY + 3 <= y + cardHeight - 10) {
+            const phoneText = truncateText(`📞 ${mother.phone}`, maxTextWidth, 6);
+            pdf.text(phoneText, x + 6, contentY);
+            contentY += 3;
+          }
+          
+          // Email truncado se disponível e houver espaço
+          if (mother.email && contentY + 3 <= y + cardHeight - 10) {
+            const emailText = truncateText(`✉ ${mother.email}`, maxTextWidth, 6);
+            pdf.text(emailText, x + 6, contentY);
+          }
+        }
+        
+        // Adicionar ícone de localização no rodapé se houver endereço
+        const location = father?.city && father?.state ? `${father.city} - ${father.state}` : 
+                        mother?.city && mother?.state ? `${mother.city} - ${mother.state}` : '';
+        if (location) {
+          pdf.setFont("times", "italic");
+          pdf.setFontSize(6);
+          pdf.setTextColor(100, 116, 139); // text-slate-500
+          const locationText = truncateText(`📍 ${location}`, maxTextWidth, 6);
+          pdf.text(locationText, x + 6, y + cardHeight - 4);
+        }
+        
+        // Resetar cores para texto normal
+        pdf.setTextColor(0, 0, 0);
+      };
+      
+      // RENDERIZAÇÃO COM PAGINAÇÃO ROBUSTA E VERIFICAÇÃO POR CARD
+      let currentRow = 0;
+      let currentCol = 0;
+      
+      // Função para adicionar cabeçalho da seção se necessário
+      const addSectionHeader = () => {
+        if (yPosition === margins.top + 15) {
+          // Adicionar título da seção apenas se estivermos no topo de uma nova página
+          pdf.setFontSize(14);
+          pdf.setFont("times", "bold");
+          pdf.text("INFORMAÇÕES DOS FILHOS (continuação)", pageWidth / 2, yPosition, { align: "center" });
+          yPosition += 25;
+        }
+      };
+      
+      for (let i = 0; i < reportChildren.length; i++) {
+        const child = reportChildren[i];
+        
+        // Calcular posição do card na página atual
+        const cardX = startX + currentCol * (cardWidth + cardMargin);
+        const cardY = yPosition + currentRow * (cardHeight + cardMargin);
+        
+        // VERIFICAÇÃO ROBUSTA ANTES DE DESENHAR CADA CARD
+        if (cardY + cardHeight > pageHeight - margins.bottom - 15) {
+          // Necessário quebra de página - adicionar nova página
           pdf.addPage();
           pageNumber++;
           addPageNumber(pageNumber);
-          yPosition = margins.top + 20;
+          
+          // Resetar posições e contadores na nova página
+          yPosition = margins.top + 15;
+          currentRow = 0;
+          currentCol = 0;
+          
+          // Adicionar cabeçalho se necessário
+          addSectionHeader();
+          
+          // Recalcular posição do card na nova página
+          const newCardX = startX + currentCol * (cardWidth + cardMargin);
+          const newCardY = yPosition + currentRow * (cardHeight + cardMargin);
+          
+          // Verificar novamente se o card cabe na nova página (proteção extra)
+          if (newCardY + cardHeight <= pageHeight - margins.bottom - 15) {
+            createChildCard(child, newCardX, newCardY);
+          } else {
+            console.warn(`Card muito alto para caber na página: ${cardHeight}px`);
+            // Tentar com card reduzido ou pular
+            continue;
+          }
+        } else {
+          // Card cabe na página atual
+          createChildCard(child, cardX, cardY);
         }
         
-        const childrenGroup = reportChildren.slice(i, i + maxChildrenPerPage);
-        
-        childrenGroup.forEach((child, groupIndex) => {
-          if (groupIndex > 0) yPosition += 10; // Espaço entre crianças
-          
-          // Nome da criança
-          const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
-          pdf.setFont("times", "bold");
-          pdf.text(`Criança: ${childFullName}`, pageWidth / 2, yPosition, { align: "center" });
-          yPosition += 10;
-          
-          pdf.setFont("times", "normal");
-          
-          // Buscar pai e mãe específicos
-          const father = parents.find(parent => parent.id === child.fatherId);
-          const mother = parents.find(parent => parent.id === child.motherId);
-          
-          if (!father && !mother) {
-            pdf.text("Dados dos pais não cadastrados", pageWidth / 2, yPosition, { align: "center" });
-            yPosition += 8;
-          } else {
-            // Mostrar informações do pai
-            if (father) {
-              pdf.text(`Pai: ${father.fullName}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-              
-              if (father.cpf) {
-                pdf.text(`CPF: ${father.cpf}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              if (father.city && father.state) {
-                pdf.text(`Endereço: ${father.city} - ${father.state}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              if (father.phone) {
-                pdf.text(`Telefone: ${father.phone}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              if (father.email) {
-                pdf.text(`Email: ${father.email}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              yPosition += 3; // Espaço entre pai e mãe
-            }
-            
-            // Mostrar informações da mãe
-            if (mother) {
-              pdf.text(`Mãe: ${mother.fullName}`, pageWidth / 2, yPosition, { align: "center" });
-              yPosition += 6;
-              
-              if (mother.cpf) {
-                pdf.text(`CPF: ${mother.cpf}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              if (mother.city && mother.state) {
-                pdf.text(`Endereço: ${mother.city} - ${mother.state}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              if (mother.phone) {
-                pdf.text(`Telefone: ${mother.phone}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-              
-              if (mother.email) {
-                pdf.text(`Email: ${mother.email}`, pageWidth / 2, yPosition, { align: "center" });
-                yPosition += 6;
-              }
-            }
-          }
-        });
+        // Avançar para próxima posição no grid
+        currentCol++;
+        if (currentCol >= cardsPerRow) {
+          currentCol = 0;
+          currentRow++;
+        }
       }
 
       // ===== SUMÁRIO (ABNT) =====
