@@ -2808,6 +2808,8 @@ export default function Reports() {
       // Encontrar a página da tabela (seção 5)
       const summaryPageNo = sectionPageMap["DETALHAMENTO DAS DESPESAS"];
       console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
+      console.log(`[LINK FINAL] Mapeamento completo de seções:`, sectionPageMap);
+      console.log(`[LINK FINAL] Dados da tabela encontrados:`, tableRowData.length, "linhas");
       
       if (summaryPageNo) {
         // Ir para a página da tabela
