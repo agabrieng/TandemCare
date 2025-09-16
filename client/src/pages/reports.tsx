@@ -1521,8 +1521,8 @@ export default function Reports() {
         ]);
       });
       
-      // Desenhar tabela de categorias
-      const catColWidths = [40, 35, 25, 50];
+      // Desenhar tabela de categorias - ajustadas para caber os cabeçalhos
+      const catColWidths = [40, 30, 35, 45];
       let catCurrentY = yPosition + 5;
       
       categoryTableData.forEach((row, index) => {
@@ -1589,8 +1589,8 @@ export default function Reports() {
           [`Média Mensal`, formatCurrency(monthlyPension), formatCurrency(monthlyExpenses), formatCurrency(Math.abs(monthlyPension - monthlyExpenses))]
         ];
         
-        // Desenhar tabela comparativa
-        const compColWidths = [35, 45, 45, 35];
+        // Desenhar tabela comparativa - ajustadas para caber os cabeçalhos
+        const compColWidths = [25, 50, 55, 30];
         let compCurrentY = yPosition;
         
         compTableData.forEach((row, index) => {
