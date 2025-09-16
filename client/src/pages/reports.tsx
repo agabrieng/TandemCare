@@ -2820,23 +2820,31 @@ export default function Reports() {
             const targetPage = expensePageMap.get(rowData.expenseId);
             
             if (targetPage) {
+              // CRÍTICO: Garantir contexto correto da página antes de cada link
+              pdf.setPage(summaryPageNo);
+              
               const padding = 1;
               const linkY = rowData.y + padding;
               const linkHeight = 6;
               
               console.log(`[LINK FINAL] Linha ${index}: expense=${rowData.expenseId} da página ${summaryPageNo} para página ${targetPage}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
               
-              // Criar link com sintaxe alternativa para maior compatibilidade
+              // Criar link com sintaxe completa para compatibilidade
               try {
-                pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+                // Sintaxe completa com top/left obrigatórios para algumas versões do jsPDF
+                pdf.link(rowData.x, linkY, rowData.width, linkHeight, { 
+                  pageNumber: targetPage,
+                  top: 0,
+                  left: 0 
+                });
                 
-                // Adicionar bordas visuais para debug (remover depois)
+                // Adicionar bordas visuais para debug
                 pdf.setDrawColor(255, 0, 0); // Vermelho
                 pdf.setLineWidth(0.5);
                 pdf.rect(rowData.x, linkY, rowData.width, linkHeight);
                 pdf.setDrawColor(0, 0, 0); // Voltar ao preto
                 
-                console.log(`[LINK SUCCESS] Link criado com sucesso para linha ${index}`);
+                console.log(`[LINK SUCCESS] Link criado com sucesso para linha ${index} (página atual: ${summaryPageNo})`);
               } catch (error) {
                 console.log(`[LINK ERROR] Erro ao criar link para linha ${index}:`, error);
               }
