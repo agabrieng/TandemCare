@@ -1973,16 +1973,31 @@ export default function Reports() {
       
       pdf.setFont("times", "normal");
       
-      // Calcular antecipadamente as páginas onde cada despesa estará na seção 6
+      // Calcular páginas mais precisamente considerando comprovantes
       const expensePageMap = new Map<string, number>();
       let predictedPageNumber = pageNumber + 1; // Seção 6 começará na próxima página
       predictedPageNumber++; // Página de introdução da seção 6
       
       sortedExpenses.forEach((expense: any, index: number) => {
-        if (index > 0) {
-          predictedPageNumber++; // Cada despesa (exceto a primeira) terá sua própria página
-        }
+        // Registrar página da despesa
         expensePageMap.set(expense.id, predictedPageNumber);
+        
+        // Cada despesa sempre começa em uma nova página (exceto a primeira)
+        if (index > 0) {
+          predictedPageNumber++;
+        }
+        
+        // Se tem comprovantes com arquivos de imagem, pode precisar de páginas extras
+        if (expense.receipts && expense.receipts.length > 0) {
+          const imagesCount = expense.receipts.filter((r: any) => 
+            r.filePath && (r.fileType?.startsWith('image/') || r.fileName?.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i))
+          ).length;
+          
+          // Cada imagem pode adicionar até 1 página extra
+          if (imagesCount > 0) {
+            predictedPageNumber += Math.min(imagesCount, 2); // Máximo 2 páginas extras por despesa
+          }
+        }
       });
       
       sortedExpenses.forEach((expense: any) => {
