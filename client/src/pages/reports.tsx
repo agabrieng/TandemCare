@@ -948,11 +948,11 @@ export default function Reports() {
         ? children.filter(child => selectedChildren.includes(child.id))
         : children;
       
-      // Configurações para cards
+      // Configurações para cards - aumentado para acomodar novo layout
       const cardWidth = 160;
-      const cardHeight = 115;
+      const cardHeight = 135;
       const cardMargin = 15;
-      const profileImageSize = 20;
+      const profileImageSize = 18;
       
       // Calcular quantos cards cabem por linha
       const cardsPerRow = Math.floor((contentWidth + cardMargin) / (cardWidth + cardMargin));
@@ -1010,147 +1010,179 @@ export default function Reports() {
         pdf.setLineWidth(0.5);
         pdf.roundedRect(x, y, cardWidth, cardHeight, 3, 3, 'FD');
         
-        // Header do card com gradiente sutil
-        pdf.setFillColor(239, 246, 255); // bg-blue-50
-        pdf.setDrawColor(219, 234, 254); // border-blue-200
-        pdf.roundedRect(x, y, cardWidth, 28, 3, 3, 'FD');
+        // Header do card limpo e profissional
+        pdf.setFillColor(248, 250, 252); // bg-slate-50
+        pdf.setDrawColor(226, 232, 240); // border-slate-200
+        pdf.rect(x, y, cardWidth, 24, 'F');
         
         // Nome da criança no header
         const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
-        pdf.setFont("times", "bold");
-        pdf.setFontSize(10);
-        pdf.setTextColor(30, 64, 175); // text-blue-800
         
         // Posição da foto de perfil e nome
         let nameStartX = x + 6;
-        const maxNameWidth = cardWidth - 12;
         
         // Adicionar foto de perfil se disponível no cache
         if (imageCache[child.id]) {
-          pdf.addImage(imageCache[child.id], 'JPEG', x + 4, y + 4, profileImageSize, profileImageSize);
-          nameStartX = x + 6 + profileImageSize + 4;
+          pdf.addImage(imageCache[child.id], 'JPEG', x + 3, y + 3, profileImageSize, profileImageSize);
+          nameStartX = x + 6 + profileImageSize + 3;
         } else {
           // Placeholder com iniciais se não houver foto
           pdf.setFillColor(203, 213, 225); // bg-slate-300
           pdf.setDrawColor(148, 163, 184); // border-slate-400
-          pdf.roundedRect(x + 4, y + 4, profileImageSize, profileImageSize, 2, 2, 'FD');
+          pdf.roundedRect(x + 3, y + 3, profileImageSize, profileImageSize, 2, 2, 'FD');
           
           // Iniciais centralizadas
           const initials = child.firstName.charAt(0).toUpperCase() + 
                           (child.lastName ? child.lastName.charAt(0).toUpperCase() : '');
           pdf.setFont("times", "bold");
-          pdf.setFontSize(8);
+          pdf.setFontSize(7);
           pdf.setTextColor(71, 85, 105);
           const initialsWidth = pdf.getTextWidth(initials);
-          pdf.text(initials, x + 4 + (profileImageSize - initialsWidth) / 2, y + 4 + profileImageSize / 2 + 2);
+          pdf.text(initials, x + 3 + (profileImageSize - initialsWidth) / 2, y + 3 + profileImageSize / 2 + 2);
           
-          nameStartX = x + 6 + profileImageSize + 4;
+          nameStartX = x + 6 + profileImageSize + 3;
         }
         
-        // Nome da criança truncado
+        // Nome da criança truncado - posicionamento ajustado
         const nameMaxWidth = cardWidth - (nameStartX - x) - 6;
-        const truncatedName = truncateText(childFullName, nameMaxWidth, 10);
+        const truncatedName = truncateText(childFullName, nameMaxWidth, 9);
         pdf.setFont("times", "bold");
-        pdf.setFontSize(10);
-        pdf.setTextColor(30, 64, 175);
-        pdf.text(truncatedName, nameStartX, y + 16);
+        pdf.setFontSize(9);
+        pdf.setTextColor(51, 65, 85); // text-slate-700 - cor mais profissional
+        pdf.text(truncatedName, nameStartX, y + 14);
         
         // Conteúdo do card
         pdf.setFont("times", "normal");
         pdf.setFontSize(7);
         pdf.setTextColor(71, 85, 105); // text-slate-600
         
-        let contentY = y + 35;
+        let contentY = y + 30;
         const maxTextWidth = cardWidth - 16;
         
-        // Informações do pai
+        // ===== SEÇÃO DO PAI =====
         if (father) {
           // Verificar se há espaço suficiente
-          if (contentY + 20 <= y + cardHeight - 10) {
+          if (contentY + 25 <= y + cardHeight - 15) {
+            // Cabeçalho da seção PAI com linha divisória
             pdf.setFont("times", "bold");
+            pdf.setFontSize(7);
+            pdf.setTextColor(30, 64, 175); // text-blue-800
+            pdf.text("PAI", x + 6, contentY);
+            
+            // Linha divisória sob o título
+            pdf.setDrawColor(30, 64, 175);
+            pdf.setLineWidth(0.3);
+            pdf.line(x + 6, contentY + 1, x + cardWidth - 6, contentY + 1);
+            contentY += 6;
+            
+            // Nome - Label e valor alinhados
+            pdf.setFont("times", "bold");
+            pdf.setFontSize(6);
             pdf.setTextColor(51, 65, 85); // text-slate-700
-            pdf.text("👨 Pai:", x + 6, contentY);
-            contentY += 4;
+            pdf.text("Nome:", x + 8, contentY);
             
             pdf.setFont("times", "normal");
-            pdf.setFontSize(6);
-            pdf.setTextColor(71, 85, 105);
+            pdf.setTextColor(71, 85, 105); // text-slate-600
+            const fatherName = truncateText(father.fullName, maxTextWidth - 25, 6);
+            pdf.text(fatherName, x + 26, contentY);
+            contentY += 4;
             
-            const fatherName = truncateText(father.fullName, maxTextWidth, 6);
-            pdf.text(fatherName, x + 6, contentY);
-            contentY += 3;
-            
-            // CPF truncado se disponível
-            if (father.cpf && contentY + 3 <= y + cardHeight - 15) {
-              const cpfText = truncateText(`CPF: ${father.cpf}`, maxTextWidth, 6);
-              pdf.text(cpfText, x + 6, contentY);
-              contentY += 3;
+            // CPF se disponível
+            if (father.cpf && contentY + 4 <= y + cardHeight - 15) {
+              pdf.setFont("times", "bold");
+              pdf.setTextColor(51, 65, 85);
+              pdf.text("CPF:", x + 8, contentY);
+              
+              pdf.setFont("times", "normal");
+              pdf.setTextColor(71, 85, 105);
+              const cpfText = truncateText(father.cpf, maxTextWidth - 25, 6);
+              pdf.text(cpfText, x + 26, contentY);
+              contentY += 4;
             }
             
-            // Telefone truncado se disponível
-            if (father.phone && contentY + 3 <= y + cardHeight - 15) {
-              const phoneText = truncateText(`📞 ${father.phone}`, maxTextWidth, 6);
-              pdf.text(phoneText, x + 6, contentY);
-              contentY += 3;
+            // Telefone se disponível
+            if (father.phone && contentY + 4 <= y + cardHeight - 15) {
+              pdf.setFont("times", "bold");
+              pdf.setTextColor(51, 65, 85);
+              pdf.text("Tel:", x + 8, contentY);
+              
+              pdf.setFont("times", "normal");
+              pdf.setTextColor(71, 85, 105);
+              const phoneText = truncateText(father.phone, maxTextWidth - 25, 6);
+              pdf.text(phoneText, x + 26, contentY);
+              contentY += 4;
             }
             
-            // Email truncado se disponível e houver espaço
-            if (father.email && contentY + 3 <= y + cardHeight - 15) {
-              const emailText = truncateText(`✉ ${father.email}`, maxTextWidth, 6);
-              pdf.text(emailText, x + 6, contentY);
-              contentY += 3;
-            }
-            
-            contentY += 2;
+            contentY += 4; // Espaço entre seções
           }
         }
         
-        // Informações da mãe
-        if (mother && contentY + 15 <= y + cardHeight - 10) {
+        // ===== SEÇÃO DA MÃE =====
+        if (mother && contentY + 20 <= y + cardHeight - 15) {
+          // Cabeçalho da seção MÃE com linha divisória
           pdf.setFont("times", "bold");
           pdf.setFontSize(7);
-          pdf.setTextColor(51, 65, 85);
-          pdf.text("👩 Mãe:", x + 6, contentY);
-          contentY += 4;
+          pdf.setTextColor(185, 28, 28); // text-red-700
+          pdf.text("MÃE", x + 6, contentY);
+          
+          // Linha divisória sob o título
+          pdf.setDrawColor(185, 28, 28);
+          pdf.setLineWidth(0.3);
+          pdf.line(x + 6, contentY + 1, x + cardWidth - 6, contentY + 1);
+          contentY += 6;
+          
+          // Nome - Label e valor alinhados
+          pdf.setFont("times", "bold");
+          pdf.setFontSize(6);
+          pdf.setTextColor(51, 65, 85); // text-slate-700
+          pdf.text("Nome:", x + 8, contentY);
           
           pdf.setFont("times", "normal");
-          pdf.setFontSize(6);
-          pdf.setTextColor(71, 85, 105);
+          pdf.setTextColor(71, 85, 105); // text-slate-600
+          const motherName = truncateText(mother.fullName, maxTextWidth - 25, 6);
+          pdf.text(motherName, x + 26, contentY);
+          contentY += 4;
           
-          const motherName = truncateText(mother.fullName, maxTextWidth, 6);
-          pdf.text(motherName, x + 6, contentY);
-          contentY += 3;
-          
-          // CPF truncado se disponível
-          if (mother.cpf && contentY + 3 <= y + cardHeight - 10) {
-            const cpfText = truncateText(`CPF: ${mother.cpf}`, maxTextWidth, 6);
-            pdf.text(cpfText, x + 6, contentY);
-            contentY += 3;
+          // CPF se disponível
+          if (mother.cpf && contentY + 4 <= y + cardHeight - 15) {
+            pdf.setFont("times", "bold");
+            pdf.setTextColor(51, 65, 85);
+            pdf.text("CPF:", x + 8, contentY);
+            
+            pdf.setFont("times", "normal");
+            pdf.setTextColor(71, 85, 105);
+            const cpfText = truncateText(mother.cpf, maxTextWidth - 25, 6);
+            pdf.text(cpfText, x + 26, contentY);
+            contentY += 4;
           }
           
-          // Telefone truncado se disponível
-          if (mother.phone && contentY + 3 <= y + cardHeight - 10) {
-            const phoneText = truncateText(`📞 ${mother.phone}`, maxTextWidth, 6);
-            pdf.text(phoneText, x + 6, contentY);
-            contentY += 3;
-          }
-          
-          // Email truncado se disponível e houver espaço
-          if (mother.email && contentY + 3 <= y + cardHeight - 10) {
-            const emailText = truncateText(`✉ ${mother.email}`, maxTextWidth, 6);
-            pdf.text(emailText, x + 6, contentY);
+          // Telefone se disponível
+          if (mother.phone && contentY + 4 <= y + cardHeight - 15) {
+            pdf.setFont("times", "bold");
+            pdf.setTextColor(51, 65, 85);
+            pdf.text("Tel:", x + 8, contentY);
+            
+            pdf.setFont("times", "normal");
+            pdf.setTextColor(71, 85, 105);
+            const phoneText = truncateText(mother.phone, maxTextWidth - 25, 6);
+            pdf.text(phoneText, x + 26, contentY);
+            contentY += 4;
           }
         }
         
-        // Adicionar ícone de localização no rodapé se houver endereço
+        // Adicionar localização no rodapé se houver endereço
         const location = father?.city && father?.state ? `${father.city} - ${father.state}` : 
                         mother?.city && mother?.state ? `${mother.city} - ${mother.state}` : '';
         if (location) {
+          // Fundo sutil para o rodapé
+          pdf.setFillColor(249, 250, 251); // bg-gray-50
+          pdf.rect(x + 2, y + cardHeight - 12, cardWidth - 4, 10, 'F');
+          
           pdf.setFont("times", "italic");
           pdf.setFontSize(6);
           pdf.setTextColor(100, 116, 139); // text-slate-500
-          const locationText = truncateText(`📍 ${location}`, maxTextWidth, 6);
-          pdf.text(locationText, x + 6, y + cardHeight - 4);
+          const locationText = truncateText(`Local: ${location}`, maxTextWidth - 4, 6);
+          pdf.text(locationText, x + 4, y + cardHeight - 6);
         }
         
         // Resetar cores para texto normal
