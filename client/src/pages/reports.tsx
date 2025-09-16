@@ -930,7 +930,7 @@ export default function Reports() {
       // Nome da Instituição/Sistema (centralizado)
       yPosition = 50;
       pdf.text("SISTEMA DE GESTÃO FINANCEIRA", pageWidth / 2, yPosition, { align: "center" });
-      pdf.text("PARA FILHOS DE PAIS DIVORCIADOS", pageWidth / 2, yPosition + 7, { align: "center" });
+      pdf.text("PARA FILHOS & FILHAS", pageWidth / 2, yPosition + 7, { align: "center" });
       
       // Título principal (centralizado, maiúsculo, negrito)
       yPosition = 110;
@@ -940,7 +940,7 @@ export default function Reports() {
       // Subtítulo
       yPosition += 12;
       pdf.setFontSize(14);
-      pdf.text("DE DESPESAS INFANTIS", pageWidth / 2, yPosition, { align: "center" });
+      pdf.text("DE DESPESAS OBRIGATÓRIAS", pageWidth / 2, yPosition, { align: "center" });
       
       // Subtítulo adicional - Padrão ABNT
       yPosition += 10;
