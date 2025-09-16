@@ -1935,7 +1935,7 @@ export default function Reports() {
       
       // Cabeçalho da tabela
       const tableHeaders = ["Data", "Descrição", "Beneficiário", "Categoria", "Valor", "Status", "Doc."];
-      const tableColWidths = [18, 40, 30, 22, 24, 18, 13]; // Total: 165mm (dentro da margem de 160mm)
+      const tableColWidths = [18, 45, 26, 28, 24, 18, 13]; // Total: 172mm - ajustado para mais espaço nas colunas Descrição e Categoria
       let xPos = margins.left;
       
       pdf.setFont("times", "bold");
@@ -1955,7 +1955,15 @@ export default function Reports() {
       pdf.setFont("times", "normal");
       
       sortedExpenses.forEach((expense: any) => {
-        if (yPosition > pageHeight - margins.bottom - 20) {
+        // Calcular altura necessária para esta linha com quebras de texto
+        const descriptionLines = pdf.splitTextToSize(expense.description, tableColWidths[1] - 4);
+        const categoryLines = pdf.splitTextToSize(expense.category, tableColWidths[3] - 4);
+        const childNameLines = pdf.splitTextToSize(expense.child.firstName, tableColWidths[2] - 4);
+        
+        const maxLines = Math.max(descriptionLines.length, categoryLines.length, childNameLines.length);
+        const rowHeight = Math.max(8, maxLines * 4.5 + 3);
+        
+        if (yPosition + rowHeight > pageHeight - margins.bottom - 20) {
           pdf.addPage();
           pageNumber++;
 
@@ -1975,24 +1983,43 @@ export default function Reports() {
 
         xPos = margins.left;
         
-        // Desenhar bordas e dados
-        const rowData = [
-          format(new Date(expense.expenseDate), 'dd/MM/yy'),
-          expense.description.length > 18 ? expense.description.substring(0, 15) + "..." : expense.description,
-          expense.child.firstName.length > 12 ? expense.child.firstName.substring(0, 9) + "..." : expense.child.firstName,
-          expense.category.length > 10 ? expense.category.substring(0, 7) + "..." : expense.category,
-          formatCurrency(parseFloat(expense.amount)),
-          expense.status.substring(0, 6),
-          expense.receipts?.length ? `${expense.receipts.length}` : "0"
+        // Preparar dados das células
+        const cellData = [
+          [format(new Date(expense.expenseDate), 'dd/MM/yy')],
+          descriptionLines,
+          childNameLines,
+          categoryLines,
+          [formatCurrency(parseFloat(expense.amount))],
+          [expense.status.substring(0, 6)],
+          [expense.receipts?.length ? `${expense.receipts.length}` : "0"]
         ];
         
-        rowData.forEach((data, index) => {
-          pdf.rect(xPos, yPosition - 5, tableColWidths[index], 8);
-          pdf.text(data, xPos + 2, yPosition);
+        // Desenhar bordas de todas as células primeiro
+        cellData.forEach((_, index) => {
+          pdf.rect(xPos, yPosition - 5, tableColWidths[index], rowHeight);
           xPos += tableColWidths[index];
         });
         
-        yPosition += 8;
+        // Resetar posição x e desenhar conteúdo das células
+        xPos = margins.left;
+        cellData.forEach((lines, index) => {
+          const cellX = xPos + 2;
+          let cellY = yPosition;
+          
+          // Para células com múltiplas linhas, centralizar verticalmente
+          if (lines.length < maxLines) {
+            const extraSpace = (maxLines - lines.length) * 4.5;
+            cellY += extraSpace / 2;
+          }
+          
+          lines.forEach((line: string, lineIndex: number) => {
+            pdf.text(line, cellX, cellY + (lineIndex * 4.5));
+          });
+          
+          xPos += tableColWidths[index];
+        });
+        
+        yPosition += rowHeight;
       });
 
       // ===== 6. EXTRATO DE DESPESAS COM COMPROVANTES =====
