@@ -2129,32 +2129,7 @@ export default function Reports() {
         // REGISTRAR APENAS A PRIMEIRA PÁGINA ONDE ESTA DESPESA ESTÁ LOCALIZADA
         if (!expensePageMap.has(expense.id)) {
           expensePageMap.set(expense.id, pageNumber);
-          
-          // IMEDIATAMENTE CRIAR O LINK CORRESPONDENTE NA TABELA DA SEÇÃO 5
-          const rowData = tableRowData.find(row => row.expenseId === expense.id);
-          console.log(`[LINK DEBUG] Processando expense.id=${expense.id}, targetPage=${pageNumber}`);
-          console.log(`[LINK DEBUG] rowData encontrada:`, rowData ? `página=${rowData.page}, y=${rowData.y}, expenseId=${rowData.expenseId}` : 'null');
-          
-          if (rowData) {
-            // Salvar página atual usando a API correta do jsPDF
-            const currentPage = pdf.internal.pages.length;
-            
-            // Ir para a página da tabela e criar o link
-            pdf.setPage(rowData.page);
-            
-            const padding = 1;
-            const linkY = rowData.y + padding;
-            // Usar altura fixa para evitar sobreposições entre linhas
-            const linkHeight = 6;
-            
-            console.log(`[LINK DEBUG] Criando link: da página ${rowData.page} para página ${pageNumber}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
-            pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: pageNumber });
-            
-            // Voltar para a página onde estávamos
-            pdf.setPage(pageNumber);
-          } else {
-            console.log(`[LINK DEBUG] ERRO: Nenhuma rowData encontrada para expense.id=${expense.id}`);
-          }
+          console.log(`[LINK DEBUG] Mapeando expense.id=${expense.id} para targetPage=${pageNumber}`);
         }
 
         // Cabeçalho da despesa
@@ -2374,8 +2349,35 @@ export default function Reports() {
         // Separador removido pois cada despesa agora está em página separada
       }
 
-      // Links já foram criados durante o processamento da seção 6
-      updateProgress(85, "Finalizando links da tabela...");
+      // ===== CRIAR TODOS OS LINKS APÓS DOCUMENTO COMPLETO =====
+      updateProgress(85, "Criando links finais da tabela...");
+      
+      // Encontrar a página da tabela (seção 5)
+      const summaryPageNo = sectionPageMap["TABELA RESUMO DE DESPESAS"];
+      console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
+      
+      if (summaryPageNo) {
+        // Ir para a página da tabela
+        pdf.setPage(summaryPageNo);
+        
+        // Criar links para cada linha em ordem crescente de Y
+        tableRowData
+          .sort((a, b) => a.y - b.y) // Garantir ordem crescente de Y
+          .forEach((rowData, index) => {
+            const targetPage = expensePageMap.get(rowData.expenseId);
+            
+            if (targetPage) {
+              const padding = 1;
+              const linkY = rowData.y + padding;
+              const linkHeight = 6;
+              
+              console.log(`[LINK FINAL] Linha ${index}: expense=${rowData.expenseId} da página ${summaryPageNo} para página ${targetPage}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
+              pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+            } else {
+              console.log(`[LINK FINAL] ERRO: Nenhuma página alvo para expense=${rowData.expenseId}`);
+            }
+          });
+      }
 
       // ===== 7. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
