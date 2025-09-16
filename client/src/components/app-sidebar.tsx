@@ -36,8 +36,8 @@ const menuItems = [
   },
   {
     title: "Pais",
-    url: "/parents",
-    icon: "people",
+    url: "/parents", 
+    icon: "family_restroom",
     description: "Cadastrar dados dos pais",
   },
   {
