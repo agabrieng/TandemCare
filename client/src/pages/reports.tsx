@@ -1937,7 +1937,7 @@ export default function Reports() {
       pdf.setFontSize(10);
       pdf.setFont("times", "italic");
       pdf.setTextColor(0, 0, 255); // Azul
-      const linkNote = "Nota: Clique em qualquer linha da tabela abaixo para ir diretamente aos detalhes da despesa na seção 6.";
+      const linkNote = "Nota: Clique na data de qualquer despesa na tabela abaixo para ir diretamente aos detalhes da despesa na seção 6.";
       const linkNoteLines = pdf.splitTextToSize(linkNote, contentWidth);
       linkNoteLines.forEach((line: string) => {
         pdf.text(line, margins.left, yPosition);
@@ -2034,9 +2034,6 @@ export default function Reports() {
         // Resetar posição x e desenhar conteúdo das células
         xPos = margins.left;
         
-        // Configurar cor de link (azul) para toda a linha
-        pdf.setTextColor(0, 0, 255); // Azul para indicar link clicável
-        
         cellData.forEach((lines, index) => {
           const cellX = xPos + 2;
           let cellY = yPosition;
@@ -2045,6 +2042,13 @@ export default function Reports() {
           if (lines.length < maxLines) {
             const extraSpace = (maxLines - lines.length) * 4.5;
             cellY += extraSpace / 2;
+          }
+          
+          // Configurar cor de link (azul) apenas para a coluna Data (index 0)
+          if (index === 0) {
+            pdf.setTextColor(0, 0, 255); // Azul para indicar link clicável na coluna Data
+          } else {
+            pdf.setTextColor(0, 0, 0); // Preto para as outras colunas
           }
           
           lines.forEach((line: string, lineIndex: number) => {
@@ -2057,21 +2061,13 @@ export default function Reports() {
         // Voltar cor do texto para preto
         pdf.setTextColor(0, 0, 0);
         
-        // Adicionar indicador visual de link no final da linha
-        const linkIconX = margins.left + tableColWidths.reduce((sum, width) => sum + width, 0) + 2;
-        pdf.setTextColor(0, 0, 255); // Azul para o ícone de link
-        pdf.setFontSize(8);
-        pdf.text("🔗", linkIconX, yPosition);
-        pdf.setFontSize(10);
-        pdf.setTextColor(0, 0, 0);
-        
-        // Adicionar link clicável na linha inteira que leva para a página da despesa na seção 6
+        // Adicionar link clicável apenas na coluna Data que leva para a página da despesa na seção 6
         const targetPage = expensePageMap.get(expense.id);
         if (targetPage) {
           const linkArea = {
-            x: margins.left,
+            x: margins.left, // Início da coluna Data
             y: yPosition - 5,
-            width: tableColWidths.reduce((sum, width) => sum + width, 0),
+            width: tableColWidths[0], // Largura apenas da coluna Data
             height: rowHeight
           };
           
