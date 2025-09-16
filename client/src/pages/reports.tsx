@@ -2805,8 +2805,8 @@ export default function Reports() {
       // ===== CRIAR TODOS OS LINKS COMO ÚLTIMO PASSO =====
       updateProgress(88, "Criando links finais da tabela...");
       
-      // Encontrar a página da tabela (seção 5)
-      const summaryPageNo = sectionPageMap["DETALHAMENTO DAS DESPESAS"];
+      // Encontrar a página da tabela (seção 5) - A tabela está na ANÁLISE FINANCEIRA, não no DETALHAMENTO
+      const summaryPageNo = sectionPageMap["ANÁLISE FINANCEIRA"];
       console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
       console.log(`[LINK FINAL] Mapeamento completo de seções:`, sectionPageMap);
       console.log(`[LINK FINAL] Dados da tabela encontrados:`, tableRowData.length, "linhas");
