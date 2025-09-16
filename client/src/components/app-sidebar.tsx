@@ -35,9 +35,15 @@ const menuItems = [
     description: "Gerenciar perfis dos filhos",
   },
   {
+    title: "TESTE PAIS",
+    url: "/parents", 
+    icon: "dashboard",
+    description: "TESTE - Cadastrar dados dos pais",
+  },
+  {
     title: "Pais",
     url: "/parents", 
-    icon: "family_restroom",
+    icon: "person",
     description: "Cadastrar dados dos pais",
   },
   {
@@ -60,6 +66,8 @@ const menuItems = [
     description: "Análises e estatísticas",
   },
 ];
+
+console.log("DEBUG SIDEBAR - Menu items:", menuItems);
 
 export function AppSidebar() {
   const { user, logout } = useAuth() as any;
