@@ -2144,7 +2144,8 @@ export default function Reports() {
             
             const padding = 1;
             const linkY = rowData.y + padding;
-            const linkHeight = Math.max(6, rowData.height - 2 * padding);
+            // Usar altura fixa para evitar sobreposições entre linhas
+            const linkHeight = 6;
             
             console.log(`[LINK DEBUG] Criando link: da página ${rowData.page} para página ${pageNumber}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
             pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: pageNumber });
