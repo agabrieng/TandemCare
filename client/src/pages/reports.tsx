@@ -1954,6 +1954,18 @@ export default function Reports() {
       
       pdf.setFont("times", "normal");
       
+      // Calcular antecipadamente as páginas onde cada despesa estará na seção 6
+      const expensePageMap = new Map<string, number>();
+      let predictedPageNumber = pageNumber + 1; // Seção 6 começará na próxima página
+      predictedPageNumber++; // Página de introdução da seção 6
+      
+      sortedExpenses.forEach((expense: any, index: number) => {
+        if (index > 0) {
+          predictedPageNumber++; // Cada despesa (exceto a primeira) terá sua própria página
+        }
+        expensePageMap.set(expense.id, predictedPageNumber);
+      });
+      
       sortedExpenses.forEach((expense: any) => {
         // Calcular altura necessária para esta linha com quebras de texto
         const descriptionLines = pdf.splitTextToSize(expense.description, tableColWidths[1] - 4);
@@ -2018,6 +2030,19 @@ export default function Reports() {
           
           xPos += tableColWidths[index];
         });
+        
+        // Adicionar link clicável na linha inteira que leva para a página da despesa na seção 6
+        const targetPage = expensePageMap.get(expense.id);
+        if (targetPage) {
+          const linkArea = {
+            x: margins.left,
+            y: yPosition - 5,
+            width: tableColWidths.reduce((sum, width) => sum + width, 0),
+            height: rowHeight
+          };
+          
+          pdf.link(linkArea.x, linkArea.y, linkArea.width, linkArea.height, { pageNumber: targetPage });
+        }
         
         yPosition += rowHeight;
       });
