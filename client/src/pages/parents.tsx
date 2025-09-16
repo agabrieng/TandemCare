@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, Users, Calendar, Edit, Trash2, Phone, Mail, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ParentForm } from "@/components/ui/parent-form";
+import { ParentForm } from "@/components/ui/parent-form.tsx";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProgressIndicator } from "@/components/ui/progress-indicator";
 import { useLoadingProgress } from "@/hooks/use-progress";
