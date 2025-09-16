@@ -22,6 +22,8 @@ interface Child {
   lastName?: string;
   dateOfBirth?: string;
   profileImageUrl?: string;
+  motherId?: string;
+  fatherId?: string;
   createdAt: string;
   updatedAt: string;
 }
