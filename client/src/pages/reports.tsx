@@ -917,9 +917,14 @@ export default function Reports() {
       pdf.text("INFORMAÇÕES CADASTRAIS", pageWidth / 2, yPosition, { align: "center" });
       
       // Obter crianças incluídas no relatório
+      console.log("Debug relatório - selectedChildren:", selectedChildren);
+      console.log("Debug relatório - children total:", children.length, children);
+      
       const reportChildren = selectedChildren.length > 0 
         ? children.filter(child => selectedChildren.includes(child.id))
         : children;
+      
+      console.log("Debug relatório - reportChildren final:", reportChildren.length, reportChildren);
       
       yPosition += 15;
       pdf.setFontSize(10);
