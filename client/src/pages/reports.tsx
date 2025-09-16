@@ -2074,6 +2074,9 @@ export default function Reports() {
           height: rowHeight
         });
         
+        // Debug: log da linha capturada
+        console.log(`[DEBUG] Linha capturada: Data=${format(new Date(expense.expenseDate), 'dd/MM/yy')}, ID=${expense.id}, Página=${pageNumber}`);
+        
         yPosition += rowHeight;
       });
 
@@ -2124,6 +2127,8 @@ export default function Reports() {
         // REGISTRAR APENAS A PRIMEIRA PÁGINA ONDE ESTA DESPESA ESTÁ LOCALIZADA
         if (!expensePageMap.has(expense.id)) {
           expensePageMap.set(expense.id, pageNumber);
+          // Debug: log do mapeamento da despesa
+          console.log(`[DEBUG] Despesa mapeada: Data=${format(new Date(expense.expenseDate), 'dd/MM/yyyy')}, ID=${expense.id}, Página=${pageNumber}, Index=${index}`);
         }
 
         // Cabeçalho da despesa
@@ -2350,11 +2355,16 @@ export default function Reports() {
       tableRowData.forEach((rowData) => {
         const targetPage = expensePageMap.get(rowData.expenseId);
         if (targetPage) {
+          // Debug: log do link sendo adicionado
+          console.log(`[DEBUG] Adicionando link: ExpenseID=${rowData.expenseId}, LinhaPágina=${rowData.page}, DestinoPágina=${targetPage}`);
+          
           // Ir para a página onde esta linha da tabela está localizada
           pdf.setPage(rowData.page);
           
           // Adicionar o link usando as coordenadas exatas capturadas
           pdf.link(rowData.x, rowData.y, rowData.width, rowData.height, { pageNumber: targetPage });
+        } else {
+          console.log(`[DEBUG] ERRO: Nenhuma página encontrada para ExpenseID=${rowData.expenseId}`);
         }
       });
 
