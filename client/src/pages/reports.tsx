@@ -944,7 +944,7 @@ export default function Reports() {
       
       // Subtítulo adicional - Padrão ABNT
       yPosition += 10;
-      pdf.setFontSize(08);
+      pdf.setFontSize(8);
       pdf.setFont("times", "normal");
       pdf.text("Conforme boas práticas contábeis", pageWidth / 2, yPosition, { align: "center" });
       
