@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
-import type { Category, Lawyer, LegalCase } from "@shared/schema";
+import type { Category, Lawyer, LegalCase, Parent, Child } from "@shared/schema";
 // PDF.js será carregado dinamicamente
 
 // Registrar os componentes do Chart.js
@@ -31,12 +32,6 @@ interface Expense {
   receipts: any[];
 }
 
-interface Child {
-  id: string;
-  firstName: string;
-  lastName?: string;
-  dateOfBirth?: string;
-}
 
 interface DashboardStats {
   totalSpent: number;
@@ -687,6 +682,7 @@ export default function Reports() {
   } | null>(null);
 
   const { showProgress, updateProgress, hideProgress } = useGlobalProgress();
+  const { toast } = useToast();
 
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
@@ -695,6 +691,11 @@ export default function Reports() {
 
   const { data: children = [] } = useQuery<Child[]>({
     queryKey: ["/api/children"],
+    retry: false,
+  });
+
+  const { data: parents = [], isLoading: isLoadingParents, isError: isErrorParents } = useQuery<Parent[]>({
+    queryKey: ["/api/parents"],
     retry: false,
   });
 
@@ -839,6 +840,25 @@ export default function Reports() {
     let timeoutIds: NodeJS.Timeout[] = [];
     
     try {
+      // Verificar se os dados dos pais ainda estão carregando
+      if (isLoadingParents) {
+        toast({
+          title: "Aguarde",
+          description: "Os dados dos pais ainda estão sendo carregados. Tente novamente em alguns segundos.",
+          variant: "default",
+        });
+        return;
+      }
+      
+      if (isErrorParents) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados dos pais. Verifique sua conexão e tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Iniciar progresso
       showProgress("Preparando relatório...", "Gerando Relatório PDF");
       
@@ -890,8 +910,106 @@ export default function Reports() {
       pdf.setFont("times", "normal");
       pdf.text(`Período analisado: ${formatDate(report.period.start)} a ${formatDate(report.period.end)}`, pageWidth / 2, yPosition, { align: "center" });
       
+      // ===== INFORMAÇÕES CADASTRAIS =====
+      yPosition = 190;
+      pdf.setFontSize(11);
+      pdf.setFont("times", "bold");
+      pdf.text("INFORMAÇÕES CADASTRAIS", pageWidth / 2, yPosition, { align: "center" });
+      
+      // Obter crianças incluídas no relatório
+      const reportChildren = selectedChildren.length > 0 
+        ? children.filter(child => selectedChildren.includes(child.id))
+        : children;
+      
+      yPosition += 15;
+      pdf.setFontSize(10);
+      pdf.setFont("times", "normal");
+      
+      // Para cada criança no relatório, mostrar os dados dos pais
+      reportChildren.forEach((child, index) => {
+        if (index > 0) yPosition += 5; // Espaço entre crianças
+        
+        // Verificar se precisa de nova página (reservar espaço para informações completas)
+        if (yPosition > pageHeight - 80) {
+          pdf.addPage();
+          addPageNumber(++pageNumber);
+          yPosition = margins.top + 20;
+        }
+        
+        // Nome da criança
+        const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
+        pdf.setFont("times", "bold");
+        pdf.text(`Criança: ${childFullName}`, pageWidth / 2, yPosition, { align: "center" });
+        yPosition += 8;
+        
+        pdf.setFont("times", "normal");
+        
+        // Buscar pai e mãe específicos
+        const father = parents.find(parent => parent.id === child.fatherId);
+        const mother = parents.find(parent => parent.id === child.motherId);
+        
+        if (!father && !mother) {
+          pdf.text("Dados dos pais não cadastrados", pageWidth / 2, yPosition, { align: "center" });
+          yPosition += 8;
+        } else {
+          // Mostrar informações do pai
+          if (father) {
+            pdf.text(`Pai: ${father.fullName}`, pageWidth / 2, yPosition, { align: "center" });
+            yPosition += 6;
+            
+            if (father.cpf) {
+              pdf.text(`CPF: ${father.cpf}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            if (father.city && father.state) {
+              pdf.text(`Endereço: ${father.city} - ${father.state}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            if (father.phone) {
+              pdf.text(`Telefone: ${father.phone}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            if (father.email) {
+              pdf.text(`Email: ${father.email}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            yPosition += 5; // Espaço entre pai e mãe
+          }
+          
+          // Mostrar informações da mãe
+          if (mother) {
+            pdf.text(`Mãe: ${mother.fullName}`, pageWidth / 2, yPosition, { align: "center" });
+            yPosition += 6;
+            
+            if (mother.cpf) {
+              pdf.text(`CPF: ${mother.cpf}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            if (mother.city && mother.state) {
+              pdf.text(`Endereço: ${mother.city} - ${mother.state}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            if (mother.phone) {
+              pdf.text(`Telefone: ${mother.phone}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+            
+            if (mother.email) {
+              pdf.text(`Email: ${mother.email}`, pageWidth / 2, yPosition, { align: "center" });
+              yPosition += 6;
+            }
+          }
+        }
+      });
+      
       // Informações do rodapé da capa
-      yPosition = 250;
+      yPosition = Math.max(yPosition + 20, 260); // Garantir espaço mínimo
       pdf.text("Local: Brasil", pageWidth / 2, yPosition, { align: "center" });
       pdf.text(`Data: ${format(new Date(), 'MMMM \'de\' yyyy', { locale: ptBR })}`, pageWidth / 2, yPosition + 10, { align: "center" });
 
