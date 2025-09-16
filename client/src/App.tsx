@@ -1,23 +1,69 @@
+import { Switch, Route, Redirect } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { Layout } from "@/components/Layout";
+import { ProgressIndicator } from "@/components/ui/progress-indicator";
+import Landing from "@/pages/landing";
+import Dashboard from "@/pages/dashboard";
+import Children from "@/pages/children";
+import Parents from "@/pages/parents";
+import Expenses from "@/pages/expenses";
+import Receipts from "@/pages/receipts";
+import Reports from "@/pages/reports";
+import LegalData from "@/pages/legal-data";
+import Settings from "@/pages/settings";
+import Categories from "@/pages/categories";
+import NotFound from "@/pages/not-found";
+
 function App() {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center p-8">
-        <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-          </svg>
-        </div>
-        <h1 className="text-4xl font-bold text-foreground mb-2">FinanceKids</h1>
-        <p className="text-xl text-muted-foreground mb-4">Gestão Financeira para Filhos</p>
-        <p className="text-lg text-muted-foreground">Teste básico - React funcionando!</p>
-        <button 
-          onClick={() => alert('React está funcionando!')}
-          className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          Testar JavaScript
-        </button>
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <ProgressIndicator 
+          progress={75} 
+          message="Carregando aplicação..." 
+          showPercentage={true}
+          className="max-w-md"
+        />
       </div>
-    </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen">
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route>
+            <Redirect to="/" />
+          </Route>
+        </Switch>
+      </div>
+    );
+  }
+
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/">
+          <Redirect to="/dashboard" />
+        </Route>
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/children" component={Children} />
+        <Route path="/parents" component={Parents} />
+        <Route path="/expenses" component={Expenses} />
+        <Route path="/receipts" component={Receipts} />
+        <Route path="/comprovantes">
+          <Redirect to="/receipts" />
+        </Route>
+        <Route path="/reports" component={Reports} />
+        <Route path="/legal-data" component={LegalData} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/categories" component={Categories} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }
 
