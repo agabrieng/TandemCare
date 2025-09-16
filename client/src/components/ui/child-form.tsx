@@ -61,8 +61,8 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
       dateOfBirth: initialData?.dateOfBirth || "",
       relationship: initialData?.relationship || "pai/mãe",
       profileImageUrl: initialData?.profileImageUrl || "",
-      motherId: initialData?.motherId || "",
-      fatherId: initialData?.fatherId || "",
+      motherId: initialData?.motherId || undefined,
+      fatherId: initialData?.fatherId || undefined,
     },
   });
 
@@ -169,6 +169,8 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
       ...data,
       lastName: data.lastName?.trim() || undefined,
       dateOfBirth: data.dateOfBirth || undefined,
+      motherId: data.motherId || undefined,
+      fatherId: data.fatherId || undefined,
     };
     onSubmit(formattedData, uploadedPhoto || undefined);
   };
@@ -287,7 +289,7 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
               <div className="space-y-2">
                 <Label htmlFor="motherId">Mãe</Label>
                 <Select
-                  value={watch("motherId") || ""}
+                  value={watch("motherId") ?? ""}
                   onValueChange={(value) => setValue("motherId", value === "" ? undefined : value)}
                   disabled={parentsLoading}
                 >
@@ -314,7 +316,7 @@ export function ChildForm({ onSubmit, onCancel, isLoading = false, initialData }
               <div className="space-y-2">
                 <Label htmlFor="fatherId">Pai</Label>
                 <Select
-                  value={watch("fatherId") || ""}
+                  value={watch("fatherId") ?? ""}
                   onValueChange={(value) => setValue("fatherId", value === "" ? undefined : value)}
                   disabled={parentsLoading}
                 >
