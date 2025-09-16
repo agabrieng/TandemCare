@@ -1973,17 +1973,16 @@ export default function Reports() {
       
       pdf.setFont("times", "normal");
       
-      // Calcular antecipadamente as páginas onde cada despesa estará na seção 6
-      const expensePageMap = new Map<string, number>();
-      let predictedPageNumber = pageNumber + 1; // Seção 6 começará na próxima página
-      predictedPageNumber++; // Página de introdução da seção 6
-      
-      sortedExpenses.forEach((expense: any, index: number) => {
-        if (index > 0) {
-          predictedPageNumber++; // Cada despesa (exceto a primeira) terá sua própria página
-        }
-        expensePageMap.set(expense.id, predictedPageNumber);
-      });
+      // Mapas para links corretos
+      const expensePageMap = new Map<string, number>(); // Primeira página de cada despesa na seção 6
+      const tableRowData: Array<{
+        expenseId: string;
+        page: number;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }> = []; // Coordenadas das linhas da tabela para adicionar links depois
       
       sortedExpenses.forEach((expense: any) => {
         // Calcular altura necessária para esta linha com quebras de texto
@@ -2065,18 +2064,15 @@ export default function Reports() {
         pdf.setFontSize(10);
         pdf.setTextColor(0, 0, 0);
         
-        // Adicionar link clicável na linha inteira que leva para a página da despesa na seção 6
-        const targetPage = expensePageMap.get(expense.id);
-        if (targetPage) {
-          const linkArea = {
-            x: margins.left,
-            y: yPosition - 5,
-            width: tableColWidths.reduce((sum, width) => sum + width, 0),
-            height: rowHeight
-          };
-          
-          pdf.link(linkArea.x, linkArea.y, linkArea.width, linkArea.height, { pageNumber: targetPage });
-        }
+        // Capturar coordenadas desta linha para adicionar link depois
+        tableRowData.push({
+          expenseId: expense.id,
+          page: pageNumber,
+          x: margins.left,
+          y: yPosition - 5,
+          width: tableColWidths.reduce((sum, width) => sum + width, 0),
+          height: rowHeight
+        });
         
         yPosition += rowHeight;
       });
@@ -2123,6 +2119,11 @@ export default function Reports() {
           pageNumber++;
 
           yPosition = margins.top + 20;
+        }
+
+        // REGISTRAR APENAS A PRIMEIRA PÁGINA ONDE ESTA DESPESA ESTÁ LOCALIZADA
+        if (!expensePageMap.has(expense.id)) {
+          expensePageMap.set(expense.id, pageNumber);
         }
 
         // Cabeçalho da despesa
@@ -2245,6 +2246,8 @@ export default function Reports() {
                       pageNumber++;
             
                       yPosition = margins.top + 20;
+                      // Atualizar o mapa de páginas se a quebra de página mudou a localização da despesa
+                      expensePageMap.set(expense.id, pageNumber);
                     }
                     
                     // Centralizar a imagem se ela for menor que a largura máxima
@@ -2264,6 +2267,8 @@ export default function Reports() {
                       pageNumber++;
             
                       yPosition = margins.top + 20;
+                      // Atualizar o mapa de páginas se a quebra de página mudou a localização da despesa
+                      expensePageMap.set(expense.id, pageNumber);
                     }
                     
                     pdf.setDrawColor(108, 117, 125);
@@ -2337,6 +2342,21 @@ export default function Reports() {
         
         // Separador removido pois cada despesa agora está em página separada
       }
+
+      // ===== CORRIGIR LINKS DA TABELA COM PÁGINAS REAIS =====
+      updateProgress(85, "Corrigindo links da tabela...");
+      
+      // Agora que temos os números de página reais das despesas, adicionar links usando as coordenadas capturadas
+      tableRowData.forEach((rowData) => {
+        const targetPage = expensePageMap.get(rowData.expenseId);
+        if (targetPage) {
+          // Ir para a página onde esta linha da tabela está localizada
+          pdf.setPage(rowData.page);
+          
+          // Adicionar o link usando as coordenadas exatas capturadas
+          pdf.link(rowData.x, rowData.y, rowData.width, rowData.height, { pageNumber: targetPage });
+        }
+      });
 
       // ===== 7. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
