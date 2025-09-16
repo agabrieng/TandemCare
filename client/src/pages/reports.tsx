@@ -939,14 +939,14 @@ export default function Reports() {
       
       // Subtítulo
       yPosition += 12;
-      pdf.setFontSize(14);
-      pdf.text("DE DESPESAS OBRIGATÓRIAS", pageWidth / 2, yPosition, { align: "center" });
+      pdf.setFontSize(16);
+      pdf.text("DESPESAS OBRIGATÓRIAS E NÃO OBRIGATÓRIAS", pageWidth / 2, yPosition, { align: "center" });
       
       // Subtítulo adicional - Padrão ABNT
       yPosition += 10;
-      pdf.setFontSize(11);
+      pdf.setFontSize(08);
       pdf.setFont("times", "normal");
-      pdf.text("Conforme Normas ABNT para Prestação de Contas Judicial", pageWidth / 2, yPosition, { align: "center" });
+      pdf.text("Conforme boas práticas contábeis", pageWidth / 2, yPosition, { align: "center" });
       
       // Período de análise
       yPosition = 160;
