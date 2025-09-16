@@ -2349,35 +2349,8 @@ export default function Reports() {
         // Separador removido pois cada despesa agora está em página separada
       }
 
-      // ===== CRIAR TODOS OS LINKS APÓS DOCUMENTO COMPLETO =====
-      updateProgress(85, "Criando links finais da tabela...");
-      
-      // Encontrar a página da tabela (seção 5)
-      const summaryPageNo = sectionPageMap["DETALHAMENTO DAS DESPESAS"];
-      console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
-      
-      if (summaryPageNo) {
-        // Ir para a página da tabela
-        pdf.setPage(summaryPageNo);
-        
-        // Criar links para cada linha em ordem crescente de Y
-        tableRowData
-          .sort((a, b) => a.y - b.y) // Garantir ordem crescente de Y
-          .forEach((rowData, index) => {
-            const targetPage = expensePageMap.get(rowData.expenseId);
-            
-            if (targetPage) {
-              const padding = 1;
-              const linkY = rowData.y + padding;
-              const linkHeight = 6;
-              
-              console.log(`[LINK FINAL] Linha ${index}: expense=${rowData.expenseId} da página ${summaryPageNo} para página ${targetPage}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
-              pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
-            } else {
-              console.log(`[LINK FINAL] ERRO: Nenhuma página alvo para expense=${rowData.expenseId}`);
-            }
-          });
-      }
+      // Links serão criados no final após numeração ABNT
+      updateProgress(85, "Preparando criação de links...");
 
       // ===== 7. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
@@ -2828,6 +2801,36 @@ export default function Reports() {
       }
       
       console.log(`[ABNT Debug] Numeração ABNT aplicada com sucesso!`);
+
+      // ===== CRIAR TODOS OS LINKS COMO ÚLTIMO PASSO =====
+      updateProgress(88, "Criando links finais da tabela...");
+      
+      // Encontrar a página da tabela (seção 5)
+      const summaryPageNo = sectionPageMap["DETALHAMENTO DAS DESPESAS"];
+      console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
+      
+      if (summaryPageNo) {
+        // Ir para a página da tabela
+        pdf.setPage(summaryPageNo);
+        
+        // Criar links para cada linha em ordem crescente de Y
+        tableRowData
+          .sort((a, b) => a.y - b.y) // Garantir ordem crescente de Y
+          .forEach((rowData, index) => {
+            const targetPage = expensePageMap.get(rowData.expenseId);
+            
+            if (targetPage) {
+              const padding = 1;
+              const linkY = rowData.y + padding;
+              const linkHeight = 6;
+              
+              console.log(`[LINK FINAL] Linha ${index}: expense=${rowData.expenseId} da página ${summaryPageNo} para página ${targetPage}, coords=(${rowData.x},${linkY},${rowData.width},${linkHeight})`);
+              pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+            } else {
+              console.log(`[LINK FINAL] ERRO: Nenhuma página alvo para expense=${rowData.expenseId}`);
+            }
+          });
+      }
 
       // Gerar o PDF como blob
       updateProgress(90, "Finalizando documento...");
