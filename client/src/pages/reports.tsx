@@ -1928,7 +1928,23 @@ export default function Reports() {
         yPosition += 6;
       });
       
-      yPosition += 10;
+      yPosition += 6;
+      
+      // Adicionar nota sobre links clicáveis
+      pdf.setFontSize(10);
+      pdf.setFont("times", "italic");
+      pdf.setTextColor(0, 0, 255); // Azul
+      const linkNote = "Nota: Clique em qualquer linha da tabela abaixo para ir diretamente aos detalhes da despesa na seção 6.";
+      const linkNoteLines = pdf.splitTextToSize(linkNote, contentWidth);
+      linkNoteLines.forEach((line: string) => {
+        pdf.text(line, margins.left, yPosition);
+        yPosition += 5;
+      });
+      
+      pdf.setTextColor(0, 0, 0); // Voltar para preto
+      pdf.setFont("times", "normal");
+      pdf.setFontSize(12);
+      yPosition += 8;
       
       yPosition += 15;
       pdf.setFontSize(10);
@@ -2014,6 +2030,10 @@ export default function Reports() {
         
         // Resetar posição x e desenhar conteúdo das células
         xPos = margins.left;
+        
+        // Configurar cor de link (azul) para toda a linha
+        pdf.setTextColor(0, 0, 255); // Azul para indicar link clicável
+        
         cellData.forEach((lines, index) => {
           const cellX = xPos + 2;
           let cellY = yPosition;
@@ -2030,6 +2050,17 @@ export default function Reports() {
           
           xPos += tableColWidths[index];
         });
+        
+        // Voltar cor do texto para preto
+        pdf.setTextColor(0, 0, 0);
+        
+        // Adicionar indicador visual de link no final da linha
+        const linkIconX = margins.left + tableColWidths.reduce((sum, width) => sum + width, 0) + 2;
+        pdf.setTextColor(0, 0, 255); // Azul para o ícone de link
+        pdf.setFontSize(8);
+        pdf.text("🔗", linkIconX, yPosition);
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
         
         // Adicionar link clicável na linha inteira que leva para a página da despesa na seção 6
         const targetPage = expensePageMap.get(expense.id);
