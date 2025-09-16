@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertChildSchema, insertExpenseSchema, insertReceiptSchema, insertLawyerSchema, insertLegalCaseSchema, insertCategorySchema } from "@shared/schema";
+import { insertChildSchema, insertExpenseSchema, insertReceiptSchema, insertLawyerSchema, insertLegalCaseSchema, insertCategorySchema, insertParentSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -97,6 +97,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting child:", error);
       res.status(500).json({ message: "Failed to delete child" });
+    }
+  });
+
+  // Parents routes
+  app.get('/api/parents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const parents = await storage.getParents(userId);
+      res.json(parents);
+    } catch (error) {
+      console.error("Error fetching parents:", error);
+      res.status(500).json({ message: "Failed to fetch parents" });
+    }
+  });
+
+  app.post('/api/parents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const parentData = insertParentSchema.parse({ ...req.body, userId });
+      
+      const parent = await storage.createParent(parentData);
+      res.status(201).json(parent);
+    } catch (error) {
+      console.error("Error creating parent:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create parent" });
+      }
+    }
+  });
+
+  app.put('/api/parents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verificar se o parent pertence ao usuário
+      const existingParent = await storage.getParentById(id);
+      if (!existingParent || existingParent.userId !== userId) {
+        return res.status(404).json({ message: "Parent not found" });
+      }
+      
+      // Remover userId do payload para prevenir alteração de ownership
+      const { userId: _, ...updateData } = req.body;
+      const parentData = insertParentSchema.partial().parse(updateData);
+      
+      const updatedParent = await storage.updateParent(id, parentData);
+      res.json(updatedParent);
+    } catch (error) {
+      console.error("Error updating parent:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update parent" });
+      }
+    }
+  });
+
+  app.delete('/api/parents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verificar se o parent pertence ao usuário
+      const existingParent = await storage.getParentById(id);
+      if (!existingParent || existingParent.userId !== userId) {
+        return res.status(404).json({ message: "Parent not found" });
+      }
+      
+      await storage.deleteParent(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting parent:", error);
+      res.status(500).json({ message: "Failed to delete parent" });
+    }
+  });
+
+  app.get('/api/parents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.claims.sub;
+      
+      const parent = await storage.getParentById(id);
+      if (!parent || parent.userId !== userId) {
+        return res.status(404).json({ message: "Parent not found" });
+      }
+      
+      res.json(parent);
+    } catch (error) {
+      console.error("Error fetching parent:", error);
+      res.status(500).json({ message: "Failed to fetch parent" });
     }
   });
 

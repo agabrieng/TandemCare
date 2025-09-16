@@ -35,6 +35,12 @@ const menuItems = [
     description: "Gerenciar perfis dos filhos",
   },
   {
+    title: "Pais",
+    url: "/parents",
+    icon: "people",
+    description: "Cadastrar dados dos pais",
+  },
+  {
     title: "Despesas",
     url: "/expenses",
     icon: "receipt_long",

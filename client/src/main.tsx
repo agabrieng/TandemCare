@@ -11,6 +11,7 @@ import { ProgressIndicator } from "@/components/ui/progress-indicator";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Children from "@/pages/children";
+import Parents from "@/pages/parents";
 import Expenses from "@/pages/expenses";
 import Receipts from "@/pages/receipts";
 import Reports from "@/pages/reports";
@@ -57,6 +58,7 @@ function App() {
         </Route>
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/children" component={Children} />
+        <Route path="/parents" component={Parents} />
         <Route path="/expenses" component={Expenses} />
         <Route path="/receipts" component={Receipts} />
         <Route path="/comprovantes">

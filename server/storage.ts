@@ -7,6 +7,7 @@ import {
   lawyers,
   legalCases,
   categories,
+  parents,
   type User,
   type UpsertUser,
   type Child,
@@ -25,6 +26,8 @@ import {
   type InsertLegalCase,
   type Category,
   type InsertCategory,
+  type Parent,
+  type InsertParent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count, sum, gte, lte } from "drizzle-orm";
@@ -44,6 +47,13 @@ export interface IStorage {
   // User-Child relationships
   addUserChild(relationship: InsertUserChild): Promise<UserChild>;
   getUserChildren(userId: string): Promise<UserChild[]>;
+  
+  // Parent operations
+  getParents(userId: string): Promise<Parent[]>;
+  createParent(parent: InsertParent): Promise<Parent>;
+  updateParent(id: string, parent: Partial<InsertParent>): Promise<Parent>;
+  deleteParent(id: string): Promise<void>;
+  getParentById(id: string): Promise<Parent | undefined>;
   
   // Expense operations
   getExpenses(userId: string, filters?: {
@@ -202,6 +212,44 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(userChildren)
       .where(eq(userChildren.userId, userId));
+  }
+
+  // Parent operations
+  async getParents(userId: string): Promise<Parent[]> {
+    return await db
+      .select()
+      .from(parents)
+      .where(eq(parents.userId, userId))
+      .orderBy(desc(parents.createdAt));
+  }
+
+  async createParent(parent: InsertParent): Promise<Parent> {
+    const [newParent] = await db
+      .insert(parents)
+      .values(parent)
+      .returning();
+    return newParent;
+  }
+
+  async updateParent(id: string, parent: Partial<InsertParent>): Promise<Parent> {
+    const [updatedParent] = await db
+      .update(parents)
+      .set({ ...parent, updatedAt: new Date() })
+      .where(eq(parents.id, id))
+      .returning();
+    return updatedParent;
+  }
+
+  async deleteParent(id: string): Promise<void> {
+    await db.delete(parents).where(eq(parents.id, id));
+  }
+
+  async getParentById(id: string): Promise<Parent | undefined> {
+    const [parent] = await db
+      .select()
+      .from(parents)
+      .where(eq(parents.id, id));
+    return parent;
   }
 
   // Expense operations
