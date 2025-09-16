@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Home, 
   Users, 
+  UserCheck, 
   Receipt, 
   FileText, 
   BarChart3, 
@@ -48,6 +49,12 @@ const menuItems = [
     url: "/children",
     icon: Users,
     description: "Gerenciar perfis dos filhos",
+  },
+  {
+    title: "Pais",
+    url: "/parents",
+    icon: UserCheck,
+    description: "Cadastrar dados dos pais",
   },
   {
     title: "Despesas",

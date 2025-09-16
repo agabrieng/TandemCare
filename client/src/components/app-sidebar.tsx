@@ -35,18 +35,6 @@ const menuItems = [
     description: "Gerenciar perfis dos filhos",
   },
   {
-    title: "TESTE PAIS",
-    url: "/parents", 
-    icon: "dashboard",
-    description: "TESTE - Cadastrar dados dos pais",
-  },
-  {
-    title: "Pais",
-    url: "/parents", 
-    icon: "person",
-    description: "Cadastrar dados dos pais",
-  },
-  {
     title: "Despesas",
     url: "/expenses",
     icon: "receipt_long",
