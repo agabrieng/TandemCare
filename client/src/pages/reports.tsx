@@ -1673,13 +1673,13 @@ export default function Reports() {
       let complianceText = "";
       
       if (complianceScore >= 90) {
-        complianceText = "EXCELENTE - A documentação apresenta-se de forma completa e organizada, atendendo plenamente aos requisitos de transparência e comprovação judicial. Todas as despesas possuem comprovação adequada.";
+        complianceText = "EXCELENTE - A documentação apresenta-se amplamente completa e organizada, com comprovantes para praticamente todas as despesas declaradas. A organização facilita a análise e verificação das informações.";
       } else if (complianceScore >= 70) {
-        complianceText = "ADEQUADA - A documentação atende aos requisitos mínimos para análise judicial, porém recomenda-se a melhoria na organização dos comprovantes para fortalecer a prestação de contas.";
+        complianceText = "ADEQUADA - A documentação apresenta boa organização, com a maioria das despesas acompanhadas de comprovantes. Recomenda-se a inclusão dos comprovantes faltantes quando disponíveis.";
       } else if (complianceScore >= 50) {
-        complianceText = "PARCIAL - A documentação apresenta algumas deficiências que podem comprometer a análise judicial. Recomenda-se a complementação dos comprovantes faltantes.";
+        complianceText = "PARCIAL - A documentação apresenta organização moderada, com algumas despesas sem comprovantes anexados. As despesas declaradas podem ser evidenciadas por outros meios conforme necessário.";
       } else {
-        complianceText = "INSUFICIENTE - A documentação apresenta deficiências significativas que comprometem a transparência da prestação de contas e podem prejudicar a análise judicial.";
+        complianceText = "DOCUMENTAÇÃO INCOMPLETA - Há despesas sem comprovantes anexados. A ausência de comprovantes não invalida o relatório e não impede a análise; as despesas podem ser evidenciadas por outros meios conforme necessário.";
       }
       
       const complianceLines = pdf.splitTextToSize(complianceText, contentWidth);
