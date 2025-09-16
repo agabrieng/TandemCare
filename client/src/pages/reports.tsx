@@ -2011,9 +2011,10 @@ export default function Reports() {
           pdf.setFont("times", "normal");
         }
 
-        // CAPTURAR COORDENADAS EXATAS DA LINHA ANTES DE RENDERIZAR
-        const yTop = yPosition; // Topo exato da linha SEM offsets
         const rowWidth = tableColWidths.reduce((sum, width) => sum + width, 0);
+        
+        // CAPTURAR COORDENADAS EXATAS ALINHADAS COM AS BORDAS DAS CÉLULAS
+        const cellTop = yPosition - 5; // Alinhar com onde realmente desenho as bordas
         
         xPos = margins.left;
         
@@ -2068,12 +2069,12 @@ export default function Reports() {
         pdf.setFontSize(10);
         pdf.setTextColor(0, 0, 0);
         
-        // Armazenar coordenadas exatas da linha para links
+        // MANTER APENAS PARA SEGUNDA PASSAGEM (será removido depois)
         tableRowData.push({
           expenseId: expense.id,
           page: pageNumber,
           x: margins.left,
-          y: yTop, // Topo exato sem offsets arbitrários
+          y: cellTop,
           width: rowWidth,
           height: rowHeight
         });
@@ -2350,20 +2351,23 @@ export default function Reports() {
       // ===== CORRIGIR LINKS DA TABELA COM PÁGINAS REAIS =====
       updateProgress(85, "Corrigindo links da tabela...");
       
-      // Agora que temos os números de página reais das despesas, adicionar links usando as coordenadas capturadas
-      tableRowData.forEach((rowData) => {
-        const targetPage = expensePageMap.get(rowData.expenseId);
-        if (targetPage) {
-          // Ir para a página onde esta linha da tabela está localizada
-          pdf.setPage(rowData.page);
-          
-          // Aplicar padding simétrico para evitar sobreposição
-          const padding = 1;
-          const linkY = rowData.y + padding;
-          const linkHeight = Math.max(6, rowData.height - 2 * padding);
-          
-          // Adicionar o link usando coordenadas exatas com padding
-          pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+      // Criar links usando as coordenadas capturadas, garantindo ordem correta
+      tableRowData.forEach((rowData, index) => {
+        const expense = sortedExpenses[index]; // Garantir mesma ordem
+        if (expense && rowData.expenseId === expense.id) {
+          const targetPage = expensePageMap.get(expense.id);
+          if (targetPage) {
+            // Ir para a página onde esta linha da tabela está localizada
+            pdf.setPage(rowData.page);
+            
+            // Aplicar padding simétrico para evitar sobreposição
+            const padding = 1;
+            const linkY = rowData.y + padding;
+            const linkHeight = Math.max(6, rowData.height - 2 * padding);
+            
+            // Adicionar o link usando coordenadas exatas
+            pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+          }
         }
       });
 
