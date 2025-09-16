@@ -2352,10 +2352,17 @@ export default function Reports() {
       updateProgress(85, "Corrigindo links da tabela...");
       
       // Criar links usando as coordenadas capturadas, garantindo ordem correta
+      console.log('[DEBUG] Total de linhas capturadas:', tableRowData.length);
+      console.log('[DEBUG] Total de despesas ordenadas:', sortedExpenses.length);
+      
       tableRowData.forEach((rowData, index) => {
         const expense = sortedExpenses[index]; // Garantir mesma ordem
+        console.log(`[DEBUG] Linha ${index}: ID=${rowData.expenseId}, ExpenseID=${expense?.id}, Match=${expense && rowData.expenseId === expense.id}`);
+        
         if (expense && rowData.expenseId === expense.id) {
           const targetPage = expensePageMap.get(expense.id);
+          console.log(`[DEBUG] Criando link ${index}: ExpenseID=${expense.id}, TargetPage=${targetPage}`);
+          
           if (targetPage) {
             // Ir para a página onde esta linha da tabela está localizada
             pdf.setPage(rowData.page);
@@ -2367,7 +2374,11 @@ export default function Reports() {
             
             // Adicionar o link usando coordenadas exatas
             pdf.link(rowData.x, linkY, rowData.width, linkHeight, { pageNumber: targetPage });
+          } else {
+            console.log(`[DEBUG] ERRO: Nenhuma página alvo encontrada para ExpenseID=${expense.id}`);
           }
+        } else {
+          console.log(`[DEBUG] ERRO: Mismatch na linha ${index} - rowData.expenseId=${rowData.expenseId}, expense.id=${expense?.id}`);
         }
       });
 
