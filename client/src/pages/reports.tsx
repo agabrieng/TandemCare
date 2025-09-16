@@ -2353,7 +2353,7 @@ export default function Reports() {
       updateProgress(85, "Criando links finais da tabela...");
       
       // Encontrar a página da tabela (seção 5)
-      const summaryPageNo = sectionPageMap["TABELA RESUMO DE DESPESAS"];
+      const summaryPageNo = sectionPageMap["DETALHAMENTO DAS DESPESAS"];
       console.log(`[LINK FINAL] Página da tabela: ${summaryPageNo}, Total de páginas: ${pdf.getNumberOfPages()}`);
       
       if (summaryPageNo) {
