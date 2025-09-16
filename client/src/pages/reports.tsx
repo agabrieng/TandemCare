@@ -881,7 +881,11 @@ export default function Reports() {
       let yPosition = margins.top;
       let pageNumber = 1;
 
+      // Estrutura para mapear onde cada seção realmente aparece
+      const sectionPageMap: Record<string, number> = {};
+
       // Função para adicionar numeração de páginas (ABNT - superior direito)
+      // Será usada apenas na segunda passada após inserir o sumário
       const addPageNumber = (pageNum: number) => {
         pdf.setFontSize(10);
         pdf.setFont("times", "normal");
@@ -934,7 +938,6 @@ export default function Reports() {
       updateProgress(35, "Criando página de informações dos filhos...");
       pdf.addPage();
       pageNumber = 2;
-      addPageNumber(pageNumber);
       yPosition = margins.top + 10;
       
       pdf.setFontSize(16);
@@ -1251,63 +1254,11 @@ export default function Reports() {
         }
       }
 
-      // ===== SUMÁRIO (ABNT) =====
-      updateProgress(40, "Gerando sumário...");
-      pdf.addPage();
-      pageNumber++;
-      addPageNumber(pageNumber);
-      yPosition = margins.top + 10;
-      
-      pdf.setFontSize(14);
-      pdf.setFont("times", "bold");
-      pdf.text("SUMÁRIO", pageWidth / 2, yPosition, { align: "center" });
-      
-      yPosition += 20;
-      pdf.setFontSize(12);
-      pdf.setFont("times", "normal");
-      
-      const summaryItems = [
-        { text: "1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", page: (pageNumber + 1).toString() },
-        { text: "2 RESUMO EXECUTIVO", page: (pageNumber + 2).toString() },
-        { text: "3 ANÁLISE FINANCEIRA", page: (pageNumber + 3).toString() },
-        { text: "3.1 Distribuição por categoria", page: (pageNumber + 3).toString() },
-        { text: "3.2 Distribuição por status", page: (pageNumber + 3).toString() },
-        { text: "3.3 Análise de conformidade documental", page: (pageNumber + 3).toString() },
-        { text: "4 GRÁFICOS E INSIGHTS", page: (pageNumber + 4).toString() },
-        { text: "4.1 Distribuição por categoria", page: (pageNumber + 4).toString() },
-        { text: "4.2 Acumulado anual de despesas", page: (pageNumber + 4).toString() },
-        { text: "4.3 Despesas por mês", page: (pageNumber + 5).toString() },
-        { text: "4.4 Tendência de gastos", page: (pageNumber + 5).toString() },
-        { text: "5 DETALHAMENTO DAS DESPESAS", page: (pageNumber + 6).toString() },
-        { text: "6 EXTRATO DE DESPESAS COM COMPROVANTES", page: (pageNumber + 7).toString() },
-        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: (pageNumber + 8).toString() },
-        { text: "REFERÊNCIAS", page: (pageNumber + 9).toString() }
-      ];
-      
-      summaryItems.forEach((item) => {
-        // Texto do item alinhado à esquerda
-        pdf.text(item.text, margins.left, yPosition);
-        
-        // Pontos de preenchimento
-        const textWidth = pdf.getTextWidth(item.text);
-        const pageNumWidth = pdf.getTextWidth(item.page);
-        const availableSpace = contentWidth - textWidth - pageNumWidth;
-        const dotCount = Math.floor(availableSpace / pdf.getTextWidth('.'));
-        const dots = '.'.repeat(Math.max(dotCount, 3));
-        
-        pdf.text(dots, margins.left + textWidth, yPosition);
-        
-        // Número da página alinhado à direita
-        pdf.text(item.page, margins.left + contentWidth - pageNumWidth, yPosition);
-        
-        yPosition += 8;
-      });
-
       // ===== 1. CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA =====
       updateProgress(45, "Criando contexto legal...");
       pdf.addPage();
-      pageNumber = 3;
-      addPageNumber(pageNumber);
+      pageNumber++;
+      sectionPageMap["CONTEXTO LEGAL"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -1369,8 +1320,8 @@ export default function Reports() {
       // ===== 2. RESUMO EXECUTIVO OTIMIZADO =====
       updateProgress(50, "Criando resumo executivo otimizado...");
       pdf.addPage();
-      pageNumber = 3;
-      addPageNumber(pageNumber);
+      pageNumber++;
+      sectionPageMap["RESUMO EXECUTIVO"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -1467,7 +1418,7 @@ export default function Reports() {
       updateProgress(60, "Analisando dados financeiros detalhadamente...");
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["ANÁLISE FINANCEIRA"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -1700,7 +1651,7 @@ export default function Reports() {
       updateProgress(65, "Gerando gráficos e insights...");
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["GRÁFICOS E INSIGHTS"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -1836,7 +1787,7 @@ export default function Reports() {
       updateProgress(70, "Detalhando despesas com observações...");
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["DETALHAMENTO DAS DESPESAS"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -1925,7 +1876,7 @@ export default function Reports() {
       updateProgress(80, "Processando comprovantes...");
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["EXTRATO DE DESPESAS COM COMPROVANTES"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -2181,7 +2132,7 @@ export default function Reports() {
       // ===== 7. CONCLUSÕES E RECOMENDAÇÕES =====
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["CONCLUSÕES E RECOMENDAÇÕES"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -2272,7 +2223,7 @@ export default function Reports() {
       // ===== REFERÊNCIAS =====
       pdf.addPage();
       pageNumber++;
-      addPageNumber(pageNumber);
+      sectionPageMap["REFERÊNCIAS"] = pageNumber;
       yPosition = margins.top + 10;
       
       pdf.setFontSize(14);
@@ -2498,6 +2449,96 @@ export default function Reports() {
       pdf.text("para Filhos de Pais Divorciados", pageWidth / 2, yPosition, { align: "center" });
       yPosition += 10;
       pdf.text(`Data de geração: ${format(new Date(), 'dd/MM/yyyy \'às\' HH:mm \'h\'', { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
+
+      // ===== INSERIR SUMÁRIO COM NUMERAÇÃO CORRETA =====
+      updateProgress(88, "Gerando sumário com numeração correta...");
+      
+      // Calcular a posição de inserção do sumário (após informações dos filhos)
+      const summaryPageIndex = 2; // posição 3 (0-indexed)
+      
+      // Inserir uma nova página na posição correta
+      pdf.insertPage(summaryPageIndex + 1);
+      
+      // Ajustar todos os números das páginas no mapeamento após a inserção
+      const adjustedSectionPageMap: Record<string, number> = {};
+      for (const [section, originalPage] of Object.entries(sectionPageMap)) {
+        // Se a página original era >= à posição de inserção, incrementar +1
+        adjustedSectionPageMap[section] = originalPage >= (summaryPageIndex + 1) ? originalPage + 1 : originalPage;
+      }
+      
+      // Ir para a página do sumário e gerar o conteúdo
+      pdf.setPage(summaryPageIndex + 1);
+      yPosition = margins.top + 10;
+      
+      pdf.setFontSize(14);
+      pdf.setFont("times", "bold");
+      pdf.text("SUMÁRIO", pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 20;
+      pdf.setFontSize(12);
+      pdf.setFont("times", "normal");
+      
+      // Criar array de itens do sumário com numeração correta
+      const summaryItemsWithCorrectPages = [
+        { text: "1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", page: adjustedSectionPageMap["CONTEXTO LEGAL"] },
+        { text: "2 RESUMO EXECUTIVO", page: adjustedSectionPageMap["RESUMO EXECUTIVO"] },
+        { text: "3 ANÁLISE FINANCEIRA", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
+        { text: "3.1 Distribuição por categoria", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
+        { text: "3.2 Distribuição por status", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
+        { text: "3.3 Análise de conformidade documental", page: adjustedSectionPageMap["ANÁLISE FINANCEIRA"] },
+        { text: "4 GRÁFICOS E INSIGHTS", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
+        { text: "4.1 Distribuição por categoria", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
+        { text: "4.2 Acumulado anual de despesas", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
+        { text: "4.3 Despesas por mês", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
+        { text: "4.4 Tendência de gastos", page: adjustedSectionPageMap["GRÁFICOS E INSIGHTS"] },
+        { text: "5 DETALHAMENTO DAS DESPESAS", page: adjustedSectionPageMap["DETALHAMENTO DAS DESPESAS"] },
+        { text: "6 EXTRATO DE DESPESAS COM COMPROVANTES", page: adjustedSectionPageMap["EXTRATO DE DESPESAS COM COMPROVANTES"] },
+        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: adjustedSectionPageMap["CONCLUSÕES E RECOMENDAÇÕES"] },
+        { text: "REFERÊNCIAS", page: adjustedSectionPageMap["REFERÊNCIAS"] }
+      ];
+      
+      // Renderizar cada item do sumário
+      summaryItemsWithCorrectPages.forEach((item) => {
+        if (!item.page) return; // Pular itens sem página definida
+        
+        // Texto do item alinhado à esquerda
+        pdf.text(item.text, margins.left, yPosition);
+        
+        // Pontos de preenchimento
+        const textWidth = pdf.getTextWidth(item.text);
+        const pageStr = item.page.toString();
+        const pageNumWidth = pdf.getTextWidth(pageStr);
+        const availableSpace = contentWidth - textWidth - pageNumWidth;
+        const dotCount = Math.floor(availableSpace / pdf.getTextWidth('.'));
+        const dots = '.'.repeat(Math.max(dotCount, 3));
+        
+        pdf.text(dots, margins.left + textWidth, yPosition);
+        
+        // Número da página alinhado à direita
+        pdf.text(pageStr, margins.left + contentWidth - pageNumWidth, yPosition);
+        
+        yPosition += 8;
+      });
+
+      // ===== SEGUNDA PASSADA: RENUMERAR TODAS AS PÁGINAS =====
+      updateProgress(92, "Renumerando todas as páginas...");
+      
+      const totalPages = pdf.getNumberOfPages();
+      
+      // Limpar todas as numerações existentes e aplicar as corretas
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        
+        // Limpar área da numeração anterior (opcional, mas garante limpeza)
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(pageWidth - margins.right - 20, 15, 20, 10, 'F');
+        
+        // Aplicar numeração correta
+        pdf.setFontSize(10);
+        pdf.setFont("times", "normal");
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(i.toString(), pageWidth - margins.right - 10, 20, { align: "right" });
+      }
 
       // Gerar o PDF como blob
       updateProgress(90, "Finalizando documento...");
