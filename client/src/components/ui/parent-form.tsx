@@ -263,7 +263,7 @@ export function ParentForm({ onSubmit, onCancel, isLoading = false, initialData 
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="city">Cidade</Label>
               <Input
@@ -340,11 +340,11 @@ export function ParentForm({ onSubmit, onCancel, isLoading = false, initialData 
         </CardContent>
       </Card>
 
-      <div className="flex gap-3 justify-end">
-        <Button type="button" variant="outline" onClick={onCancel} data-testid="button-parent-cancel">
+      <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+        <Button type="button" variant="outline" onClick={onCancel} data-testid="button-parent-cancel" className="w-full sm:w-auto">
           Cancelar
         </Button>
-        <Button type="submit" disabled={isLoading} data-testid="button-parent-submit">
+        <Button type="submit" disabled={isLoading} data-testid="button-parent-submit" className="w-full sm:w-auto">
           {isLoading ? "Salvando..." : initialData ? "Salvar Alterações" : "Adicionar Pai/Mãe"}
         </Button>
       </div>

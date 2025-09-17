@@ -196,14 +196,14 @@ export default function Parents() {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
             <Users className="h-6 w-6 text-primary" />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight" data-testid="text-parents-title">Pais</h1>
-            <p className="text-muted-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-parents-title">Pais</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Gerencie as informações dos pais das crianças
             </p>
           </div>
@@ -211,12 +211,12 @@ export default function Parents() {
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-parent">
+            <Button className="w-full sm:w-auto" data-testid="button-add-parent">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Pai/Mãe
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Pai/Mãe</DialogTitle>
               <DialogDescription>
@@ -255,23 +255,25 @@ export default function Parents() {
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {parents.map((parent) => (
             <Card key={parent.id} className="hover-elevate" data-testid={`card-parent-${parent.id}`}>
-              <CardHeader className="flex flex-row items-center gap-4 pb-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                    {getInitials(parent.fullName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg truncate" data-testid={`text-parent-name-${parent.id}`}>
-                    {parent.fullName}
-                  </h3>
-                  {parent.profession && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      {parent.profession}
-                    </p>
-                  )}
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-3 pb-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Avatar className="h-12 w-12 flex-shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                      {getInitials(parent.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-lg truncate" data-testid={`text-parent-name-${parent.id}`}>
+                      {parent.fullName}
+                    </h3>
+                    {parent.profession && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        {parent.profession}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 sm:flex-shrink-0 justify-end sm:justify-start">
                   <Button
                     size="icon"
                     variant="ghost"
@@ -332,7 +334,7 @@ export default function Parents() {
 
       {/* Dialog de edição */}
       <Dialog open={editingParent !== null} onOpenChange={() => setEditingParent(null)}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Informações</DialogTitle>
             <DialogDescription>
