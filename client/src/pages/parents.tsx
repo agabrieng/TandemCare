@@ -195,7 +195,7 @@ export default function Parents() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -252,7 +252,7 @@ export default function Parents() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {parents.map((parent) => (
             <Card key={parent.id} className="hover-elevate" data-testid={`card-parent-${parent.id}`}>
               <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-3 pb-4">
@@ -263,11 +263,11 @@ export default function Parents() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg truncate" data-testid={`text-parent-name-${parent.id}`}>
+                    <h3 className="font-semibold text-base sm:text-lg truncate" data-testid={`text-parent-name-${parent.id}`}>
                       {parent.fullName}
                     </h3>
                     {parent.profession && (
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {parent.profession}
                       </p>
                     )}
@@ -292,32 +292,32 @@ export default function Parents() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2 sm:space-y-3">
                 {parent.dateOfBirth && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatBirthDate(parent.dateOfBirth)}</span>
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="min-w-0 truncate">{formatBirthDate(parent.dateOfBirth)}</span>
                   </div>
                 )}
                 
                 {parent.phone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{parent.phone}</span>
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="min-w-0 truncate">{parent.phone}</span>
                   </div>
                 )}
                 
                 {parent.email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="truncate">{parent.email}</span>
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="min-w-0 truncate">{parent.email}</span>
                   </div>
                 )}
                 
                 {parent.city && parent.state && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="truncate">{parent.city}, {parent.state}</span>
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="min-w-0 truncate">{parent.city}, {parent.state}</span>
                   </div>
                 )}
 
