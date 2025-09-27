@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, TextInput, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import { View, Text, Button, StyleSheet, TextInput, ActivityIndicator, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
-import { apiRequest } from '@client/lib/api'; 
-// TODO: Substituir o useToast simulado por uma adaptação React Native
+// Importa o AuthContext adaptado
+import { useAuth } from '@client/contexts/auth-context'; 
+// Importa o hook de toast (usaremos Alert no mobile, mas mantemos a importação para compatibilidade)
 import { useToast } from '@client/hooks/use-toast'; 
 
 // Use o logo da empresa (Tandem app icon) como placeholder visual
@@ -11,106 +12,154 @@ const logoImage = require('../assets/icon.png');
 export default function AuthScreen() {
   const [email, setEmail] = useState('user@tandemcare.com'); 
   const [password, setPassword] = useState('password'); 
+  const [name, setName] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast(); // Usando o hook do web por enquanto
+  
+  // Usando o useAuth adaptado do monorepo
+  const { user, login, register } = useAuth();
 
+  // Redireciona se o usuário já estiver logado (pós-refresh ou login/register)
+  React.useEffect(() => {
+    if (user && user.role) {
+      // Baseado nas rotas do TandemCare, assumimos 'user', 'manager' e 'admin'
+      const roleRouteMap: { [key: string]: string } = {
+        'admin': '/(tabs)/admin-dashboard', 
+        'manager': '/(tabs)/manager-dashboard', 
+        'user': '/(tabs)/dashboard',
+      };
+      const path = roleRouteMap[user.role] || '/(tabs)/dashboard';
+      router.replace(path);
+    }
+  }, [user]);
+  
   const handleAuth = async () => {
     setError(null);
     setLoading(true);
     
-    // ATENÇÃO: As chamadas de API DEVEM ser adaptadas para usar a URL absoluta do Replit.
-    // Isso será corrigido na Fase 2. Por enquanto, a navegação é simulada.
-    
     try {
-        // Simulação de login/registro
-        // A lógica real de API será adicionada na próxima fase.
-        await new Promise(resolve => setTimeout(resolve, 1000)); 
+        if (isLogin) {
+            await login(email, password);
+            Alert.alert("Sucesso", "Login realizado com sucesso!");
+        } else {
+            // No registro, forçamos o role 'user' se o campo não for usado
+            const userData = { name, email, password, role: 'user' };
+            await register(userData); 
+            Alert.alert("Sucesso", "Conta criada com sucesso! Redirecionando...");
+        }
         
-        // Simula sucesso de login e redireciona para a aba principal
-        router.replace('/(tabs)/dashboard'); 
     } catch (err: any) {
-        setError(err.message || 'Erro de autenticação.');
-        toast({ title: "Erro", description: err.message || "Erro de autenticação.", variant: "destructive" });
+        // As mensagens de erro da API são passadas via a exceção (err.message)
+        let message = err.message || 'Erro desconhecido de autenticação.';
+        
+        // Tenta extrair a mensagem de erro da API (se for um JSON de erro)
+        if (message.includes('400') || message.includes('401')) {
+             try {
+                 const jsonError = JSON.parse(message.substring(message.indexOf(':') + 1));
+                 message = jsonError.message || message;
+             } catch (e) {
+                 // Mantém a mensagem original se não for JSON
+             }
+        }
+        
+        setError(message);
+        Alert.alert("Erro de Autenticação", message);
+
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={logoImage} style={styles.logo} />
-        <Text style={styles.title}>TandemCare</Text>
-      </View>
-
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, isLogin && styles.tabButtonActive]}
-          onPress={() => setIsLogin(true)}
-          disabled={loading}
-        >
-          <Text style={styles.tabText}>Entrar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, !isLogin && styles.tabButtonActive]}
-          onPress={() => setIsLogin(false)}
-          disabled={loading}
-        >
-          <Text style={styles.tabText}>Cadastrar</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.formContainer}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>E-mail</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholder="seu-email@exemplo.com"
-            editable={!loading}
-          />
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Image source={logoImage} style={styles.logo} />
+          <Text style={styles.title}>TandemCare</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Senha</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="••••••••"
-            editable={!loading}
-          />
-        </View>
-
-        {error && <Text style={styles.errorText}>{error}</Text>}
-
-        <View style={styles.buttonContainer}>
-          <Button
-            title={isLogin ? "Entrar" : "Criar Conta"}
-            onPress={handleAuth}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, isLogin && styles.tabButtonActive]}
+            onPress={() => { setIsLogin(true); setError(null); }}
             disabled={loading}
-            color="#1d4ed8" // Cor primária TandemCare (Azul)
-          />
+          >
+            <Text style={styles.tabText}>Entrar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, !isLogin && styles.tabButtonActive]}
+            onPress={() => { setIsLogin(false); setError(null); }}
+            disabled={loading}
+          >
+            <Text style={styles.tabText}>Cadastrar</Text>
+          </TouchableOpacity>
         </View>
-        
-        {loading && <ActivityIndicator size="small" color="#1d4ed8" style={styles.loading} />}
+
+        <View style={styles.formContainer}>
+          {!isLogin && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nome Completo</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Seu nome"
+                editable={!loading}
+              />
+            </View>
+          )}
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>E-mail</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder="seu-email@exemplo.com"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Senha</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="••••••••"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title={isLogin ? "Entrar" : "Criar Conta"}
+              onPress={handleAuth}
+              disabled={loading || (isLogin ? false : !name.trim())}
+              color="#1d4ed8"
+            />
+          </View>
+          
+          {loading && <ActivityIndicator size="small" color="#1d4ed8" style={styles.loading} />}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     padding: 24,
     backgroundColor: '#f8f8f8',
-    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
