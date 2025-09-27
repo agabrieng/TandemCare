@@ -1,4 +1,14 @@
-import { API_BASE_URL } from '@mobile/lib/environment'; // Importa a URL base
+// Função local para detectar ambiente de produção (evita dependência circular)
+const isProductionEnvironment = () => {
+  return process.env.NODE_ENV === 'production';
+};
+
+// URL base da API TandemCare no Replit
+const PRODUCTION_URL = 'https://tandemcare.replit.app';
+
+const API_BASE_URL = isProductionEnvironment() 
+  ? PRODUCTION_URL 
+  : PRODUCTION_URL; // Usamos a URL de produção/deployment para testes também
 
 export async function apiRequest(
   method: string,
@@ -20,14 +30,18 @@ export async function apiRequest(
   
   // Tenta obter o token do AsyncStorage (para mobile) ou assume cookie (para web)
   let authToken = null;
-  try {
-    // Tenta usar AsyncStorage (se disponível, ambiente mobile)
-    const AsyncStorage = await import('@react-native-async-storage/async-storage').then(m => m.default).catch(() => null);
-    if (AsyncStorage) {
-      authToken = await AsyncStorage.getItem('auth_token');
+  if (typeof window === 'undefined' || (typeof navigator !== 'undefined' && navigator.product === 'ReactNative')) {
+    // Ambiente Node.js ou React Native - tenta carregar AsyncStorage
+    try {
+      // Usa require para evitar que o bundler (Vite) tente resolver o módulo
+      const AsyncStorage = eval('require("@react-native-async-storage/async-storage")').default;
+      if (AsyncStorage) {
+        authToken = await AsyncStorage.getItem('auth_token');
+      }
+    } catch(e) {
+      // Não é um erro crítico se AsyncStorage falhar - provavelmente estamos em ambiente web
+      console.log('AsyncStorage not available - running in web environment');
     }
-  } catch(e) {
-    // Não é um erro crítico se AsyncStorage falhar na web
   }
 
   if (authToken) {
