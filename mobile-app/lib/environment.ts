@@ -1,4 +1,7 @@
-import { isProductionEnvironment } from '@client/lib/environment';
+// Função utilitária para detectar ambiente de produção
+export const isProductionEnvironment = () => {
+  return process.env.NODE_ENV === 'production';
+};
 
 // Este deve ser substituído pela URL de produção do seu Replit App quando estiver pronto para o deploy.
 // Se estiver no ambiente de desenvolvimento do Replit, ele tentará construir a URL.
