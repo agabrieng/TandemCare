@@ -1,0 +1,674 @@
+# Objetivo: Estruturar o monorepo para isolar o código Web (client) do código Nativo (mobile-app) 
+# para o projeto TandemCare. Isso inclui a criação do diretório mobile-app/ e arquivos de configuração base.
+
+# 1. PREPARAÇÃO DO AMBIENTE
+# Cria o diretório principal do cliente nativo
+mkdir mobile-app
+# Cria o diretório de assets e de rotas para Expo Router
+mkdir mobile-app/assets
+mkdir mobile-app/app
+
+# 2. CONFIGURAÇÃO BASE DO EXPO E ARQUIVOS DE BUILD
+
+# Cria o arquivo de configuração do Babel para Expo
+echo "module.exports = function(api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+  };
+};" > mobile-app/babel.config.js
+
+# Cria o arquivo de inicialização do Expo Router
+echo "import { registerRootComponent } from 'expo';
+import 'expo-router/entry'; 
+
+registerRootComponent(() => null);" > mobile-app/index.js
+
+# Cria arquivos de assets placeholder (ícones e splash) para evitar erros de build do Expo
+# Usando a mesma imagem de logo existente como placeholder, já que não temos um logo TandemCare
+cp attached_assets/EnergyMatch_Logo_02.png mobile-app/assets/icon.png
+cp attached_assets/EnergyMatch_Logo_02.png mobile-app/assets/splash.png
+cp attached_assets/EnergyMatch_Logo_02.png mobile-app/assets/adaptive-icon.png
+echo "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAfW" > mobile-app/assets/favicon.png
+
+# Cria os arquivos de configuração Expo/EAS dentro da pasta mobile-app
+echo "{
+  \"expo\": {
+    \"name\": \"TandemCareMobile\",
+    \"slug\": \"tandemcare-mobile\",
+    \"version\": \"1.0.0\",
+    \"orientation\": \"portrait\",
+    \"icon\": \"./assets/icon.png\",
+    \"userInterfaceStyle\": \"automatic\",
+    \"scheme\": \"tandemcare\",
+    \"splash\": {
+      \"image\": \"./assets/splash.png\",
+      \"resizeMode\": \"contain\",
+      \"backgroundColor\": \"#ffffff\"
+    },
+    \"assetBundlePatterns\": [
+      \"**/*\"
+    ],
+    \"ios\": {
+      \"supportsTablet\": true,
+      \"bundleIdentifier\": \"com.yourcompany.tandemcare\"
+    },
+    \"android\": {
+      \"adaptiveIcon\": {
+        \"foregroundImage\": \"./assets/adaptive-icon.png\",
+        \"backgroundColor\": \"#ffffff\"
+      },
+      \"package\": \"com.yourcompany.tandemcare\"
+    },
+    \"web\": {
+      \"favicon\": \"./assets/favicon.png\",
+      \"bundler\": \"vite\"
+    },
+    \"plugins\": [
+      \"expo-router\"
+    ],
+    \"extra\": {
+      \"eas\": {
+        \"projectId\": \"tandemcare-expo-project-id\" 
+        // Substituído o ID antigo por um placeholder do TandemCare
+      }
+    }
+  }
+}" > mobile-app/app.json
+
+echo "{
+  \"cli\": {
+    \"version\": \">= 16.19.3\",
+    \"appVersionSource\": \"remote\"
+  },
+  \"build\": {
+    \"development\": {
+      \"developmentClient\": true,
+      \"distribution\": \"internal\"
+    },
+    \"preview\": {
+      \"distribution\": \"internal\"
+    },
+    \"production\": {
+      \"autoIncrement\": true
+    }
+  },
+  \"submit\": {
+    \"production\": {}
+  }
+}" > mobile-app/eas.json
+
+# 3. CRIAÇÃO DOS ARQUIVOS DE ROTEAMENTO DO EXPO ROUTER E COMPONENTES PLACEHOLDERS
+
+# Componente Card base (para uso no React Native)
+echo "import React from 'react';
+import { View, StyleSheet } from 'react-native';
+
+export function Card({ children, style }: { children: React.ReactNode, style?: any }) {
+  return (
+    <View style={[styles.card, style]}>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+});" > mobile-app/components/Card.tsx
+
+# Layout principal do Expo Router
+echo "import { Stack } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClientProvider } from '@tanstack/react-query';
+// Reutiliza a configuração do query client do frontend web
+import { queryClient } from '@client/lib/queryClient'; 
+import { View, Text, StyleSheet } from 'react-native';
+
+// Placeholder para o AuthProvider, que será adaptado na Fase 2
+const AuthPlaceholder = ({ children }: { children: React.ReactNode }) => (
+  <View style={styles.authContainer}>
+    {children}
+  </View>
+);
+
+const styles = StyleSheet.create({
+  authContainer: {
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+  },
+});
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthPlaceholder> 
+          <Stack>
+            {/* index.tsx será a tela de Autenticação */}
+            <Stack.Screen name=\"index\" options={{ title: 'Login', headerShown: false }} /> 
+            {/* (tabs) é a navegação principal (Dashboard) */}
+            <Stack.Screen name=\"(tabs)\" options={{ headerShown: false }} /> 
+          </Stack>
+        </AuthPlaceholder>
+      </QueryClientProvider>
+    </SafeAreaProvider>
+  );
+}" > mobile-app/app/_layout.tsx
+
+# Tela de Autenticação (index.tsx)
+echo "import React, { useState } from 'react';
+import { View, Text, Button, StyleSheet, TextInput, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import { Link, router } from 'expo-router';
+import { apiRequest } from '@client/lib/api'; 
+// TODO: Substituir o useToast simulado por uma adaptação React Native
+import { useToast } from '@client/hooks/use-toast'; 
+
+// Use o logo da empresa (EnergyMatch_Logo_02.png) como placeholder visual
+const logoImage = require('../../attached_assets/EnergyMatch_Logo_02.png'); 
+
+export default function AuthScreen() {
+  const [email, setEmail] = useState('user@tandemcare.com'); 
+  const [password, setPassword] = useState('password'); 
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast(); // Usando o hook do web por enquanto
+
+  const handleAuth = async () => {
+    setError(null);
+    setLoading(true);
+    
+    // ATENÇÃO: As chamadas de API DEVEM ser adaptadas para usar a URL absoluta do Replit.
+    // Isso será corrigido na Fase 2. Por enquanto, a navegação é simulada.
+    
+    try {
+        // Simulação de login/registro
+        // A lógica real de API será adicionada na próxima fase.
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
+        
+        // Simula sucesso de login e redireciona para a aba principal
+        router.replace('/(tabs)/dashboard'); 
+    } catch (err: any) {
+        setError(err.message || 'Erro de autenticação.');
+        toast({ title: \"Erro\", description: err.message || \"Erro de autenticação.\", variant: \"destructive\" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Image source={logoImage} style={styles.logo} />
+        <Text style={styles.title}>TandemCare</Text>
+      </View>
+
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, isLogin && styles.tabButtonActive]}
+          onPress={() => setIsLogin(true)}
+          disabled={loading}
+        >
+          <Text style={styles.tabText}>Entrar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, !isLogin && styles.tabButtonActive]}
+          onPress={() => setIsLogin(false)}
+          disabled={loading}
+        >
+          <Text style={styles.tabText}>Cadastrar</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.formContainer}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>E-mail</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType=\"email-address\"
+            autoCapitalize=\"none\"
+            placeholder=\"seu-email@exemplo.com\"
+            editable={!loading}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Senha</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder=\"••••••••\"
+            editable={!loading}
+          />
+        </View>
+
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title={isLogin ? \"Entrar\" : \"Criar Conta\"}
+            onPress={handleAuth}
+            disabled={loading}
+            color=\"#1d4ed8\" // Cor primária TandemCare (Azul)
+          />
+        </View>
+        
+        {loading && <ActivityIndicator size=\"small\" color=\"#1d4ed8\" style={styles.loading} />}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: '#f8f8f8',
+    justifyContent: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1d4ed8',
+    textAlign: 'center',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tabButtonActive: {
+    backgroundColor: '#ffffff',
+    borderColor: '#d1d5db',
+    borderWidth: 1,
+  },
+  tabText: {
+    fontWeight: '600',
+    color: '#374151',
+  },
+  formContainer: {
+    padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 4,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  input: {
+    height: 44,
+    borderColor: '#d1d5db',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    color: '#1f2937',
+  },
+  errorText: {
+    color: '#dc2626',
+    marginBottom: 16,
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  buttonContainer: {
+    marginTop: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  loading: {
+    marginTop: 20,
+  },
+  link: {
+    marginTop: 20,
+    alignSelf: 'center',
+  },
+});" > mobile-app/app/index.tsx
+
+# Layout da Tab Bar (Navegação Principal)
+echo "import { Tabs } from 'expo-router';
+import { Home, List, User } from 'lucide-react-native';
+
+export default function TabLayout() {
+  return (
+    <Tabs screenOptions={{ 
+      tabBarActiveTintColor: '#1d4ed8', // Azul principal
+      headerShown: true, 
+      tabBarLabelStyle: { fontSize: 12, fontWeight: '500' }
+    }}>
+      <Tabs.Screen
+        name=\"dashboard\"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+          headerTitle: 'Dashboard',
+        }}
+      />
+      <Tabs.Screen
+        name=\"records\"
+        options={{
+          title: 'Registros',
+          tabBarIcon: ({ color }) => <List size={24} color={color} />,
+          headerTitle: 'Meus Registros',
+        }}
+      />
+      <Tabs.Screen
+        name=\"profile\"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color }) => <User size={24} color={color} />,
+          headerTitle: 'Meu Perfil',
+        }}
+      />
+    </Tabs>
+  );
+}" > mobile-app/app/(tabs)/_layout.tsx
+
+# Tela de Dashboard
+echo "import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Card } from '@mobile/components/Card'; 
+import { Home, Clipboard, Activity } from 'lucide-react-native';
+
+// Esta tela substitui client/src/pages/dashboard.tsx 
+
+export default function DashboardScreen() {
+  return (
+    <ScrollView style={styles.scrollView}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Dashboard TandemCare</Text>
+        <Text style={styles.subtitle}>Visão geral dos seus registros de cuidado.</Text>
+
+        <View style={styles.statsGrid}>
+          <Card style={styles.statCard}>
+            <View style={styles.statContent}>
+              <View>
+                <Text style={styles.statTitle}>Total de Registros</Text>
+                <Text style={styles.statValue}>12</Text>
+              </View>
+              <View style={[styles.iconWrapper, { backgroundColor: '#bfdbfe' }]}>
+                <Clipboard size={28} color=\"#1d4ed8\" />
+              </View>
+            </View>
+          </Card>
+          <Card style={styles.statCard}>
+            <View style={styles.statContent}>
+              <View>
+                <Text style={styles.statTitle}>Última Atualização</Text>
+                <Text style={styles.statValue}>Hoje</Text>
+              </View>
+              <View style={[styles.iconWrapper, { backgroundColor: '#d1fae5' }]}>
+                <Activity size={28} color=\"#059669\" />
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        <Card style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <Button title=\"Novo Registro\" color=\"#1d4ed8\" onPress={() => { /* Navegar para nova tela */ }} />
+        </Card>
+
+        <Card style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Monitoramento</Text>
+          <Text style={styles.placeholderText}>Gráficos de atividade virão aqui.</Text>
+        </Card>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#f4f4f4',
+  },
+  container: {
+    padding: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 20,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+    gap: 15,
+  },
+  statCard: {
+    width: '48%', 
+    padding: 15,
+  },
+  statContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1d4ed8',
+  },
+  iconWrapper: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionCard: {
+    padding: 20,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#1f2937',
+  },
+  placeholderText: {
+    textAlign: 'center',
+    color: '#9ca3af',
+    paddingVertical: 30,
+  },
+});" > mobile-app/app/(tabs)/dashboard.tsx
+
+# Telas de Registros e Perfil (Placeholders)
+echo "import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function RecordsScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Meus Registros</Text>
+      <Text style={styles.note}>Esta tela listará seus registros de saúde e cuidado.</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#1f2937',
+  },
+  note: {
+    fontSize: 14,
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#f0f9ff',
+    borderColor: '#bae6fd',
+    borderWidth: 1,
+    borderRadius: 8,
+    color: '#0369a1',
+    textAlign: 'center',
+  }
+});" > mobile-app/app/(tabs)/records.tsx
+
+echo "import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function ProfileScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Meu Perfil</Text>
+      <Text style={styles.note}>Esta tela exibirá e permitirá editar as informações do usuário.</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#1f2937',
+  },
+  note: {
+    fontSize: 14,
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#f0f9ff',
+    borderColor: '#bae6fd',
+    borderWidth: 1,
+    borderRadius: 8,
+    color: '#0369a1',
+    textAlign: 'center',
+  }
+});" > mobile-app/app/(tabs)/profile.tsx
+
+
+# 4. ATUALIZAÇÕES EM ARQUIVOS DE CONFIGURAÇÃO EXISTENTES
+
+# Atualiza o tsconfig.json para incluir o novo diretório, React Native JSX e novos aliases
+cat > tsconfig.json << EOF
+{
+  "include": ["client/src/**/*", "mobile-app/**/*", "shared/**/*", "server/**/*"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
+    "noEmit": true,
+    "module": "ESNext",
+    "strict": true,
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "jsx": "react-native",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "types": ["node", "vite/client", "react-native"],
+    "paths": {
+      "@/*": ["./client/src/*"],
+      "@mobile/*": ["./mobile-app/*"],
+      "@shared/*": ["./shared/*"],
+      "@assets/*": ["./attached_assets/*"],
+      "@client/*": ["./client/src/*"]
+    }
+  }
+}
+EOF
+
+# Atualiza o package.json principal para incluir lucide-react-native e script mobile
+PACKAGE_CONTENT=$(cat package.json)
+
+# Adiciona lucide-react-native
+if ! grep -q '\"lucide-react-native\"' package.json; then
+  UPDATED_PACKAGE=$(echo \"$PACKAGE_CONTENT\" | sed 's/\"lucide-react\": \"\^0.453.0\"/\"lucide-react\": \"\^0.453.0\",\n    \"lucide-react-native\": \"\^0.399.0\"/')
+else
+  UPDATED_PACKAGE=\"$PACKAGE_CONTENT\"
+fi
+
+# Adiciona o script de start mobile
+UPDATED_PACKAGE=$(echo \"$UPDATED_PACKAGE\" | sed 's/\"db:push\": \"drizzle-kit push\"/\"db:push\": \"drizzle-kit push\",\n    \"mobile:start\": \"npm start --prefix mobile-app\"/')
+echo "$UPDATED_PACKAGE" > package.json
+
+
+# Atualiza o .gitignore para incluir as exclusões do Mobile App e pastas de build
+cat > .gitignore << EOF
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+# Mobile App additions
+/mobile-app/node_modules
+/mobile-app/.expo
+/mobile-app/ios
+/mobile-app/android
+EOF
+
+# 5. INSTALAÇÃO FINAL DE DEPENDÊNCIAS NO DIRETÓRIO MOBILE
+# Isto garantirá que o npm detecte e instale as dependências corretas no diretório mobile-app
+npm install --prefix mobile-app
