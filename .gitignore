@@ -4,3 +4,8 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Mobile App additions
+/mobile-app/node_modules
+/mobile-app/.expo
+/mobile-app/ios
+/mobile-app/android
