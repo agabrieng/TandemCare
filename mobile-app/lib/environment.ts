@@ -3,12 +3,13 @@ export const isProductionEnvironment = () => {
   return process.env.NODE_ENV === 'production';
 };
 
-// URL base da API TandemCare no Replit. Esta URL será usada pelo app Mobile.
+// URLs para desenvolvimento e produção
+const DEVELOPMENT_URL = 'http://172.31.74.130:5000'; // IP local da rede Replit
 const PRODUCTION_URL = 'https://tandemcare.replit.app';
 
 export const API_BASE_URL = isProductionEnvironment() 
   ? PRODUCTION_URL 
-  : PRODUCTION_URL; // Usamos a URL de produção/deployment para testes mobile também
+  : DEVELOPMENT_URL; // Usa IP local para desenvolvimento mobile
 
 // Adicionando um console.log para fins de depuração
 console.log('Mobile API Base URL:', API_BASE_URL);
