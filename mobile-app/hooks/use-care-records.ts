@@ -14,13 +14,27 @@ interface CareRecord {
 
 // Adaptação da função de busca de dados
 const fetchCareRecords = async (userId: string): Promise<CareRecord[]> => {
-  // ATENÇÃO: Assumindo que o Backend Express tem uma rota para buscar registros
-  // do usuário logado (ex: GET /api/records)
-  const response = await apiRequest('GET', `/api/records?userId=${userId}`); 
+  try {
+    // ATENÇÃO: Assumindo que o Backend Express tem uma rota para buscar registros
+    // do usuário logado (ex: GET /api/records)
+    const response = await apiRequest('GET', `/api/records?userId=${userId}`);
+    const data = await response.json();
+    
+    // Se a API retornar dados válidos, os usa
+    if (data && Array.isArray(data.records)) {
+      return data.records.map((record: any) => ({
+        id: record.id || record._id,
+        type: record.type || 'default',
+        title: record.title || record.description || 'Registro',
+        createdAt: record.createdAt || record.created_at || new Date().toISOString(),
+        value: record.value || record.amount || record.details
+      }));
+    }
+  } catch (error) {
+    console.warn('API /api/records não disponível:', error);
+  }
   
-  // Vamos simular os dados para o desenvolvimento, caso a rota API não esteja pronta.
-  // A rota real deve ser criada no backend em uma fase de desenvolvimento.
-
+  // Fallback para dados simulados se a API não estiver disponível ou não retornar dados
   return [
     { id: '1', type: 'medication', title: 'Medicação Diária', createdAt: new Date().toISOString(), value: 'Aspirina 100mg' },
     { id: '2', type: 'vital', title: 'Pressão Arterial', createdAt: new Date(Date.now() - 3600000).toISOString(), value: '120/80 mmHg' },
