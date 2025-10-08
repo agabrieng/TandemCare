@@ -1716,10 +1716,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   pageNumber++;
                   yPosition = margins.top;
                   
-                  // Use maximum available space with minimal margins
-                  const imgMargin = 10; // Small margin around image
-                  const maxWidth = pageWidth - (imgMargin * 2);
-                  const maxHeight = pageHeight - (imgMargin * 2);
+                  // Use maximum available space with minimal margins (5mm on all sides)
+                  const receiptMargins = {
+                    top: 5,
+                    bottom: 5,
+                    left: 5,
+                    right: 5
+                  };
+                  
+                  const maxWidth = pageWidth - receiptMargins.left - receiptMargins.right;
+                  const maxHeight = pageHeight - receiptMargins.top - receiptMargins.bottom;
                   let imgWidth = maxWidth;
                   let imgHeight = maxHeight;
                   
@@ -1730,14 +1736,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     imgWidth = img.width * ratio;
                     imgHeight = img.height * ratio;
                   } catch (dimError) {
-                    // Fallback to fixed size if dimension detection fails
-                    console.warn('Could not detect image dimensions, using fixed size:', dimError);
+                    // Fallback to using maximum dimensions if dimension detection fails
+                    console.warn('Could not detect image dimensions, using maximum size:', dimError);
+                    imgWidth = maxWidth;
+                    imgHeight = maxHeight;
                   }
                   
-                  // Center image both horizontally and vertically
+                  // Center image both horizontally and vertically on the page
                   const imgX = (pageWidth - imgWidth) / 2;
                   const imgY = (pageHeight - imgHeight) / 2;
-                  pdf.addImage(imageBase64, 'JPEG', imgX, imgY, imgWidth, imgHeight);
+                  pdf.addImage(imageBase64, 'JPEG', imgX, imgY, imgWidth, imgHeight, undefined, 'FAST');
                 }
               } catch (error) {
                 console.error(`Error loading receipt image:`, error);
