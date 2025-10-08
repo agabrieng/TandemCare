@@ -3272,16 +3272,49 @@ export default function Reports() {
 
               {/* Botões */}
               <div className="space-y-3">
-                <a
-                  href={downloadUrl}
-                  download
-                  className="block w-full"
+                <Button 
+                  className="w-full h-12 text-base" 
+                  data-testid="button-download-pdf"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(downloadUrl, {
+                        credentials: 'include'
+                      });
+                      
+                      if (!response.ok) {
+                        throw new Error('Falha ao baixar o PDF');
+                      }
+                      
+                      const blob = await response.blob();
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `relatorio-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.pdf`;
+                      link.style.display = 'none';
+                      
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      
+                      URL.revokeObjectURL(url);
+                      
+                      toast({
+                        title: "Download iniciado",
+                        description: "O PDF está sendo salvo no seu dispositivo.",
+                      });
+                    } catch (error) {
+                      console.error('Erro ao baixar PDF:', error);
+                      toast({
+                        title: "Erro ao baixar",
+                        description: "Não foi possível baixar o PDF. Tente novamente.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
-                  <Button className="w-full h-12 text-base" data-testid="button-download-pdf">
-                    <Download className="w-5 h-5 mr-2" />
-                    Baixar Relatório
-                  </Button>
-                </a>
+                  <Download className="w-5 h-5 mr-2" />
+                  Baixar Relatório
+                </Button>
                 <Button
                   variant="outline"
                   className="w-full h-12 text-base"

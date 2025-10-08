@@ -7,6 +7,18 @@ The application serves as a centralized platform where parents can register expe
 # Recent Changes
 
 ## Date: 2025-10-08
+- **RESOLVED**: Fixed mobile PWA PDF download functionality
+  - Root cause: PWA environment doesn't support simple download links with `<a href download>`
+  - Solution: Implemented blob-based download using fetch + URL.createObjectURL approach
+  - Changed modal download button to fetch PDF, convert to blob, and programmatically trigger download
+  - **Result**: PDF download now works correctly in both PWA and browser environments
+  
+- **RESOLVED**: Fixed jsPDF import error in production Node.js environment
+  - Root cause: jsPDF module exports differ between dev and production
+  - Solution: Changed from `(await import('jspdf')).default` to `{ jsPDF } = await import('jspdf')`
+  - Used named export instead of default export for Node.js compatibility
+  - **Result**: Server-side PDF generation now works correctly in production
+
 - **RESOLVED**: Fixed mobile PDF generation error in production mode
   - Root cause: Server-side PDF generation code was accessing non-existent properties on `legalCase` object
   - Properties `court` and `description` don't exist in schema - correct names are `courtName` and `notes`
