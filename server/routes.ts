@@ -686,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import required modules
       const jsPDF = (await import('jspdf')).default;
-      const { createCanvas } = await import('canvas');
+      const { createCanvas, loadImage } = await import('canvas');
       const { Chart, registerables } = await import('chart.js');
       const { format, parse, subDays, subMonths, subYears, startOfYear } = await import('date-fns');
       const { ptBR } = await import('date-fns/locale');
@@ -1711,17 +1711,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (imageBuffer && receipt.fileType && receipt.fileType.startsWith('image/')) {
                   const imageBase64 = `data:${receipt.fileType};base64,${imageBuffer.toString('base64')}`;
                   
+                  // Default dimensions
                   const maxWidth = contentWidth - 20;
-                  const maxHeight = 100;
+                  const maxHeight = 150;
+                  let imgWidth = maxWidth;
+                  let imgHeight = maxHeight;
                   
-                  if (yPosition + maxHeight > pageHeight - margins.bottom - 10) {
+                  try {
+                    // Load image to get real dimensions and maintain aspect ratio
+                    const img = await loadImage(imageBuffer);
+                    const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+                    imgWidth = img.width * ratio;
+                    imgHeight = img.height * ratio;
+                  } catch (dimError) {
+                    // Fallback to fixed size if dimension detection fails
+                    console.warn('Could not detect image dimensions, using fixed size:', dimError);
+                  }
+                  
+                  if (yPosition + imgHeight > pageHeight - margins.bottom - 10) {
                     pdf.addPage();
                     pageNumber++;
                     yPosition = margins.top + 20;
                   }
                   
-                  pdf.addImage(imageBase64, 'JPEG', margins.left + 10, yPosition, maxWidth, maxHeight);
-                  yPosition += maxHeight + 10;
+                  pdf.addImage(imageBase64, 'JPEG', margins.left + 10, yPosition, imgWidth, imgHeight);
+                  yPosition += imgHeight + 10;
                 }
               } catch (error) {
                 console.error(`Error loading receipt image:`, error);
