@@ -141,7 +141,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-border">
+          <div className="p-4 sm:p-6 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className={cn("flex items-center gap-3", isCollapsed && "md:justify-center")}>
                 <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
@@ -169,8 +169,10 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className={cn("flex-1 space-y-1 sm:space-y-2", isCollapsed ? "p-2" : "p-3 sm:p-4")}>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Navigation */}
+            <nav className={cn("space-y-1 sm:space-y-2", isCollapsed ? "p-2" : "p-3 sm:p-4")}>
             {menuItems.map((item) => {
               const isActive = location === item.url;
               const Icon = item.icon;
@@ -331,6 +333,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
               </DropdownMenu>
             </div>
           </div>
+        </div>
         </div>
       </aside>
     </>
