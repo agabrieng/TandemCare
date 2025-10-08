@@ -1711,9 +1711,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (imageBuffer && receipt.fileType && receipt.fileType.startsWith('image/')) {
                   const imageBase64 = `data:${receipt.fileType};base64,${imageBuffer.toString('base64')}`;
                   
-                  // Use full page width for images
-                  const maxWidth = contentWidth;
-                  const maxHeight = pageHeight - margins.top - margins.bottom - 40; // Almost full page height
+                  // Add new page for each receipt image
+                  pdf.addPage();
+                  pageNumber++;
+                  yPosition = margins.top;
+                  
+                  // Use maximum available space with minimal margins
+                  const imgMargin = 10; // Small margin around image
+                  const maxWidth = pageWidth - (imgMargin * 2);
+                  const maxHeight = pageHeight - (imgMargin * 2);
                   let imgWidth = maxWidth;
                   let imgHeight = maxHeight;
                   
@@ -1728,17 +1734,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     console.warn('Could not detect image dimensions, using fixed size:', dimError);
                   }
                   
-                  // Always add image on new page for better visibility
-                  if (yPosition > margins.top + 30 || yPosition + imgHeight > pageHeight - margins.bottom - 10) {
-                    pdf.addPage();
-                    pageNumber++;
-                    yPosition = margins.top + 20;
-                  }
-                  
-                  // Center image horizontally
-                  const imgX = margins.left + (contentWidth - imgWidth) / 2;
-                  pdf.addImage(imageBase64, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
-                  yPosition += imgHeight + 10;
+                  // Center image both horizontally and vertically
+                  const imgX = (pageWidth - imgWidth) / 2;
+                  const imgY = (pageHeight - imgHeight) / 2;
+                  pdf.addImage(imageBase64, 'JPEG', imgX, imgY, imgWidth, imgHeight);
                 }
               } catch (error) {
                 console.error(`Error loading receipt image:`, error);
