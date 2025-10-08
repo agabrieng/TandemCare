@@ -7,6 +7,15 @@ The application serves as a centralized platform where parents can register expe
 # Recent Changes
 
 ## Date: 2025-10-08
+- **COMPLETED**: Mobile PDF reports now have complete parity with desktop version
+  - Enhanced child information section with detailed parent contact information (phone, CPF, location)
+  - Upgraded executive summary to "RESUMO EXECUTIVO OTIMIZADO" with pension comparison table and financial indicators
+  - Added three missing financial analysis subsections (3.2 Comparativo Mensal, 3.3 Distribuição por Status, 3.4 Análise de Conformidade Documental)
+  - Updated table of contents (SUMÁRIO) to include all subsections and new sections
+  - Implemented REFERÊNCIAS section with legal citations (Constituição Federal, ECA, ABNT standards)
+  - Implemented DADOS JURÍDICOS E LEGAIS section with lawyer and legal case information
+  - **Result**: Mobile and desktop PDF reports now contain identical comprehensive information for legal documentation
+  
 - **RESOLVED**: Fixed mobile PWA PDF download functionality
   - Root cause: PWA environment doesn't support simple download links with `<a href download>`
   - Solution: Implemented blob-based download using fetch + URL.createObjectURL approach
