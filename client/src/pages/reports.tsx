@@ -2150,6 +2150,10 @@ export default function Reports() {
               yPosition = margins.top + 20;
             }
             
+            // Adicionar pequeno delay para permitir que o navegador processe outros eventos
+            // Isso evita travamento/crash em dispositivos móveis ao processar muitos comprovantes
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             // Tentar carregar o arquivo real (imagem ou PDF)
             if (receipt.filePath) {
               try {
@@ -2159,8 +2163,12 @@ export default function Reports() {
                   const isImage = fileData.type.startsWith('image/');
                   
                   if (isImage) {
-                    // Processar como imagem com alta qualidade para melhor legibilidade
-                    const compressedImageData = await compressImage(fileData.data, 1200, 0.85);
+                    // Processar como imagem com qualidade otimizada
+                    // Usar resolução menor em dispositivos móveis para evitar crash
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    const maxResolution = isMobile ? 800 : 1200;
+                    const quality = isMobile ? 0.75 : 0.85;
+                    const compressedImageData = await compressImage(fileData.data, maxResolution, quality);
                     
                     // Criar uma imagem temporária para obter as dimensões
                     const tempImg = new Image();
