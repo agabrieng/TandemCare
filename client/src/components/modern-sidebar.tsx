@@ -302,7 +302,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                   side="right" 
                   align="start" 
                   sideOffset={8} 
-                  className="w-64 p-2"
+                  className="w-64 p-2 z-[100]"
                 >
                   <div className="flex items-center gap-3 p-2">
                     <Avatar className="w-10 h-10">
