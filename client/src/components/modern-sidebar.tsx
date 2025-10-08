@@ -265,74 +265,71 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                 )}
               </div>
             </Link>
-          </div>
 
-          {/* User Profile */}
-          <div className={cn("border-t border-border", isCollapsed ? "p-2" : "p-4")}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className={cn(
-                    "flex items-center w-full rounded-xl bg-accent hover-elevate p-3",
-                    isCollapsed ? "md:justify-center" : "justify-start gap-3"
-                  )}
-                  data-testid="button-user-menu"
-                >
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={user?.avatar} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                      {getUserInitials(user?.firstName, user?.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {!isCollapsed && (
-                    <>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="text-sm font-medium text-foreground truncate" data-testid="text-user-name">
+            {/* User Profile */}
+            <div className="mt-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div 
+                    className={cn(
+                      "flex items-center rounded-xl transition-all duration-200 group cursor-pointer hover-elevate active-elevate-2",
+                      "text-muted-foreground hover:text-foreground",
+                      isCollapsed ? "md:justify-center md:px-2 md:py-3 px-4 py-4" : "px-4 py-4 gap-3"
+                    )}
+                    data-testid="button-user-menu"
+                  >
+                    <Avatar className="w-5 h-5">
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                        {getUserInitials(user?.firstName, user?.lastName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {!isCollapsed && (
+                      <div className="flex-1">
+                        <div className="font-medium text-sm" data-testid="text-user-name">
                           {user?.firstName || 'Usuário'}
                         </div>
                         <div className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
                           {user?.email || 'user@example.com'}
                         </div>
                       </div>
-                      <ChevronUp className="h-4 w-4 opacity-60" />
-                    </>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                side="top" 
-                align="start" 
-                sideOffset={8} 
-                className="w-64 p-2"
-              >
-                <div className="flex items-center gap-3 p-2">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={user?.avatar} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                      {getUserInitials(user?.firstName, user?.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-foreground truncate" data-testid="text-user-name">
-                      {user?.firstName || 'Usuário'}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate" data-testid="text-user-email">
-                      {user?.email || 'user@example.com'}
+                    )}
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  side="right" 
+                  align="start" 
+                  sideOffset={8} 
+                  className="w-64 p-2"
+                >
+                  <div className="flex items-center gap-3 p-2">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                        {getUserInitials(user?.firstName, user?.lastName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {user?.firstName || 'Usuário'}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {user?.email || 'user@example.com'}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                  data-testid="menuitem-logout"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                    data-testid="menuitem-logout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </aside>
