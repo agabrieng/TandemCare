@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useMemo } from "react";
+import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const { progressState, simulateProgress } = useLoadingProgress();
+  const [, setLocation] = useLocation();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -180,7 +182,12 @@ export default function Dashboard() {
               <Filter className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden sm:inline">Filtros</span>
             </Button>
-            <Button size="default" className="flex-1 sm:flex-initial min-h-11 sm:min-h-9" data-testid="button-add-expense">
+            <Button 
+              size="default" 
+              className="flex-1 sm:flex-initial min-h-11 sm:min-h-9" 
+              onClick={() => setLocation('/expenses')}
+              data-testid="button-add-expense"
+            >
               <Plus className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden sm:inline">Nova Despesa</span>
             </Button>
