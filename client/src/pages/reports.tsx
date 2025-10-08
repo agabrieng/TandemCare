@@ -3210,29 +3210,36 @@ export default function Reports() {
 
       {/* Modal de Download do Servidor */}
       {showDownloadModal && downloadUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold mb-4">Relatório Gerado com Sucesso!</h2>
-            <p className="text-muted-foreground mb-6">
-              Seu relatório foi gerado no servidor e está pronto para download.
-            </p>
-            <div className="flex gap-3">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-card border border-border p-6 rounded-lg shadow-2xl max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
+                <Download className="w-6 h-6 text-green-500" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Sucesso!</h2>
+              <p className="text-muted-foreground">
+                Seu relatório foi gerado e está pronto para download.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
               <a
                 href={downloadUrl}
                 download
-                className="flex-1"
+                className="w-full"
               >
-                <Button className="w-full" data-testid="button-download-pdf">
-                  <Download className="w-4 h-4 mr-2" />
+                <Button size="lg" className="w-full" data-testid="button-download-pdf">
+                  <Download className="w-5 h-5 mr-2" />
                   Baixar Relatório
                 </Button>
               </a>
               <Button
+                size="lg"
                 variant="outline"
                 onClick={() => {
                   setShowDownloadModal(false);
                   setDownloadUrl(null);
                 }}
+                className="w-full"
                 data-testid="button-close-download-modal"
               >
                 Fechar
