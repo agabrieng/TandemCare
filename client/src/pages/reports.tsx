@@ -872,10 +872,11 @@ export default function Reports() {
     let timeoutIds: NodeJS.Timeout[] = [];
     
     try {
-      // Detectar dispositivo móvel logo no início
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // FORÇAR SEMPRE USAR MÉTODO DESKTOP (versão completa do PDF)
+      // Desktop version PDF exportation method is default!
+      const isMobileDevice = false; // Sempre usar versão desktop
       console.log("[PDF Generation] User Agent:", navigator.userAgent);
-      console.log("[PDF Generation] Is Mobile Device:", isMobileDevice);
+      console.log("[PDF Generation] Forçando modo Desktop (isMobileDevice = false)");
       
       // Em dispositivos móveis, gerar o PDF no servidor
       if (isMobileDevice) {
@@ -2266,9 +2267,8 @@ export default function Reports() {
             }
             
             // Adicionar delay para permitir que o navegador processe outros eventos
-            // Isso evita travamento/crash em dispositivos móveis ao processar muitos comprovantes
-            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const delayMs = isMobileDevice ? 150 : 50;
+            // Desktop version sempre usa menor delay
+            const delayMs = 50;
             await new Promise(resolve => setTimeout(resolve, delayMs));
             
             // Tentar carregar o arquivo real (imagem ou PDF)
@@ -2281,10 +2281,9 @@ export default function Reports() {
                   
                   if (isImage) {
                     // Processar como imagem com qualidade otimizada
-                    // Usar resolução menor em dispositivos móveis para evitar crash
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                    const maxResolution = isMobile ? 800 : 1200;
-                    const quality = isMobile ? 0.75 : 0.85;
+                    // Desktop version sempre usa alta resolução
+                    const maxResolution = 1200;
+                    const quality = 0.85;
                     const compressedImageData = await compressImage(fileData.data, maxResolution, quality);
                     
                     // Criar uma imagem temporária para obter as dimensões
