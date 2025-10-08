@@ -90,64 +90,66 @@ export function PdfDownloadModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="max-w-md sm:max-w-lg" data-testid="modal-pdf-download">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <FileCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-            Relatório PDF Gerado com Sucesso!
-          </DialogTitle>
-          <DialogDescription>
-            Seu relatório foi gerado com sucesso no padrão ABNT. Revise as informações e faça o download.
-          </DialogDescription>
-        </DialogHeader>
+        <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden" data-testid="modal-pdf-download">
+        {/* Header com gradiente */}
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
+          <div className="flex items-center justify-center space-x-3">
+            <FileText className="h-8 w-8" />
+            <h3 className="text-xl font-bold">Relatório PDF Gerado</h3>
+          </div>
+        </div>
 
-        <div className="space-y-4">
+        {/* Corpo da modal */}
+        <div className="p-6 space-y-6">
+          {/* Mensagem de sucesso */}
+          <div className="text-center">
+            <p className="text-base font-medium text-foreground">
+              Seu relatório foi gerado com sucesso no padrão ABNT. Revise as informações e faça o download.
+            </p>
+          </div>
+
           {/* Informações do Relatório */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    Período
-                  </span>
-                  <span className="font-medium" data-testid="text-period">
-                    {formatDate(reportStats.period.start)} até {formatDate(reportStats.period.end)}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-primary" data-testid="text-modal-total-amount">
-                      {formatCurrency(reportStats.totalAmount)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Total Gasto</div>
+          <div className="bg-muted/50 rounded-lg p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  Período
+                </span>
+                <span className="font-medium" data-testid="text-period">
+                  {formatDate(reportStats.period.start)} até {formatDate(reportStats.period.end)}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-primary" data-testid="text-modal-total-amount">
+                    {formatCurrency(reportStats.totalAmount)}
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold" data-testid="text-modal-expense-count">
-                      {reportStats.expenseCount}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Despesas</div>
+                  <div className="text-xs text-muted-foreground">Total Gasto</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold" data-testid="text-modal-expense-count">
+                    {reportStats.expenseCount}
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm pt-2 border-t">
-                  <span className="text-muted-foreground">Documentação</span>
-                  <span className="font-medium text-green-600" data-testid="text-modal-documentation-rate">
-                    {((reportStats.receiptCount / Math.max(reportStats.expenseCount, 1)) * 100).toFixed(0)}% 
-                    ({reportStats.receiptCount} comprovantes)
-                  </span>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Tamanho do arquivo</span>
-                  <span className="font-medium" data-testid="text-file-size">{fileSizeInMB} MB</span>
+                  <div className="text-xs text-muted-foreground">Despesas</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              
+              <div className="flex items-center justify-between text-sm pt-2 border-t">
+                <span className="text-muted-foreground">Documentação</span>
+                <span className="font-medium text-green-600 dark:text-green-400" data-testid="text-modal-documentation-rate">
+                  {((reportStats.receiptCount / Math.max(reportStats.expenseCount, 1)) * 100).toFixed(0)}% 
+                  ({reportStats.receiptCount} comprovantes)
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Tamanho do arquivo</span>
+                <span className="font-medium" data-testid="text-file-size">{fileSizeInMB} MB</span>
+              </div>
+            </div>
+          </div>
 
           {/* Nome do Arquivo */}
           <div className="space-y-2">
@@ -165,36 +167,45 @@ export function PdfDownloadModal({
               O arquivo será salvo como PDF automaticamente
             </p>
           </div>
-        </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleClose} data-testid="button-close-modal">
-            Fechar
-          </Button>
-          <Button 
-            onClick={handleDownload}
-            disabled={isDownloading || !pdfBlob}
-            data-testid="button-download-pdf"
-            className="min-w-[120px]"
-          >
-            {isDownloading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Baixando...
-              </div>
-            ) : isDownloaded ? (
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4" />
-                Baixado!
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                Baixar PDF
-              </div>
-            )}
-          </Button>
-        </DialogFooter>
+          {/* Botões de ação */}
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+            <Button variant="outline" onClick={handleClose} data-testid="button-close-modal" className="w-full sm:w-auto">
+              Fechar
+            </Button>
+            <Button 
+              onClick={handleDownload}
+              disabled={isDownloading || !pdfBlob}
+              data-testid="button-download-pdf"
+              className="min-w-[120px] w-full sm:w-auto"
+            >
+              {isDownloading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Baixando...
+                </div>
+              ) : isDownloaded ? (
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  Baixado!
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Baixar PDF
+                </div>
+              )}
+            </Button>
+          </div>
+
+          {/* Rodapé com status do sistema */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-muted-foreground font-medium">Sistema ativo</span>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
