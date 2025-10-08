@@ -54,13 +54,13 @@ export default function Landing() {
       </div>
 
       {/* Logo Section */}
-      <div className="py-8 bg-background">
+      <div className="py-12 sm:py-16 md:py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center">
             <img 
               src={logoImage} 
               alt="TandemCare Logo" 
-              className="h-48 w-auto object-contain"
+              className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl h-auto object-contain"
               data-testid="img-logo"
             />
           </div>
