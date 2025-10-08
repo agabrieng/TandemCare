@@ -185,7 +185,7 @@ export default function Dashboard() {
             <Button 
               size="default" 
               className="flex-1 sm:flex-initial min-h-11 sm:min-h-9" 
-              onClick={() => setLocation('/expenses')}
+              onClick={() => setLocation('/expenses?add=true')}
               data-testid="button-add-expense"
             >
               <Plus className="w-5 h-5 sm:w-4 sm:h-4 sm:mr-2" />

@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ const monthNames = [
 
 export default function Expenses() {
   const isMobile = useIsMobile();
+  const [location, setLocation] = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,6 +105,16 @@ export default function Expenses() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Check if URL has ?add=true parameter to open add dialog automatically
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('add') === 'true') {
+      setIsAddDialogOpen(true);
+      // Clean up URL parameter without triggering navigation
+      window.history.replaceState({}, '', '/expenses');
+    }
+  }, []);
 
   // Build structured filter object for query key
   const filters = {
