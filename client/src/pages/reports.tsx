@@ -872,89 +872,8 @@ export default function Reports() {
       // Detectar dispositivo móvel logo no início
       const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      // Em dispositivos móveis, gerar PDF no servidor
-      if (isMobileDevice) {
-        console.log('[Mobile PDF] Iniciando geração no servidor');
-        
-        try {
-          console.log('[Mobile PDF] Mostrando progresso...');
-          showProgress("Preparando relatório...", "Gerando Relatório PDF");
-        } catch (e) {
-          console.error('[Mobile PDF] Erro ao mostrar progresso:', e);
-          throw e;
-        }
-        
-        console.log('[Mobile PDF] Aguardando 300ms...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        console.log('[Mobile PDF] Atualizando progresso para 30%...');
-        updateProgress(30, "Enviando dados para o servidor...");
-        
-        console.log('[Mobile PDF] Criando nome do arquivo...');
-        const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-        
-        console.log('[Mobile PDF] Montando dados do relatório...');
-        console.log('[Mobile PDF] Filtros atuais:', {
-          startDate,
-          endDate,
-          selectedChildren,
-          selectedStatus,
-          selectedCategories
-        });
-        const reportData = {
-          filters: {
-            startDate: startDate,
-            endDate: endDate,
-            childId: selectedChildren.length === 1 ? selectedChildren[0] : 'all',
-            status: selectedStatus.length === 1 ? selectedStatus[0] : 'all',
-            categoryId: selectedCategories.length === 1 ? selectedCategories[0] : 'all',
-          },
-          fileName
-        };
-        
-        console.log('[Mobile PDF] Dados montados:', reportData);
-        updateProgress(60, "Gerando PDF no servidor...");
-        
-        const response = await fetch('/api/reports/generate-pdf-mobile', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(reportData)
-        });
-        
-        console.log('[Mobile PDF] Resposta recebida:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[Mobile PDF] Erro na resposta:', errorText);
-          throw new Error(`Erro ao gerar PDF: ${response.statusText} - ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('[Mobile PDF] Resultado:', result);
-        
-        updateProgress(90, "Preparando download...");
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        updateProgress(100, "Download iniciado!");
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        hideProgress(true);
-        
-        // Abrir link de download
-        window.location.href = result.downloadUrl;
-        
-        const report = generateReport();
-        toast({
-          title: "Relatório gerado com sucesso!",
-          description: `O download será iniciado automaticamente. Total: ${formatCurrency(report.totalAmount)} | ${report.expenseCount} despesas`,
-          variant: "default",
-        });
-        
-        return; // Terminar aqui para mobile
-      }
+      // Em dispositivos móveis, gerar o PDF completo mas SEM os comprovantes
+      // para evitar o crash por consumo de memória
       
       // CÓDIGO DESKTOP A PARTIR DAQUI
       
@@ -2122,7 +2041,15 @@ export default function Reports() {
       });
 
       // ===== 6. EXTRATO DE DESPESAS COM COMPROVANTES =====
-      updateProgress(80, "Processando comprovantes...");
+      // Em dispositivos móveis, pular a seção de comprovantes para evitar crash
+      const skipReceipts = isMobileDevice;
+      
+      if (skipReceipts) {
+        updateProgress(80, "Gerando relatório otimizado para mobile...");
+      } else {
+        updateProgress(80, "Processando comprovantes...");
+      }
+      
       pdf.addPage();
       pageNumber++;
       sectionPageMap["EXTRATO DE DESPESAS COM COMPROVANTES"] = pageNumber;
@@ -2195,32 +2122,40 @@ export default function Reports() {
         
         // Comprovantes
         if (expense.receipts && expense.receipts.length > 0) {
-          // Detectar dispositivo móvel
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          
-          // Em dispositivos móveis, processar apenas o primeiro comprovante de cada despesa
-          // para evitar timeout e crash
-          const receiptsToProcess = isMobile ? Math.min(1, expense.receipts.length) : expense.receipts.length;
-          
-          pdf.setFont("times", "bold");
-          pdf.text(`Comprovantes anexados: ${expense.receipts.length}`, margins.left, yPosition);
-          yPosition += 6;
-          
-          // Adicionar nota se houver comprovantes omitidos em mobile
-          if (isMobile && expense.receipts.length > 1) {
+          // Em dispositivos móveis, NÃO processar imagens para evitar crash
+          if (skipReceipts) {
+            pdf.setFont("times", "bold");
+            pdf.text(`Comprovantes anexados: ${expense.receipts.length}`, margins.left, yPosition);
+            yPosition += 6;
+            
             pdf.setFont("times", "italic");
             pdf.setFontSize(9);
             pdf.setTextColor(100, 100, 100);
-            pdf.text(`(Mostrando ${receiptsToProcess} de ${expense.receipts.length} - versão otimizada para dispositivo móvel)`, margins.left, yPosition);
+            pdf.text(`(Imagens não incluídas na versão mobile para otimização)`, margins.left, yPosition);
             pdf.setFontSize(10);
             pdf.setTextColor(0, 0, 0);
+            pdf.setFont("times", "normal");
+            yPosition += 10;
+            
+            // Listar apenas os nomes dos arquivos sem carregar as imagens
+            expense.receipts.forEach((receipt: any, idx: number) => {
+              pdf.text(`• ${receipt.fileName || `Comprovante ${idx + 1}`}`, margins.left + 5, yPosition);
+              yPosition += 5;
+            });
+            yPosition += 10;
+          } else {
+            // Código original para desktop - processar imagens
+            const receiptsToProcess = expense.receipts.length;
+            
+            pdf.setFont("times", "bold");
+            pdf.text(`Comprovantes anexados: ${expense.receipts.length}`, margins.left, yPosition);
             yPosition += 6;
-          }
-          yPosition += 4;
-          
-          pdf.setFont("times", "normal");
-          
-          for (let receiptIndex = 0; receiptIndex < receiptsToProcess; receiptIndex++) {
+            
+            yPosition += 4;
+            
+            pdf.setFont("times", "normal");
+            
+            for (let receiptIndex = 0; receiptIndex < receiptsToProcess; receiptIndex++) {
             const receipt = expense.receipts[receiptIndex];
             if (yPosition > pageHeight - margins.bottom - 20) {
               pdf.addPage();
@@ -2395,6 +2330,7 @@ export default function Reports() {
               yPosition += imageHeight + 15;
             }
           }
+          } // Fechar o else do skipReceipts
         } else {
           pdf.setFont("times", "italic");
           pdf.setTextColor(150, 0, 0);
