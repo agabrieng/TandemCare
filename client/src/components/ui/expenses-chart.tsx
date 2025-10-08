@@ -9,15 +9,15 @@ interface ExpensesChartProps {
     amount: number;
     percentage: number;
   }>;
+  period?: string;
+  onPeriodChange?: (period: string) => void;
   userCategoryColors?: Record<string, string>;
   fallbackColor?: string;
   categoryColors?: Record<string, string>; // Manter para compatibilidade
   className?: string;
 }
 
-export function ExpensesChart({ data, userCategoryColors, fallbackColor, categoryColors, className, ...props }: ExpensesChartProps) {
-  // Extrair props customizadas para evitar warnings do React
-  const { ...cardProps } = props;
+export function ExpensesChart({ data, period = "90", onPeriodChange, userCategoryColors, fallbackColor, categoryColors, className }: ExpensesChartProps) {
   const isMobile = useIsMobile();
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -78,12 +78,12 @@ export function ExpensesChart({ data, userCategoryColors, fallbackColor, categor
   };
 
   return (
-    <Card className={className} {...cardProps}>
+    <Card className={className}>
       <CardHeader className="px-4 sm:px-6">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <CardTitle className="text-base sm:text-lg">Gastos por Categoria</CardTitle>
-          <Select defaultValue="30">
-            <SelectTrigger className="w-full sm:w-40 text-base">
+          <Select value={period} onValueChange={onPeriodChange}>
+            <SelectTrigger className="w-full sm:w-40 text-base" data-testid="select-chart-period">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>

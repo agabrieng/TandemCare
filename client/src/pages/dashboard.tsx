@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,7 @@ export default function Dashboard() {
   const { isAuthenticated, isLoading } = useAuth();
   const { progressState, simulateProgress } = useLoadingProgress();
   const [, setLocation] = useLocation();
+  const [chartPeriod, setChartPeriod] = useState<string>("90");
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -118,6 +119,45 @@ export default function Dashboard() {
 
     return { userColorMap, fallbackColor };
   }, [categories]);
+
+  // Filtrar despesas por período e calcular categoryBreakdown
+  const filteredCategoryBreakdown = useMemo(() => {
+    if (!expenses || expenses.length === 0) {
+      return stats?.categoryBreakdown || [];
+    }
+
+    const now = new Date();
+    const daysToSubtract = parseInt(chartPeriod);
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+
+    // Filtrar despesas pelo período
+    const filteredExpenses = expenses.filter((expense: Expense) => {
+      const expenseDate = new Date(expense.expenseDate);
+      return expenseDate >= startDate && expenseDate <= now;
+    });
+
+    // Calcular total filtrado
+    const totalFiltered = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+
+    if (totalFiltered === 0) {
+      return [];
+    }
+
+    // Agrupar por categoria
+    const categoryTotals: Record<string, number> = {};
+    filteredExpenses.forEach((expense: Expense) => {
+      const category = expense.category.toLowerCase();
+      categoryTotals[category] = (categoryTotals[category] || 0) + parseFloat(expense.amount);
+    });
+
+    // Calcular percentagens
+    return Object.entries(categoryTotals).map(([category, amount]) => ({
+      category,
+      amount,
+      percentage: (amount / totalFiltered) * 100,
+    }));
+  }, [expenses, chartPeriod, stats?.categoryBreakdown]);
 
   // Simular progresso quando carregando dados
   useEffect(() => {
@@ -262,7 +302,9 @@ export default function Dashboard() {
         {/* Charts and Recent Activities */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
           <ExpensesChart 
-            data={stats?.categoryBreakdown || []}
+            data={filteredCategoryBreakdown}
+            period={chartPeriod}
+            onPeriodChange={setChartPeriod}
             userCategoryColors={categoryColors.userColorMap}
             fallbackColor={categoryColors.fallbackColor}
             data-testid="chart-expenses-by-category"
