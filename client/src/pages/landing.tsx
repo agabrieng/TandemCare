@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, Shield, FileText, BarChart3, Users, Receipt } from "lucide-react";
+import logoImage from "@assets/TandemCare-01_1759906949175.png";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -48,6 +49,20 @@ export default function Landing() {
                 </div>
               </div>
             </main>
+          </div>
+        </div>
+      </div>
+
+      {/* Logo Section */}
+      <div className="py-8 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center">
+            <img 
+              src={logoImage} 
+              alt="TandemCare Logo" 
+              className="h-48 w-auto object-contain"
+              data-testid="img-logo"
+            />
           </div>
         </div>
       </div>
