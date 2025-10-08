@@ -874,6 +874,8 @@ export default function Reports() {
     try {
       // Detectar dispositivo móvel logo no início
       const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      console.log("[PDF Generation] User Agent:", navigator.userAgent);
+      console.log("[PDF Generation] Is Mobile Device:", isMobileDevice);
       
       // Em dispositivos móveis, gerar o PDF no servidor
       if (isMobileDevice) {
