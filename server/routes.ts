@@ -1709,8 +1709,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const imageBuffer = await loadImageFromStorage(receipt.filePath);
                 
                 if (imageBuffer && receipt.fileType && receipt.fileType.startsWith('image/')) {
-                  const imageBase64 = `data:${receipt.fileType};base64,${imageBuffer.toString('base64')}`;
-                  
                   // Add new page for each receipt image
                   pdf.addPage();
                   pageNumber++;
@@ -1729,15 +1727,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   let imgWidth = maxWidth;
                   let imgHeight = maxHeight;
                   
+                  let optimizedImageData: string;
+                  
                   try {
-                    // Load image to get real dimensions and maintain aspect ratio
+                    // Load image to get real dimensions
                     const img = await loadImage(imageBuffer);
+                    
+                    // Calculate target dimensions to maintain aspect ratio
                     const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
                     imgWidth = img.width * ratio;
                     imgHeight = img.height * ratio;
+                    
+                    // Optimize image: resize and compress to reduce file size
+                    // Maximum dimension of 1500px to ensure readability while reducing size
+                    const maxDimension = 1500;
+                    let targetWidth = img.width;
+                    let targetHeight = img.height;
+                    
+                    if (img.width > maxDimension || img.height > maxDimension) {
+                      const scale = Math.min(maxDimension / img.width, maxDimension / img.height);
+                      targetWidth = Math.floor(img.width * scale);
+                      targetHeight = Math.floor(img.height * scale);
+                    }
+                    
+                    // Create canvas for compression
+                    const compressionCanvas = createCanvas(targetWidth, targetHeight);
+                    const compressionCtx = compressionCanvas.getContext('2d');
+                    
+                    // Draw resized image
+                    compressionCtx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                    
+                    // Convert to JPEG with 75% quality (good balance between size and readability)
+                    optimizedImageData = compressionCanvas.toDataURL('image/jpeg', 0.75);
                   } catch (dimError) {
-                    // Fallback to using maximum dimensions if dimension detection fails
-                    console.warn('Could not detect image dimensions, using maximum size:', dimError);
+                    // Fallback: use original image with basic compression
+                    console.warn('Could not optimize image, using original:', dimError);
+                    optimizedImageData = `data:${receipt.fileType};base64,${imageBuffer.toString('base64')}`;
                     imgWidth = maxWidth;
                     imgHeight = maxHeight;
                   }
@@ -1745,7 +1770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Center image both horizontally and vertically on the page
                   const imgX = (pageWidth - imgWidth) / 2;
                   const imgY = (pageHeight - imgHeight) / 2;
-                  pdf.addImage(imageBase64, 'JPEG', imgX, imgY, imgWidth, imgHeight, undefined, 'FAST');
+                  pdf.addImage(optimizedImageData, 'JPEG', imgX, imgY, imgWidth, imgHeight, undefined, 'FAST');
                 }
               } catch (error) {
                 console.error(`Error loading receipt image:`, error);
