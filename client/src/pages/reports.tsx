@@ -910,13 +910,21 @@ export default function Reports() {
         timeoutIds.push(progressInterval as any);
         
         try {
+          console.log("[Mobile PDF] Iniciando requisição ao servidor");
+          console.log("[Mobile PDF] Filtros:", filters);
+          console.log("[Mobile PDF] Nome do arquivo:", fileName);
+          
           const response = await apiRequest('POST', '/api/reports/generate-pdf-server', { 
             filters, 
             fileName 
           });
           
+          console.log("[Mobile PDF] Resposta recebida, status:", response.status);
           clearInterval(progressInterval);
+          
           const data = await response.json();
+          console.log("[Mobile PDF] Dados parseados:", data);
+          
           updateProgress(100, "PDF gerado com sucesso!");
           
           // Exibir modal com link de download
@@ -926,10 +934,11 @@ export default function Reports() {
         } catch (error) {
           clearInterval(progressInterval);
           console.error("Erro ao gerar PDF no servidor:", error);
+          console.error("Detalhes do erro:", error instanceof Error ? error.message : String(error));
           hideProgress();
           toast({
             title: "Erro",
-            description: "Não foi possível gerar o PDF no servidor. Tente novamente.",
+            description: `Não foi possível gerar o PDF no servidor. ${error instanceof Error ? error.message : 'Tente novamente.'}`,
             variant: "destructive",
           });
         }
