@@ -410,17 +410,17 @@ export default function Receipts() {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Page Header */}
-      <div className="bg-card border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground" data-testid="title-receipts">Comprovantes</h1>
-            <p className="text-muted-foreground">Gerencie todos os comprovantes das despesas</p>
+      <div className="bg-card border-b border-border px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="title-receipts">Comprovantes</h1>
+            <p className="text-sm text-muted-foreground hidden sm:block">Gerencie todos os comprovantes das despesas</p>
           </div>
           <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-upload-receipt">
-                <Upload className="mr-2 w-4 h-4" />
-                Enviar Comprovante
+              <Button size={isMobile ? "sm" : "default"} data-testid="button-upload-receipt" className="flex-shrink-0">
+                <Upload className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="whitespace-nowrap">{isMobile ? "Enviar" : "Enviar Comprovante"}</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="dialog-upload-receipt">

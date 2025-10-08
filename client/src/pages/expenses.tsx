@@ -485,15 +485,16 @@ export default function Expenses() {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Page Header */}
-      <div className="border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold" data-testid="title-expenses">Despesas</h1>
-            <p className="text-muted-foreground">Gerencie todas as despesas dos seus filhos</p>
+      <div className="border-b px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold" data-testid="title-expenses">Despesas</h1>
+            <p className="text-sm text-muted-foreground hidden sm:block">Gerencie todas as despesas dos seus filhos</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button 
               variant="outline" 
+              size={isMobile ? "sm" : "default"}
               onClick={() => {
                 // Invalida todas as queries que começam com "/api/expenses"
                 queryClient.invalidateQueries({ 
@@ -516,17 +517,17 @@ export default function Expenses() {
               }}
               data-testid="button-refresh-expenses"
             >
-              <RefreshCw className="mr-2 w-4 h-4" />
-              Atualizar
+              <RefreshCw className={isMobile ? "w-4 h-4" : "mr-2 w-4 h-4"} />
+              {!isMobile && "Atualizar"}
             </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button data-testid="button-add-expense">
-                  <Plus className="mr-2 w-4 h-4" />
-                  Nova Despesa
+                <Button size={isMobile ? "sm" : "default"} data-testid="button-add-expense">
+                  <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="whitespace-nowrap">Nova{!isMobile && " Despesa"}</span>
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-2xl" data-testid="dialog-add-expense">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-add-expense">
               <DialogHeader>
                 <DialogTitle>Adicionar Nova Despesa</DialogTitle>
                 <DialogDescription>
@@ -544,14 +545,14 @@ export default function Expenses() {
         </div>
       </div>
 
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         {/* Search and Filters */}
-        <div className="mb-6 space-y-4">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-md">
+        <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+            <div className="relative flex-1 sm:max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por descrição, filho ou categoria..."
+                placeholder={isMobile ? "Buscar..." : "Buscar por descrição, filho ou categoria..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -560,8 +561,10 @@ export default function Expenses() {
             </div>
             <Button
               variant="outline"
+              size={isMobile ? "sm" : "default"}
               onClick={() => setShowFilters(!showFilters)}
               data-testid="button-toggle-filters"
+              className="flex-shrink-0"
             >
               <Filter className="w-4 h-4 mr-2" />
               Filtros

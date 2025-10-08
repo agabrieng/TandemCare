@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -72,6 +73,7 @@ interface Child {
 }
 
 export default function LegalData() {
+  const isMobile = useIsMobile();
   const [isAddLawyerDialogOpen, setIsAddLawyerDialogOpen] = useState(false);
   const [isAddCaseDialogOpen, setIsAddCaseDialogOpen] = useState(false);
   const [editingLawyer, setEditingLawyer] = useState<Lawyer | null>(null);
@@ -366,37 +368,39 @@ export default function LegalData() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dados Jurídicos</h1>
-          <p className="text-muted-foreground">
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dados Jurídicos</h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">
             Gerencie informações de advogados e processos judiciais
           </p>
         </div>
       </div>
 
-      <Tabs defaultValue="lawyers" className="space-y-6">
+      <Tabs defaultValue="lawyers" className="space-y-4 sm:space-y-6">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lawyers" className="flex items-center gap-2" data-testid="tab-lawyers">
+          <TabsTrigger value="lawyers" className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base" data-testid="tab-lawyers">
             <Scale className="w-4 h-4" />
-            Advogados
+            <span className="hidden sm:inline">Advogados</span>
+            <span className="sm:hidden">Advogados</span>
           </TabsTrigger>
-          <TabsTrigger value="cases" className="flex items-center gap-2" data-testid="tab-cases">
+          <TabsTrigger value="cases" className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base" data-testid="tab-cases">
             <Briefcase className="w-4 h-4" />
-            Processos Judiciais
+            <span className="hidden sm:inline">Processos Judiciais</span>
+            <span className="sm:hidden">Processos</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Lawyers Tab */}
         <TabsContent value="lawyers" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Advogados Cadastrados</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <h2 className="text-lg sm:text-xl font-semibold">Advogados Cadastrados</h2>
             <Dialog open={isAddLawyerDialogOpen} onOpenChange={setIsAddLawyerDialogOpen}>
               <DialogTrigger asChild>
-                <Button data-testid="button-add-lawyer">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Advogado
+                <Button size={isMobile ? "sm" : "default"} data-testid="button-add-lawyer" className="flex-shrink-0">
+                  <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="whitespace-nowrap">{isMobile ? "Adicionar" : "Adicionar Advogado"}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -545,13 +549,13 @@ export default function LegalData() {
 
         {/* Legal Cases Tab */}
         <TabsContent value="cases" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Processos Judiciais</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <h2 className="text-lg sm:text-xl font-semibold">Processos Judiciais</h2>
             <Dialog open={isAddCaseDialogOpen} onOpenChange={setIsAddCaseDialogOpen}>
               <DialogTrigger asChild>
-                <Button data-testid="button-add-case">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Processo
+                <Button size={isMobile ? "sm" : "default"} data-testid="button-add-case" className="flex-shrink-0">
+                  <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="whitespace-nowrap">{isMobile ? "Adicionar" : "Adicionar Processo"}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
