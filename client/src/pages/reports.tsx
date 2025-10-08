@@ -875,12 +875,26 @@ export default function Reports() {
       // Em dispositivos móveis, gerar PDF no servidor
       if (isMobileDevice) {
         console.log('[Mobile PDF] Iniciando geração no servidor');
-        showProgress("Preparando relatório...", "Gerando Relatório PDF");
+        
+        try {
+          console.log('[Mobile PDF] Mostrando progresso...');
+          showProgress("Preparando relatório...", "Gerando Relatório PDF");
+        } catch (e) {
+          console.error('[Mobile PDF] Erro ao mostrar progresso:', e);
+          throw e;
+        }
+        
+        console.log('[Mobile PDF] Aguardando 300ms...');
         await new Promise(resolve => setTimeout(resolve, 300));
         
+        console.log('[Mobile PDF] Atualizando progresso para 30%...');
         updateProgress(30, "Enviando dados para o servidor...");
         
+        console.log('[Mobile PDF] Criando nome do arquivo...');
         const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        
+        console.log('[Mobile PDF] Montando dados do relatório...');
+        console.log('[Mobile PDF] Filtros atuais:', filters);
         const reportData = {
           filters: {
             startDate: filters.startDate,
@@ -892,7 +906,7 @@ export default function Reports() {
           fileName
         };
         
-        console.log('[Mobile PDF] Enviando para servidor:', reportData);
+        console.log('[Mobile PDF] Dados montados:', reportData);
         updateProgress(60, "Gerando PDF no servidor...");
         
         const response = await fetch('/api/reports/generate-pdf-mobile', {
