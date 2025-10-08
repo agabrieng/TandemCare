@@ -877,7 +877,7 @@ export default function Reports() {
       
       // Em dispositivos móveis, gerar o PDF no servidor
       if (isMobileDevice) {
-        showProgress("Gerando relatório no servidor...", "Processando");
+        showProgress("Preparando dados...", "Processando");
         
         const fileName = `relatorio-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.pdf`;
         
@@ -890,12 +890,32 @@ export default function Reports() {
           categoryId: selectedCategories.length === 1 ? selectedCategories[0] : 'all',
         };
         
+        // Simular progresso gradual enquanto o servidor processa
+        let currentProgress = 0;
+        const progressInterval = setInterval(() => {
+          currentProgress += 2;
+          if (currentProgress < 90) {
+            const messages = [
+              "Coletando dados...",
+              "Preparando documento...",
+              "Gerando gráficos...",
+              "Processando comprovantes...",
+              "Finalizando relatório..."
+            ];
+            const messageIndex = Math.floor(currentProgress / 20);
+            updateProgress(currentProgress, messages[messageIndex] || "Gerando relatório...");
+          }
+        }, 300); // Atualiza a cada 300ms
+        
+        timeoutIds.push(progressInterval as any);
+        
         try {
           const response = await apiRequest('POST', '/api/reports/generate-pdf-server', { 
             filters, 
             fileName 
           });
           
+          clearInterval(progressInterval);
           const data = await response.json();
           updateProgress(100, "PDF gerado com sucesso!");
           
@@ -904,6 +924,7 @@ export default function Reports() {
           setShowDownloadModal(true);
           hideProgress();
         } catch (error) {
+          clearInterval(progressInterval);
           console.error("Erro ao gerar PDF no servidor:", error);
           hideProgress();
           toast({
