@@ -692,9 +692,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import required modules
       console.log("[PDF Server] Importando módulos...");
-      const jsPDFModule = await import('jspdf');
-      const jsPDF = jsPDFModule.default || jsPDFModule.jsPDF || jsPDFModule;
-      console.log("[PDF Server] jsPDF importado:", typeof jsPDF, Object.keys(jsPDFModule));
+      const { jsPDF } = await import('jspdf');
+      console.log("[PDF Server] jsPDF importado:", typeof jsPDF);
       
       const { createCanvas, loadImage } = await import('canvas');
       const { Chart, registerables } = await import('chart.js');
