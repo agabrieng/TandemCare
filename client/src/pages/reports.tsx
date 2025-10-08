@@ -874,6 +874,7 @@ export default function Reports() {
       
       // Em dispositivos móveis, gerar PDF no servidor
       if (isMobileDevice) {
+        console.log('[Mobile PDF] Iniciando geração no servidor');
         showProgress("Preparando relatório...", "Gerando Relatório PDF");
         await new Promise(resolve => setTimeout(resolve, 300));
         
@@ -891,6 +892,7 @@ export default function Reports() {
           fileName
         };
         
+        console.log('[Mobile PDF] Enviando para servidor:', reportData);
         updateProgress(60, "Gerando PDF no servidor...");
         
         const response = await fetch('/api/reports/generate-pdf-mobile', {
@@ -902,11 +904,16 @@ export default function Reports() {
           body: JSON.stringify(reportData)
         });
         
+        console.log('[Mobile PDF] Resposta recebida:', response.status);
+        
         if (!response.ok) {
-          throw new Error(`Erro ao gerar PDF: ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('[Mobile PDF] Erro na resposta:', errorText);
+          throw new Error(`Erro ao gerar PDF: ${response.statusText} - ${errorText}`);
         }
         
         const result = await response.json();
+        console.log('[Mobile PDF] Resultado:', result);
         
         updateProgress(90, "Preparando download...");
         await new Promise(resolve => setTimeout(resolve, 300));
