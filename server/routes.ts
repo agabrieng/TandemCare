@@ -1711,9 +1711,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (imageBuffer && receipt.fileType && receipt.fileType.startsWith('image/')) {
                   const imageBase64 = `data:${receipt.fileType};base64,${imageBuffer.toString('base64')}`;
                   
-                  // Default dimensions
-                  const maxWidth = contentWidth - 20;
-                  const maxHeight = 150;
+                  // Use full page width for images
+                  const maxWidth = contentWidth;
+                  const maxHeight = pageHeight - margins.top - margins.bottom - 40; // Almost full page height
                   let imgWidth = maxWidth;
                   let imgHeight = maxHeight;
                   
@@ -1728,13 +1728,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     console.warn('Could not detect image dimensions, using fixed size:', dimError);
                   }
                   
-                  if (yPosition + imgHeight > pageHeight - margins.bottom - 10) {
+                  // Always add image on new page for better visibility
+                  if (yPosition > margins.top + 30 || yPosition + imgHeight > pageHeight - margins.bottom - 10) {
                     pdf.addPage();
                     pageNumber++;
                     yPosition = margins.top + 20;
                   }
                   
-                  pdf.addImage(imageBase64, 'JPEG', margins.left + 10, yPosition, imgWidth, imgHeight);
+                  // Center image horizontally
+                  const imgX = margins.left + (contentWidth - imgWidth) / 2;
+                  pdf.addImage(imageBase64, 'JPEG', imgX, yPosition, imgWidth, imgHeight);
                   yPosition += imgHeight + 10;
                 }
               } catch (error) {
