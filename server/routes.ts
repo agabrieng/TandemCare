@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectStorageService, objectStorageClient, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertChildSchema, insertExpenseSchema, insertReceiptSchema, insertLawyerSchema, insertLegalCaseSchema, insertCategorySchema, insertParentSchema } from "@shared/schema";
 import { z } from "zod";
@@ -648,6 +648,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // PDF temporary storage for mobile download
+  app.post('/api/reports/temp-pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { pdfData, fileName } = req.body;
+      
+      if (!pdfData || !fileName) {
+        return res.status(400).json({ message: "PDF data and fileName are required" });
+      }
+
+      // Decode base64 PDF data
+      const pdfBuffer = Buffer.from(pdfData, 'base64');
+      
+      // Get private object directory from ObjectStorageService
+      const objectStorage = new ObjectStorageService();
+      const privateDir = objectStorage.getPrivateObjectDir();
+      
+      // Save to object storage with temporary prefix
+      const tempPath = `${privateDir}/temp-pdfs/${userId}/${fileName}`;
+      const pathParts = tempPath.split('/');
+      const bucketName = pathParts[1];
+      const objectName = pathParts.slice(2).join('/');
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      // Upload file
+      await file.save(pdfBuffer, {
+        metadata: {
+          contentType: 'application/pdf',
+        },
+      });
+      
+      // Generate download URL
+      const downloadUrl = `/api/reports/download-temp-pdf/${fileName}`;
+      
+      res.json({ downloadUrl });
+    } catch (error) {
+      console.error("Error saving temporary PDF:", error);
+      res.status(500).json({ message: "Failed to save PDF" });
+    }
+  });
+
+  // Download temporary PDF
+  app.get('/api/reports/download-temp-pdf/:fileName', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { fileName } = req.params;
+      
+      const objectStorage = new ObjectStorageService();
+      const privateDir = objectStorage.getPrivateObjectDir();
+      
+      const tempPath = `${privateDir}/temp-pdfs/${userId}/${fileName}`;
+      const pathParts = tempPath.split('/');
+      const bucketName = pathParts[1];
+      const objectName = pathParts.slice(2).join('/');
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      // Check if file exists
+      const [exists] = await file.exists();
+      if (!exists) {
+        return res.status(404).json({ message: "PDF not found or already downloaded" });
+      }
+      
+      // Download file
+      const [fileBuffer] = await file.download();
+      
+      // Delete the temporary file after download
+      await file.delete();
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Error downloading temporary PDF:", error);
+      res.status(500).json({ message: "Failed to download PDF" });
     }
   });
 

@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
+import { apiRequest } from "@/lib/queryClient";
 import type { Category, Lawyer, LegalCase, Parent, Child } from "@shared/schema";
 // PDF.js será carregado dinamicamente
 
@@ -2777,26 +2778,39 @@ export default function Reports() {
       // Detectar dispositivo móvel
       const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      // Em dispositivos móveis, fazer download direto sem modal para evitar crash
+      // Em dispositivos móveis, enviar PDF para servidor e fazer download via link
       if (isMobileDevice) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        updateProgress(98, "Iniciando download...");
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Download direto em mobile
-        pdf.save(fileName);
+        updateProgress(96, "Gerando arquivo PDF...");
         
-        updateProgress(100, "Download iniciado!");
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Gerar PDF como base64 (mais leve que blob)
+        const pdfBase64 = pdf.output('datauristring').split(',')[1];
+        
+        updateProgress(98, "Salvando no servidor...");
+        
+        // Enviar para servidor
+        const response = await apiRequest('/api/reports/temp-pdf', {
+          method: 'POST',
+          body: JSON.stringify({
+            pdfData: pdfBase64,
+            fileName: `${fileName}.pdf`
+          })
+        });
+        
+        updateProgress(100, "Preparando download...");
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Esconder progresso
         hideProgress(true);
         
+        // Abrir link de download em nova aba
+        window.open(response.downloadUrl, '_blank');
+        
         // Mostrar toast de sucesso
         toast({
           title: "Relatório gerado com sucesso!",
-          description: `O download do relatório foi iniciado automaticamente. Total: ${formatCurrency(report.totalAmount)} | ${report.expenseCount} despesas`,
+          description: `Clique no link que abriu para fazer o download. Total: ${formatCurrency(report.totalAmount)} | ${report.expenseCount} despesas`,
           variant: "default",
         });
       } else {
