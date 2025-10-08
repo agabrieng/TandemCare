@@ -894,14 +894,20 @@ export default function Reports() {
         const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
         
         console.log('[Mobile PDF] Montando dados do relatório...');
-        console.log('[Mobile PDF] Filtros atuais:', filters);
+        console.log('[Mobile PDF] Filtros atuais:', {
+          startDate,
+          endDate,
+          selectedChildren,
+          selectedStatus,
+          selectedCategories
+        });
         const reportData = {
           filters: {
-            startDate: filters.startDate,
-            endDate: filters.endDate,
-            childId: filters.childId,
-            status: filters.status,
-            categoryId: filters.categoryId,
+            startDate: startDate,
+            endDate: endDate,
+            childId: selectedChildren.length === 1 ? selectedChildren[0] : 'all',
+            status: selectedStatus.length === 1 ? selectedStatus[0] : 'all',
+            categoryId: selectedCategories.length === 1 ? selectedCategories[0] : 'all',
           },
           fileName
         };
