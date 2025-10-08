@@ -879,12 +879,20 @@ export default function Reports() {
       if (isMobileDevice) {
         showProgress("Gerando relatório no servidor...", "Processando");
         
-        const report = generateReport();
         const fileName = `relatorio-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.pdf`;
+        
+        // Enviar apenas os filtros - servidor validará e buscará dados
+        const filters = {
+          startDate,
+          endDate,
+          childId: selectedChildren.length === 1 ? selectedChildren[0] : 'all',
+          status: selectedStatus.length === 1 ? selectedStatus[0] : 'all',
+          categoryId: selectedCategories.length === 1 ? selectedCategories[0] : 'all',
+        };
         
         try {
           const response = await apiRequest('POST', '/api/reports/generate-pdf-server', { 
-            reportData: report, 
+            filters, 
             fileName 
           });
           
