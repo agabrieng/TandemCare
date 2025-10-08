@@ -6,6 +6,14 @@ The application serves as a centralized platform where parents can register expe
 
 # Recent Changes
 
+## Date: 2025-10-08
+- **RESOLVED**: Fixed mobile PDF generation error in production mode
+  - Root cause: Server-side PDF generation code was accessing non-existent properties on `legalCase` object
+  - Properties `court` and `description` don't exist in schema - correct names are `courtName` and `notes`
+  - Fix: Updated server/routes.ts lines 1305 and 1307 to use correct property names from schema
+  - Error occurred when generating "CONTEXTO LEGAL" section of PDF reports
+  - **Result**: Mobile PDF generation now works correctly in production without server errors
+
 ## Date: 2025-09-12
 - **COMPLETED**: Implemented major accessibility improvements for PDF report charts
   - **Enhanced font sizes**: Titles increased to 32px, legends to 26px, axis labels to 22px (100% larger than before)
