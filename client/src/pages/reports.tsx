@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart } from "lucide-react";
+import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart, FileCheck } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, parse, subDays, subMonths, subYears, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
@@ -3209,45 +3210,54 @@ export default function Reports() {
       />
 
       {/* Modal de Download do Servidor */}
-      {showDownloadModal && downloadUrl && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
-          <div className="bg-card border border-border p-6 rounded-lg shadow-2xl max-w-md w-full mx-4">
-            <div className="text-center mb-6">
-              <div className="mx-auto w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
-                <Download className="w-6 h-6 text-green-500" />
+      <Dialog open={showDownloadModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowDownloadModal(false);
+          setDownloadUrl(null);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <FileCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Sucesso!</h2>
-              <p className="text-muted-foreground">
-                Seu relatório foi gerado e está pronto para download.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <a
-                href={downloadUrl}
-                download
-                className="w-full"
-              >
-                <Button size="lg" className="w-full" data-testid="button-download-pdf">
-                  <Download className="w-5 h-5 mr-2" />
-                  Baixar Relatório
-                </Button>
-              </a>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  setShowDownloadModal(false);
-                  setDownloadUrl(null);
-                }}
-                className="w-full"
-                data-testid="button-close-download-modal"
-              >
-                Fechar
-              </Button>
-            </div>
+              Relatório Gerado com Sucesso!
+            </DialogTitle>
+            <DialogDescription>
+              Seu relatório foi gerado no servidor e está pronto para download.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              O PDF foi gerado completamente no servidor com todos os gráficos e comprovantes incluídos.
+            </p>
           </div>
-        </div>
-      )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDownloadModal(false);
+                setDownloadUrl(null);
+              }}
+              data-testid="button-close-download-modal"
+            >
+              Fechar
+            </Button>
+            <a
+              href={downloadUrl || '#'}
+              download
+            >
+              <Button className="w-full sm:w-auto" data-testid="button-download-pdf">
+                <Download className="w-4 h-4 mr-2" />
+                Baixar Relatório
+              </Button>
+            </a>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
