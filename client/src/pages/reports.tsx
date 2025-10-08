@@ -2773,10 +2773,18 @@ export default function Reports() {
       const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}`;
       
       updateProgress(95, "Preparando download...");
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simular processamento final
+      
+      // Em dispositivos móveis, dar mais tempo para o navegador processar antes de criar o blob
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      await new Promise(resolve => setTimeout(resolve, isMobileDevice ? 1000 : 500));
       
       // Gerar blob do PDF ao invés de salvar diretamente
-      const pdfBlob = pdf.output('blob');
+      // Usar Promise para tornar assíncrono e evitar travamento
+      const pdfBlob = await new Promise<Blob>((resolve) => {
+        setTimeout(() => {
+          resolve(pdf.output('blob'));
+        }, 100);
+      });
       
       // Configurar estatísticas para o modal
       const stats = {
