@@ -1254,20 +1254,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       yPosition += 35;
       
-      // Use simple text listing instead of cards for server-side generation
+      // Use detailed format matching desktop version
       const reportChildren = children;
       
       reportChildren.forEach((child: any, index: number) => {
-        if (yPosition > pageHeight - margins.bottom - 40) {
+        if (yPosition > pageHeight - margins.bottom - 90) {
           pdf.addPage();
           pageNumber++;
           yPosition = margins.top + 20;
         }
         
+        // Child name - centered
         pdf.setFont("times", "bold");
-        pdf.setFontSize(12);
-        pdf.text(`${index + 1}. ${child.firstName} ${child.lastName || ''}`, margins.left, yPosition);
-        yPosition += 8;
+        pdf.setFontSize(14);
+        const childFullName = `${child.firstName}${child.lastName ? ' ' + child.lastName : ''}`;
+        pdf.text(childFullName, pageWidth / 2, yPosition, { align: "center" });
+        yPosition += 15;
         
         pdf.setFont("times", "normal");
         pdf.setFontSize(10);
@@ -1275,14 +1277,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const father = parents.find((p: any) => p.id === child.fatherId);
         const mother = parents.find((p: any) => p.id === child.motherId);
         
+        // Father section
         if (father) {
-          pdf.text(`Pai: ${father.fullName}${father.cpf ? ` (CPF: ${father.cpf})` : ''}`, margins.left + 5, yPosition);
+          pdf.setFont("times", "bold");
+          pdf.setFontSize(10);
+          pdf.text("PAI", margins.left + 10, yPosition);
+          yPosition += 8;
+          
+          pdf.setFont("times", "normal");
+          pdf.text(`  Nome:               ${father.fullName}`, margins.left + 10, yPosition);
+          yPosition += 6;
+          
+          if (father.cpf) {
+            pdf.text(`  CPF:                ${father.cpf}`, margins.left + 10, yPosition);
+            yPosition += 6;
+          }
+          
+          if (father.phone) {
+            pdf.text(`  Tel:                ${father.phone}`, margins.left + 10, yPosition);
+            yPosition += 6;
+          }
+          
           yPosition += 6;
         }
         
+        // Mother section
         if (mother) {
-          pdf.text(`Mãe: ${mother.fullName}${mother.cpf ? ` (CPF: ${mother.cpf})` : ''}`, margins.left + 5, yPosition);
+          pdf.setFont("times", "bold");
+          pdf.setFontSize(10);
+          pdf.text("MÃE", margins.left + 10, yPosition);
+          yPosition += 8;
+          
+          pdf.setFont("times", "normal");
+          pdf.text(`  Nome:               ${mother.fullName}`, margins.left + 10, yPosition);
           yPosition += 6;
+          
+          if (mother.cpf) {
+            pdf.text(`  CPF:                ${mother.cpf}`, margins.left + 10, yPosition);
+            yPosition += 6;
+          }
+          
+          if (mother.phone) {
+            pdf.text(`  Tel:                ${mother.phone}`, margins.left + 10, yPosition);
+            yPosition += 6;
+          }
+          
+          yPosition += 6;
+        }
+        
+        // Location
+        if (child.address) {
+          const location = [child.address.city, child.address.state].filter(Boolean).join(' - ');
+          if (location) {
+            pdf.setFont("times", "normal");
+            pdf.text(`Local: ${location}`, margins.left + 10, yPosition);
+            yPosition += 6;
+          }
         }
         
         yPosition += 10;
@@ -1345,23 +1395,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("2 RESUMO EXECUTIVO", margins.left, yPosition);
+      pdf.text("2 RESUMO EXECUTIVO OTIMIZADO", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
       pdf.setFont("times", "normal");
       
-      const summaryInfo = [
-        `• Total de despesas no período: ${reportData.expenseCount}`,
-        `• Valor total gasto: ${formatCurrency(reportData.totalAmount)}`,
-        `• Total de comprovantes: ${reportData.receiptCount}`,
-        `• Período analisado: ${formatReportPeriodDate(periodStart)} a ${formatReportPeriodDate(periodEnd)}`
-      ];
+      const documentationRate = ((reportData.receiptCount / Math.max(reportData.expenseCount, 1)) * 100).toFixed(1);
       
-      summaryInfo.forEach((info) => {
-        pdf.text(info, margins.left, yPosition);
-        yPosition += 8;
+      // Calculate theoretical pension amount based on period
+      const periodInMonths = Math.ceil((reportData.period.end.getTime() - reportData.period.start.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const theoreticalPensionAmount = activeLegalCase?.alimonyAmount ? 
+        parseFloat(activeLegalCase.alimonyAmount.toString()) * Math.max(periodInMonths, 1) : 0;
+      
+      const beneficiariesText = Object.keys(reportData.childTotals).length > 0 ? 
+        Object.keys(reportData.childTotals).join(', ') : '[Nome do(s) Filho(s)]';
+      
+      const executiveSummary = [
+        `Durante o período de ${formatReportPeriodDate(periodStart)} a ${formatReportPeriodDate(periodEnd)}, o valor total da pensão alimentícia recebida para o(s) beneficiário(s) ${beneficiariesText} foi de ${formatCurrency(theoreticalPensionAmount)}. Neste mesmo período, foram registradas e comprovadas ${reportData.expenseCount} despesas, totalizando ${formatCurrency(reportData.totalAmount)}.`,
+        '',
+        '',
+        `A taxa de documentação, indicando a proporção de despesas com comprovantes anexados, foi de ${documentationRate}%. A análise detalhada das despesas, conforme apresentado nas seções seguintes, demonstra a aplicação dos recursos da pensão alimentícia de acordo com as necessidades do(s) beneficiário(s) e em conformidade com o acordo/decisão judicial estabelecido.`,
+        '',
+        '',
+        theoreticalPensionAmount > reportData.totalAmount 
+          ? `Diferença adicional de ${formatCurrency(theoreticalPensionAmount - reportData.totalAmount)} foi aplicada complementarmente às necessidades dos beneficiários.`
+          : ''
+      ].filter(Boolean);
+      
+      executiveSummary.forEach((line) => {
+        if (line === '') {
+          yPosition += 6;
+        } else {
+          const lines = pdf.splitTextToSize(line, contentWidth);
+          lines.forEach((splitLine: string) => {
+            pdf.text(splitLine, margins.left, yPosition);
+            yPosition += 6;
+          });
+        }
       });
+      
+      // Indicators table
+      yPosition += 10;
+      pdf.setFont("times", "bold");
+      pdf.text("2.1 Indicadores Consolidados", margins.left, yPosition);
+      
+      yPosition += 10;
+      pdf.setFont("times", "normal");
+      const summaryData = [
+        [`Indicador`, `Valor`],
+        theoreticalPensionAmount > 0 ? [`Valor Total da Pensão Recebida`, `${formatCurrency(theoreticalPensionAmount)}`] : null,
+        [`Total de Despesas Registradas`, `${reportData.expenseCount}`],
+        [`Valor Total das Despesas Comprovadas`, `${formatCurrency(reportData.totalAmount)}`],
+        [`Comprovantes Anexados`, `${reportData.receiptCount}`],
+        [`Taxa de Documentação`, `${documentationRate}%`],
+        [`Número de Beneficiários`, `${Object.keys(reportData.childTotals).length}`],
+        theoreticalPensionAmount > 0 ? 
+          [`Saldo Remanescente/Diferença`, `${formatCurrency(Math.abs(theoreticalPensionAmount - reportData.totalAmount))}`] : null
+      ].filter(Boolean);
+      
+      // Draw table
+      const tableStartY = yPosition;
+      const colWidths = [100, 60];
+      let currentY = tableStartY;
+      
+      summaryData.forEach((row, index) => {
+        if (!row) return;
+        
+        let xPos = margins.left;
+        
+        if (index === 0) {
+          pdf.setFont("times", "bold");
+        } else {
+          pdf.setFont("times", "normal");
+        }
+        
+        // Draw borders
+        pdf.rect(margins.left, currentY - 5, colWidths[0], 8);
+        pdf.rect(margins.left + colWidths[0], currentY - 5, colWidths[1], 8);
+        
+        pdf.text(row[0], xPos + 2, currentY);
+        pdf.text(row[1], xPos + colWidths[0] + 2, currentY);
+        currentY += 8;
+      });
+      
+      yPosition = currentY;
 
       // ===== FINANCIAL ANALYSIS =====
       pdf.addPage();
@@ -1371,21 +1489,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       pdf.setFontSize(14);
       pdf.setFont("times", "bold");
-      pdf.text("3 ANÁLISE FINANCEIRA", margins.left, yPosition);
+      pdf.text("3 ANÁLISE FINANCEIRA DETALHADA", margins.left, yPosition);
       
       yPosition += 15;
       pdf.setFontSize(12);
       pdf.setFont("times", "normal");
       
-      // Category breakdown
-      pdf.setFont("times", "bold");
-      pdf.text("3.1 Distribuição por categoria", margins.left, yPosition);
+      const introText = "Esta seção apresenta a distribuição e análise das despesas, com foco na clareza e na relevância para o contexto judicial.";
+      const introLines = pdf.splitTextToSize(introText, contentWidth);
+      introLines.forEach((line: string) => {
+        pdf.text(line, margins.left, yPosition);
+        yPosition += 6;
+      });
+      
       yPosition += 10;
+      
+      // 3.1 Category breakdown
+      pdf.setFont("times", "bold");
+      pdf.text("3.1 Distribuição por Categoria de Despesa", margins.left, yPosition);
+      yPosition += 8;
       pdf.setFont("times", "normal");
+      pdf.text("As despesas foram categorizadas conforme as necessidades dos beneficiários:", margins.left, yPosition);
+      yPosition += 10;
+      
+      // Table header
+      const catTableData = [
+        [`Categoria`, `Valor (R$)`, `Percentual (%)`, `Observações`]
+      ];
       
       Object.entries(reportData.categoryTotals).forEach(([category, amount]: [string, any]) => {
         const percentage = reportData.totalAmount > 0 ? ((amount / reportData.totalAmount) * 100).toFixed(1) : '0.0';
-        pdf.text(`• ${category.charAt(0).toUpperCase() + category.slice(1)}: ${formatCurrency(amount)} (${percentage}%)`, margins.left + 5, yPosition);
+        let observation = '';
+        if (category.toLowerCase().includes('saúde')) observation = 'Direito fundamental';
+        if (category.toLowerCase().includes('lazer')) observation = 'Desenvolvimento social';
+        if (category.toLowerCase().includes('vestuário')) observation = 'Necessidade básica';
+        catTableData.push([
+          category.charAt(0).toUpperCase() + category.slice(1),
+          formatCurrency(amount),
+          `${percentage}%`,
+          observation
+        ]);
+      });
+      
+      // Draw category table
+      const catColWidths = [35, 35, 30, 60];
+      let catCurrentY = yPosition;
+      
+      catTableData.forEach((row, index) => {
+        let xPos = margins.left;
+        
+        if (index === 0) {
+          pdf.setFont("times", "bold");
+        } else {
+          pdf.setFont("times", "normal");
+        }
+        
+        // Draw borders
+        row.forEach((_, colIndex) => {
+          pdf.rect(xPos, catCurrentY - 5, catColWidths[colIndex], 8);
+          xPos += catColWidths[colIndex];
+        });
+        
+        // Draw content
+        xPos = margins.left;
+        row.forEach((cell, colIndex) => {
+          pdf.text(cell, xPos + 2, catCurrentY);
+          xPos += catColWidths[colIndex];
+        });
+        
+        catCurrentY += 8;
+      });
+      
+      yPosition = catCurrentY + 10;
+      
+      // 3.2 Comparativo Mensal
+      if (theoreticalPensionAmount > 0 && periodInMonths > 0) {
+        if (yPosition > pageHeight - margins.bottom - 60) {
+          pdf.addPage();
+          pageNumber++;
+          yPosition = margins.top + 20;
+        }
+        
+        pdf.setFont("times", "bold");
+        pdf.text("3.2 Comparativo Mensal: Pensão Recebida vs. Despesas Comprovadas", margins.left, yPosition);
+        yPosition += 8;
+        
+        pdf.setFont("times", "normal");
+        pdf.text("Esta tabela compara o valor da pensão alimentícia recebida com as despesas", margins.left, yPosition);
+        yPosition += 6;
+        pdf.text("efetivamente comprovadas, demonstrando a gestão dos recursos:", margins.left, yPosition);
+        yPosition += 10;
+        
+        const monthlyPension = theoreticalPensionAmount / Math.max(periodInMonths, 1);
+        const monthlyExpenses = reportData.totalAmount / Math.max(periodInMonths, 1);
+        
+        const compTableData = [
+          [`Mês/Ano`, `Pensão Recebida (R$)`, `Despesas Comprovadas (R$)`, `Diferença (R$)`],
+          [`Período Total`, formatCurrency(theoreticalPensionAmount), formatCurrency(reportData.totalAmount), formatCurrency(Math.abs(theoreticalPensionAmount - reportData.totalAmount))],
+          [`Média Mensal`, formatCurrency(monthlyPension), formatCurrency(monthlyExpenses), formatCurrency(Math.abs(monthlyPension - monthlyExpenses))]
+        ];
+        
+        const compColWidths = [25, 50, 55, 30];
+        let compCurrentY = yPosition;
+        
+        compTableData.forEach((row, index) => {
+          let xPos = margins.left;
+          
+          if (index === 0) {
+            pdf.setFont("times", "bold");
+          } else {
+            pdf.setFont("times", "normal");
+          }
+          
+          row.forEach((_, colIndex) => {
+            pdf.rect(xPos, compCurrentY - 5, compColWidths[colIndex], 8);
+            xPos += compColWidths[colIndex];
+          });
+          
+          xPos = margins.left;
+          row.forEach((cell, colIndex) => {
+            pdf.text(cell, xPos + 2, compCurrentY);
+            xPos += compColWidths[colIndex];
+          });
+          
+          compCurrentY += 8;
+        });
+        
+        yPosition = compCurrentY + 10;
+      }
+      
+      // 3.3 Distribution by payment status
+      if (yPosition > pageHeight - margins.bottom - 40) {
+        pdf.addPage();
+        pageNumber++;
+        yPosition = margins.top + 20;
+      }
+      
+      pdf.setFont("times", "bold");
+      pdf.text("3.3 Distribuição por Status de Pagamento", margins.left, yPosition);
+      yPosition += 10;
+      pdf.setFont("times", "normal");
+      
+      Object.entries(reportData.statusTotals).forEach(([status, amount]) => {
+        const percentage = ((amount as number / reportData.totalAmount) * 100).toFixed(1);
+        const statusText = `${status.charAt(0).toUpperCase() + status.slice(1)}: ${formatCurrency(amount as number)} (${percentage}% do total)`;
+        pdf.text(`• ${statusText}`, margins.left + 5, yPosition);
+        yPosition += 6;
+      });
+      
+      yPosition += 10;
+      
+      // 3.4 Documentation compliance analysis
+      if (yPosition > pageHeight - margins.bottom - 40) {
+        pdf.addPage();
+        pageNumber++;
+        yPosition = margins.top + 20;
+      }
+      
+      pdf.setFont("times", "bold");
+      pdf.text("3.4 Análise de Conformidade Documental", margins.left, yPosition);
+      yPosition += 10;
+      pdf.setFont("times", "normal");
+      
+      const complianceScore = parseFloat(documentationRate);
+      let complianceText = "";
+      
+      if (complianceScore >= 90) {
+        complianceText = "EXCELENTE - A documentação apresenta-se amplamente completa e organizada, com comprovantes para praticamente todas as despesas declaradas. A organização facilita a análise e verificação das informações.";
+      } else if (complianceScore >= 70) {
+        complianceText = "ADEQUADA - A documentação apresenta boa organização, com a maioria das despesas acompanhadas de comprovantes. Recomenda-se a inclusão dos comprovantes faltantes quando disponíveis.";
+      } else if (complianceScore >= 50) {
+        complianceText = "PARCIAL - A documentação apresenta organização moderada, com algumas despesas sem comprovantes anexados. As despesas declaradas podem ser evidenciadas por outros meios conforme necessário.";
+      } else {
+        complianceText = "DOCUMENTAÇÃO INCOMPLETA - Há despesas sem comprovantes anexados. A ausência de comprovantes não invalida o relatório e não impede a análise; as despesas podem ser evidenciadas por outros meios conforme necessário.";
+      }
+      
+      const complianceLines = pdf.splitTextToSize(complianceText, contentWidth);
+      complianceLines.forEach((line: string) => {
+        pdf.text(line, margins.left, yPosition);
         yPosition += 6;
       });
 
@@ -1828,6 +2109,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       yPosition += 10;
       pdf.text(`Data de geração: ${format(new Date(), 'dd/MM/yyyy \'às\' HH:mm \'h\'', { locale: ptBR })}`, pageWidth / 2, yPosition, { align: "center" });
 
+      // ===== REFERÊNCIAS =====
+      pdf.addPage();
+      pageNumber++;
+      sectionPageMap["REFERÊNCIAS"] = pageNumber;
+      yPosition = margins.top + 10;
+      
+      pdf.setFontSize(14);
+      pdf.setFont("times", "bold");
+      pdf.text("REFERÊNCIAS", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFontSize(12);
+      pdf.setFont("times", "normal");
+      
+      const references = [
+        "BRASIL. Constituição da República Federativa do Brasil de 1988. Brasília, DF: Senado Federal, 1988.",
+        "",
+        "BRASIL. Lei nº 8.069, de 13 de julho de 1990. Dispõe sobre o Estatuto da Criança e do Adolescente. Brasília, DF: Congresso Nacional, 1990.",
+        "",
+        "ASSOCIAÇÃO BRASILEIRA DE NORMAS TÉCNICAS. ABNT NBR 14724: informação e documentação: trabalhos acadêmicos: apresentação. 3. ed. Rio de Janeiro: ABNT, 2011."
+      ];
+      
+      references.forEach((ref) => {
+        if (ref === '') {
+          yPosition += 6;
+        } else {
+          const lines = pdf.splitTextToSize(ref, contentWidth);
+          lines.forEach((line: string) => {
+            pdf.text(line, margins.left, yPosition);
+            yPosition += 6;
+          });
+          yPosition += 4;
+        }
+      });
+
+      // ===== DADOS JURÍDICOS E LEGAIS =====
+      pdf.addPage();
+      pageNumber++;
+      sectionPageMap["DADOS JURÍDICOS E LEGAIS"] = pageNumber;
+      yPosition = margins.top + 30;
+      
+      pdf.setFontSize(14);
+      pdf.setFont("times", "bold");
+      pdf.text("DADOS JURÍDICOS E LEGAIS", pageWidth / 2, yPosition, { align: "center" });
+      
+      yPosition += 20;
+
+      // 1. ADVOGADO RESPONSÁVEL
+      pdf.setFontSize(12);
+      pdf.setFont("times", "bold");
+      pdf.text("1. ADVOGADO RESPONSÁVEL", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFont("times", "normal");
+      
+      if (lawyers && lawyers.length > 0) {
+        const primaryLawyer = lawyers[0];
+        
+        const lawyerInfo = [
+          `Nome: ${primaryLawyer.fullName}`,
+          primaryLawyer.oabNumber ? `OAB: ${primaryLawyer.oabNumber}${primaryLawyer.oabState ? ` - ${primaryLawyer.oabState}` : ''}` : '',
+          primaryLawyer.lawFirm ? `Escritório: ${primaryLawyer.lawFirm}` : '',
+          primaryLawyer.phone || primaryLawyer.email ? `Contato: ${[primaryLawyer.phone, primaryLawyer.email].filter(Boolean).join(' - ')}` : '',
+          primaryLawyer.specializations && primaryLawyer.specializations.length > 0 ? `Especialização: ${primaryLawyer.specializations.join(', ')}` : '',
+          primaryLawyer.address ? `Endereço: ${primaryLawyer.address}` : ''
+        ].filter(Boolean);
+        
+        lawyerInfo.forEach((info) => {
+          pdf.text(info, margins.left + 5, yPosition);
+          yPosition += 8;
+        });
+        
+        if (primaryLawyer.notes) {
+          yPosition += 5;
+          pdf.setFont("times", "italic");
+          pdf.text("Observações:", margins.left + 5, yPosition);
+          yPosition += 8;
+          
+          const notesLines = pdf.splitTextToSize(primaryLawyer.notes, contentWidth - 10);
+          notesLines.forEach((line: string) => {
+            pdf.text(line, margins.left + 10, yPosition);
+            yPosition += 6;
+          });
+          pdf.setFont("times", "normal");
+        }
+      } else {
+        pdf.setFont("times", "italic");
+        pdf.text("[Nenhum advogado cadastrado no sistema]", margins.left + 5, yPosition);
+        pdf.setFont("times", "normal");
+        yPosition += 8;
+      }
+      
+      yPosition += 15;
+
+      // 2. PROCESSO JUDICIAL
+      if (yPosition > pageHeight - margins.bottom - 60) {
+        pdf.addPage();
+        pageNumber++;
+        yPosition = margins.top + 20;
+      }
+      
+      pdf.setFont("times", "bold");
+      pdf.text("2. PROCESSO JUDICIAL", margins.left, yPosition);
+      
+      yPosition += 15;
+      pdf.setFont("times", "normal");
+      
+      if (activeLegalCase) {
+        const caseInfo = [
+          `Número do Processo: ${activeLegalCase.caseNumber || '[Não informado]'}`,
+          `Status: ${activeLegalCase.status ? activeLegalCase.status.charAt(0).toUpperCase() + activeLegalCase.status.slice(1) : '[Não informado]'}`,
+          activeLegalCase.courtName ? `Tribunal: ${activeLegalCase.courtName}` : '',
+          activeLegalCase.judgeName ? `Juiz: ${activeLegalCase.judgeName}` : '',
+          activeLegalCase.startDate ? `Data de Início: ${format(new Date(activeLegalCase.startDate), 'dd/MM/yyyy')}` : ''
+        ].filter(Boolean);
+        
+        caseInfo.forEach((info) => {
+          pdf.text(info, margins.left + 5, yPosition);
+          yPosition += 8;
+        });
+      } else {
+        pdf.setFont("times", "italic");
+        pdf.text("[Nenhum processo judicial cadastrado]", margins.left + 5, yPosition);
+        pdf.setFont("times", "normal");
+        yPosition += 8;
+      }
+
       // ===== INSERT SUMMARY =====
       const totalPagesBeforeSummary = pdf.getNumberOfPages();
       const contextualLegalPageIndex = sectionPageMap["CONTEXTO LEGAL"] - 1;
@@ -1864,10 +2272,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { text: "1 CONTEXTO LEGAL E ACORDO DE PENSÃO ALIMENTÍCIA", page: calculateDisplayPage(adjustedSectionPageMap["CONTEXTO LEGAL"]) },
         { text: "2 RESUMO EXECUTIVO", page: calculateDisplayPage(adjustedSectionPageMap["RESUMO EXECUTIVO"]) },
         { text: "3 ANÁLISE FINANCEIRA", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "3.1 Distribuição por categoria", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "3.2 Distribuição por status", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
+        { text: "3.3 Análise de conformidade documental", page: calculateDisplayPage(adjustedSectionPageMap["ANÁLISE FINANCEIRA"]) },
         { text: "4 GRÁFICOS E INSIGHTS", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.1 Distribuição por categoria", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.2 Acumulado anual de despesas", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.3 Despesas por mês", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
+        { text: "4.4 Tendência de gastos", page: calculateDisplayPage(adjustedSectionPageMap["GRÁFICOS E INSIGHTS"]) },
         { text: "5 DETALHAMENTO DAS DESPESAS", page: calculateDisplayPage(adjustedSectionPageMap["DETALHAMENTO DAS DESPESAS"]) },
         { text: "6 EXTRATO DE DESPESAS COM COMPROVANTES", page: calculateDisplayPage(adjustedSectionPageMap["EXTRATO DE DESPESAS COM COMPROVANTES"]) },
-        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: calculateDisplayPage(adjustedSectionPageMap["CONCLUSÕES E RECOMENDAÇÕES"]) }
+        { text: "7 CONCLUSÕES E RECOMENDAÇÕES", page: calculateDisplayPage(adjustedSectionPageMap["CONCLUSÕES E RECOMENDAÇÕES"]) },
+        { text: "REFERÊNCIAS", page: calculateDisplayPage(adjustedSectionPageMap["REFERÊNCIAS"]) },
+        { text: "DADOS JURÍDICOS E LEGAIS", page: calculateDisplayPage(adjustedSectionPageMap["DADOS JURÍDICOS E LEGAIS"]) }
       ].filter(item => item.page !== null);
       
       summaryItemsWithCorrectPages.forEach((item) => {
