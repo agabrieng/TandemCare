@@ -15,7 +15,6 @@ import jsPDF from "jspdf";
 import { Chart, registerables } from 'chart.js';
 import { useGlobalProgress } from "@/contexts/progress-context";
 import { PdfDownloadModal } from "@/components/pdf-download-modal";
-import { apiRequest } from "@/lib/queryClient";
 import type { Category, Lawyer, LegalCase, Parent, Child } from "@shared/schema";
 // PDF.js será carregado dinamicamente
 
@@ -894,10 +893,20 @@ export default function Reports() {
         
         updateProgress(60, "Gerando PDF no servidor...");
         
-        const response = await apiRequest('/api/reports/generate-pdf-mobile', {
+        const response = await fetch('/api/reports/generate-pdf-mobile', {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
           body: JSON.stringify(reportData)
         });
+        
+        if (!response.ok) {
+          throw new Error(`Erro ao gerar PDF: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
         
         updateProgress(90, "Preparando download...");
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -908,7 +917,7 @@ export default function Reports() {
         hideProgress(true);
         
         // Abrir link de download
-        window.location.href = response.downloadUrl;
+        window.location.href = result.downloadUrl;
         
         const report = generateReport();
         toast({
