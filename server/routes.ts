@@ -1302,9 +1302,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contextualInfo = [
           `Número do Processo: ${activeLegalCase.caseNumber || '[Não informado]'}`,
           `Status: ${activeLegalCase.status?.charAt(0).toUpperCase() + activeLegalCase.status?.slice(1) || '[Não informado]'}`,
-          activeLegalCase.court ? `Tribunal: ${activeLegalCase.court}` : `Tribunal: [Não informado]`,
+          activeLegalCase.courtName ? `Tribunal: ${activeLegalCase.courtName}` : `Tribunal: [Não informado]`,
           activeLegalCase.judgeName ? `Juiz Responsável: ${activeLegalCase.judgeName}` : `Juiz Responsável: [Nome do Juiz]`,
-          activeLegalCase.description ? `Observações: ${activeLegalCase.description}` : ''
+          activeLegalCase.notes ? `Observações: ${activeLegalCase.notes}` : ''
         ].filter(Boolean);
       } else {
         contextualInfo = [
