@@ -90,7 +90,7 @@ export function PdfDownloadModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden" data-testid="modal-pdf-download">
+        <DialogContent className="max-w-md sm:max-w-lg p-0 gap-0 overflow-hidden bg-white dark:bg-gray-900" data-testid="modal-pdf-download">
         {/* Header com gradiente */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
           <div className="flex items-center justify-center space-x-3">
