@@ -651,7 +651,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF temporary storage for mobile download
+  // Generate PDF on server for mobile devices
+  app.post('/api/reports/generate-pdf-mobile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { filters, fileName } = req.body;
+      
+      // Get expenses based on filters
+      const expenses = await storage.getExpenses(userId);
+      
+      // Filter expenses
+      let filteredExpenses = expenses;
+      
+      if (filters.startDate) {
+        filteredExpenses = filteredExpenses.filter(exp => 
+          new Date(exp.expenseDate) >= new Date(filters.startDate)
+        );
+      }
+      
+      if (filters.endDate) {
+        filteredExpenses = filteredExpenses.filter(exp => 
+          new Date(exp.expenseDate) <= new Date(filters.endDate)
+        );
+      }
+      
+      if (filters.childId && filters.childId !== 'all') {
+        filteredExpenses = filteredExpenses.filter(exp => exp.childId === filters.childId);
+      }
+      
+      if (filters.status && filters.status !== 'all') {
+        filteredExpenses = filteredExpenses.filter(exp => exp.status === filters.status);
+      }
+      
+      if (filters.categoryId && filters.categoryId !== 'all') {
+        filteredExpenses = filteredExpenses.filter(exp => exp.categoryId === filters.categoryId);
+      }
+      
+      // Generate simple PDF (without images to avoid memory issues on mobile)
+      const jsPDF = (await import('jspdf')).default;
+      const pdf = new jsPDF();
+      
+      // Title
+      pdf.setFontSize(20);
+      pdf.text('Relatório de Despesas', 105, 20, { align: 'center' });
+      
+      // Summary
+      const totalAmount = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+      pdf.setFontSize(12);
+      pdf.text(`Total de Despesas: ${filteredExpenses.length}`, 20, 40);
+      pdf.text(`Valor Total: R$ ${totalAmount.toFixed(2).replace('.', ',')}`, 20, 50);
+      
+      // Expenses list
+      let yPosition = 70;
+      pdf.setFontSize(10);
+      
+      for (const expense of filteredExpenses) {
+        if (yPosition > 270) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        const expenseDate = new Date(expense.expenseDate).toLocaleDateString('pt-BR');
+        pdf.text(`${expenseDate} - ${expense.description}`, 20, yPosition);
+        pdf.text(`R$ ${parseFloat(expense.amount).toFixed(2).replace('.', ',')}`, 150, yPosition);
+        yPosition += 10;
+      }
+      
+      // Generate PDF buffer
+      const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+      
+      // Save to object storage
+      const objectStorage = new ObjectStorageService();
+      const privateDir = objectStorage.getPrivateObjectDir();
+      const tempPath = `${privateDir}/temp-pdfs/${userId}/${fileName}`;
+      const pathParts = tempPath.split('/');
+      const bucketName = pathParts[1];
+      const objectName = pathParts.slice(2).join('/');
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      await file.save(pdfBuffer, {
+        metadata: {
+          contentType: 'application/pdf',
+        },
+      });
+      
+      // Return download URL
+      const downloadUrl = `/api/reports/download-temp-pdf/${fileName}`;
+      res.json({ downloadUrl });
+    } catch (error) {
+      console.error("Error generating PDF on server:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // PDF temporary storage for mobile download (deprecated - kept for compatibility)
   app.post('/api/reports/temp-pdf', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

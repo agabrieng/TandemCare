@@ -870,6 +870,58 @@ export default function Reports() {
     let timeoutIds: NodeJS.Timeout[] = [];
     
     try {
+      // Detectar dispositivo móvel logo no início
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // Em dispositivos móveis, gerar PDF no servidor
+      if (isMobileDevice) {
+        showProgress("Preparando relatório...", "Gerando Relatório PDF");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        updateProgress(30, "Enviando dados para o servidor...");
+        
+        const fileName = `relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        const reportData = {
+          filters: {
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+            childId: filters.childId,
+            status: filters.status,
+            categoryId: filters.categoryId,
+          },
+          fileName
+        };
+        
+        updateProgress(60, "Gerando PDF no servidor...");
+        
+        const response = await apiRequest('/api/reports/generate-pdf-mobile', {
+          method: 'POST',
+          body: JSON.stringify(reportData)
+        });
+        
+        updateProgress(90, "Preparando download...");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        updateProgress(100, "Download iniciado!");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        hideProgress(true);
+        
+        // Abrir link de download
+        window.location.href = response.downloadUrl;
+        
+        const report = generateReport();
+        toast({
+          title: "Relatório gerado com sucesso!",
+          description: `O download será iniciado automaticamente. Total: ${formatCurrency(report.totalAmount)} | ${report.expenseCount} despesas`,
+          variant: "default",
+        });
+        
+        return; // Terminar aqui para mobile
+      }
+      
+      // CÓDIGO DESKTOP A PARTIR DAQUI
+      
       // Verificar se os dados dos pais ainda estão carregando
       if (isLoadingParents) {
         toast({
@@ -2775,76 +2827,36 @@ export default function Reports() {
       
       updateProgress(95, "Preparando download...");
       
-      // Detectar dispositivo móvel
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // Desktop: mostrar modal
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Em dispositivos móveis, enviar PDF para servidor e fazer download via link
-      if (isMobileDevice) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        updateProgress(96, "Gerando arquivo PDF...");
-        
-        // Gerar PDF como base64 (mais leve que blob)
-        const pdfBase64 = pdf.output('datauristring').split(',')[1];
-        
-        updateProgress(98, "Salvando no servidor...");
-        
-        // Enviar para servidor
-        const response = await apiRequest('/api/reports/temp-pdf', {
-          method: 'POST',
-          body: JSON.stringify({
-            pdfData: pdfBase64,
-            fileName: `${fileName}.pdf`
-          })
-        });
-        
-        updateProgress(100, "Preparando download...");
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Esconder progresso
-        hideProgress(true);
-        
-        // Abrir link de download em nova aba
-        window.open(response.downloadUrl, '_blank');
-        
-        // Mostrar toast de sucesso
-        toast({
-          title: "Relatório gerado com sucesso!",
-          description: `Clique no link que abriu para fazer o download. Total: ${formatCurrency(report.totalAmount)} | ${report.expenseCount} despesas`,
-          variant: "default",
-        });
-      } else {
-        // Desktop: mostrar modal
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Gerar blob do PDF para o modal
-        const pdfBlob = await new Promise<Blob>((resolve) => {
-          setTimeout(() => {
-            resolve(pdf.output('blob'));
-          }, 100);
-        });
-        
-        // Configurar estatísticas para o modal
-        const stats = {
-          totalAmount: report.totalAmount,
-          expenseCount: report.expenseCount,
-          receiptCount: report.receiptCount,
-          period: report.period
-        };
-        
-        updateProgress(100, "Relatório PDF gerado com sucesso!");
-        
-        // Esperar um pouco para mostrar 100% e então finalizar
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Esconder progresso imediatamente
-        hideProgress(true);
-        
-        // Configurar estados e abrir modal
-        setPdfBlob(pdfBlob);
-        setReportStats(stats);
-        setShowPdfModal(true);
-      }
+      // Gerar blob do PDF para o modal
+      const pdfBlob = await new Promise<Blob>((resolve) => {
+        setTimeout(() => {
+          resolve(pdf.output('blob'));
+        }, 100);
+      });
+      
+      // Configurar estatísticas para o modal
+      const stats = {
+        totalAmount: report.totalAmount,
+        expenseCount: report.expenseCount,
+        receiptCount: report.receiptCount,
+        period: report.period
+      };
+      
+      updateProgress(100, "Relatório PDF gerado com sucesso!");
+      
+      // Esperar um pouco para mostrar 100% e então finalizar
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Esconder progresso imediatamente
+      hideProgress(true);
+      
+      // Configurar estados e abrir modal
+      setPdfBlob(pdfBlob);
+      setReportStats(stats);
+      setShowPdfModal(true);
       
     } catch (error) {
       hideProgress(true);
