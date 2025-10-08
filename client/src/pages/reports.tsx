@@ -2106,13 +2106,32 @@ export default function Reports() {
         
         // Comprovantes
         if (expense.receipts && expense.receipts.length > 0) {
+          // Detectar dispositivo móvel
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          // Em dispositivos móveis, processar apenas o primeiro comprovante de cada despesa
+          // para evitar timeout e crash
+          const receiptsToProcess = isMobile ? Math.min(1, expense.receipts.length) : expense.receipts.length;
+          
           pdf.setFont("times", "bold");
           pdf.text(`Comprovantes anexados: ${expense.receipts.length}`, margins.left, yPosition);
-          yPosition += 10;
+          yPosition += 6;
+          
+          // Adicionar nota se houver comprovantes omitidos em mobile
+          if (isMobile && expense.receipts.length > 1) {
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(9);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(`(Mostrando ${receiptsToProcess} de ${expense.receipts.length} - versão otimizada para dispositivo móvel)`, margins.left, yPosition);
+            pdf.setFontSize(10);
+            pdf.setTextColor(0, 0, 0);
+            yPosition += 6;
+          }
+          yPosition += 4;
           
           pdf.setFont("times", "normal");
           
-          for (let receiptIndex = 0; receiptIndex < expense.receipts.length; receiptIndex++) {
+          for (let receiptIndex = 0; receiptIndex < receiptsToProcess; receiptIndex++) {
             const receipt = expense.receipts[receiptIndex];
             if (yPosition > pageHeight - margins.bottom - 20) {
               pdf.addPage();
@@ -2150,9 +2169,11 @@ export default function Reports() {
               yPosition = margins.top + 20;
             }
             
-            // Adicionar pequeno delay para permitir que o navegador processe outros eventos
+            // Adicionar delay para permitir que o navegador processe outros eventos
             // Isso evita travamento/crash em dispositivos móveis ao processar muitos comprovantes
-            await new Promise(resolve => setTimeout(resolve, 50));
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const delayMs = isMobileDevice ? 150 : 50;
+            await new Promise(resolve => setTimeout(resolve, delayMs));
             
             // Tentar carregar o arquivo real (imagem ou PDF)
             if (receipt.filePath) {
