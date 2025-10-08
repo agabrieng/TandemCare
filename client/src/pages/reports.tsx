@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, PieChart, FileCheck } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, parse, subDays, subMonths, subYears, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
@@ -3209,55 +3208,79 @@ export default function Reports() {
         defaultFileName={`relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}`}
       />
 
-      {/* Modal de Download do Servidor */}
-      <Dialog open={showDownloadModal} onOpenChange={(open) => {
-        if (!open) {
-          setShowDownloadModal(false);
-          setDownloadUrl(null);
-        }
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <FileCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
+      {/* Modal de Download do Servidor com visual customizado */}
+      {showDownloadModal && downloadUrl && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4" data-testid="download-modal">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
+            {/* Header com gradiente */}
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
+              <div className="flex items-center justify-center space-x-3">
+                <FileCheck className="h-8 w-8 animate-pulse" />
+                <h3 className="text-xl font-bold">
+                  Sucesso!
+                </h3>
               </div>
-              Relatório Gerado com Sucesso!
-            </DialogTitle>
-            <DialogDescription>
-              Seu relatório foi gerado no servidor e está pronto para download.
-            </DialogDescription>
-          </DialogHeader>
+            </div>
 
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              O PDF foi gerado completamente no servidor com todos os gráficos e comprovantes incluídos.
-            </p>
+            {/* Corpo do modal */}
+            <div className="p-8 space-y-6">
+              {/* Mensagem principal */}
+              <div className="text-center">
+                <p className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                  Relatório gerado com sucesso!
+                </p>
+              </div>
+
+              {/* Ícone de sucesso */}
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                  <Download className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+
+              {/* Botões */}
+              <div className="space-y-3">
+                <a
+                  href={downloadUrl}
+                  download
+                  className="block w-full"
+                >
+                  <Button className="w-full h-12 text-base" data-testid="button-download-pdf">
+                    <Download className="w-5 h-5 mr-2" />
+                    Baixar Relatório
+                  </Button>
+                </a>
+                <Button
+                  variant="outline"
+                  className="w-full h-12 text-base"
+                  onClick={() => {
+                    setShowDownloadModal(false);
+                    setDownloadUrl(null);
+                  }}
+                  data-testid="button-close-download-modal"
+                >
+                  Fechar
+                </Button>
+              </div>
+
+              {/* Mensagem de rodapé */}
+              <div className="text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  O PDF foi gerado no servidor com todos os gráficos e comprovantes incluídos.
+                </p>
+              </div>
+            </div>
+
+            {/* Rodapé com gradiente sutil */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 px-6 py-3">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">Sistema ativo</span>
+              </div>
+            </div>
           </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowDownloadModal(false);
-                setDownloadUrl(null);
-              }}
-              data-testid="button-close-download-modal"
-            >
-              Fechar
-            </Button>
-            <a
-              href={downloadUrl || '#'}
-              download
-            >
-              <Button className="w-full sm:w-auto" data-testid="button-download-pdf">
-                <Download className="w-4 h-4 mr-2" />
-                Baixar Relatório
-              </Button>
-            </a>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
