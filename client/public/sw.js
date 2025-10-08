@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE_NAME = `tandem-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `tandem-dynamic-${CACHE_VERSION}`;
 const API_CACHE_NAME = `tandem-api-${CACHE_VERSION}`;
