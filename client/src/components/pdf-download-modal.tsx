@@ -100,44 +100,44 @@ export function PdfDownloadModal({
         </div>
 
         {/* Corpo da modal */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 bg-white dark:bg-gray-900">
           {/* Mensagem de sucesso */}
           <div className="text-center">
-            <p className="text-base font-medium text-foreground">
+            <p className="text-base font-medium text-gray-800 dark:text-gray-200">
               Seu relatório foi gerado com sucesso no padrão ABNT. Revise as informações e faça o download.
             </p>
           </div>
 
           {/* Informações do Relatório */}
-          <div className="bg-muted/50 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-muted-foreground">
+                <span className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <Calendar className="w-4 h-4" />
                   Período
                 </span>
-                <span className="font-medium" data-testid="text-period">
+                <span className="font-medium text-gray-900 dark:text-gray-100" data-testid="text-period">
                   {formatDate(reportStats.period.start)} até {formatDate(reportStats.period.end)}
                 </span>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200 dark:border-gray-700">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-primary" data-testid="text-modal-total-amount">
+                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400" data-testid="text-modal-total-amount">
                     {formatCurrency(reportStats.totalAmount)}
                   </div>
-                  <div className="text-xs text-muted-foreground">Total Gasto</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Total Gasto</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold" data-testid="text-modal-expense-count">
+                  <div className="text-lg font-bold text-gray-900 dark:text-gray-100" data-testid="text-modal-expense-count">
                     {reportStats.expenseCount}
                   </div>
-                  <div className="text-xs text-muted-foreground">Despesas</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Despesas</div>
                 </div>
               </div>
               
-              <div className="flex items-center justify-between text-sm pt-2 border-t">
-                <span className="text-muted-foreground">Documentação</span>
+              <div className="flex items-center justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Documentação</span>
                 <span className="font-medium text-green-600 dark:text-green-400" data-testid="text-modal-documentation-rate">
                   {((reportStats.receiptCount / Math.max(reportStats.expenseCount, 1)) * 100).toFixed(0)}% 
                   ({reportStats.receiptCount} comprovantes)
@@ -145,15 +145,15 @@ export function PdfDownloadModal({
               </div>
               
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tamanho do arquivo</span>
-                <span className="font-medium" data-testid="text-file-size">{fileSizeInMB} MB</span>
+                <span className="text-gray-600 dark:text-gray-400">Tamanho do arquivo</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100" data-testid="text-file-size">{fileSizeInMB} MB</span>
               </div>
             </div>
           </div>
 
           {/* Nome do Arquivo */}
           <div className="space-y-2">
-            <Label htmlFor="fileName" className="text-sm font-medium">
+            <Label htmlFor="fileName" className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Nome do arquivo
             </Label>
             <Input
@@ -163,7 +163,7 @@ export function PdfDownloadModal({
               placeholder="Digite o nome do arquivo"
               data-testid="input-file-name"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               O arquivo será salvo como PDF automaticamente
             </p>
           </div>
@@ -199,10 +199,10 @@ export function PdfDownloadModal({
           </div>
 
           {/* Rodapé com status do sistema */}
-          <div className="border-t pt-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
             <div className="flex items-center justify-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-muted-foreground font-medium">Sistema ativo</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">Sistema ativo</span>
             </div>
           </div>
         </div>
