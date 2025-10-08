@@ -663,10 +663,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/reports/generate-pdf-server', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("[PDF Server] Iniciando geração de PDF no servidor");
       const userId = req.user.claims.sub;
       const { filters: rawFilters, fileName } = req.body;
       
+      console.log("[PDF Server] UserId:", userId);
+      console.log("[PDF Server] Filtros recebidos:", rawFilters);
+      console.log("[PDF Server] Nome do arquivo:", fileName);
+      
       if (!rawFilters || !fileName) {
+        console.log("[PDF Server] Erro: Faltam filtros ou nome do arquivo");
         return res.status(400).json({ message: "Filters and fileName are required" });
       }
 
@@ -1301,7 +1307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (activeLegalCase) {
         contextualInfo = [
           `Número do Processo: ${activeLegalCase.caseNumber || '[Não informado]'}`,
-          `Status: ${activeLegalCase.status?.charAt(0).toUpperCase() + activeLegalCase.status?.slice(1) || '[Não informado]'}`,
+          `Status: ${activeLegalCase.status ? activeLegalCase.status.charAt(0).toUpperCase() + activeLegalCase.status.slice(1) : '[Não informado]'}`,
           activeLegalCase.courtName ? `Tribunal: ${activeLegalCase.courtName}` : `Tribunal: [Não informado]`,
           activeLegalCase.judgeName ? `Juiz Responsável: ${activeLegalCase.judgeName}` : `Juiz Responsável: [Nome do Juiz]`,
           activeLegalCase.notes ? `Observações: ${activeLegalCase.notes}` : ''
@@ -1894,13 +1900,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate PDF buffer
+      console.log("[PDF Server] Gerando buffer do PDF...");
       const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+      console.log("[PDF Server] Buffer gerado com sucesso, tamanho:", pdfBuffer.length, "bytes");
       
       // Save to object storage
+      console.log("[PDF Server] Salvando PDF no object storage...");
       const objectStorage = new ObjectStorageService();
       const privateDir = objectStorage.getPrivateObjectDir();
       const pdfPath = `${privateDir}/reports/${userId}/${fileName}`;
+      console.log("[PDF Server] Caminho do PDF:", pdfPath);
+      
       const { bucketName, objectName } = parseObjectPath(pdfPath);
+      console.log("[PDF Server] Bucket:", bucketName, "Object:", objectName);
       
       const bucket = objectStorageClient.bucket(bucketName);
       const file = bucket.file(objectName);
@@ -1910,13 +1922,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           contentType: 'application/pdf',
         },
       });
+      console.log("[PDF Server] PDF salvo com sucesso no object storage");
       
       // Generate download URL
       const downloadUrl = `/api/reports/download-pdf/${encodeURIComponent(fileName)}`;
+      console.log("[PDF Server] URL de download gerada:", downloadUrl);
       
       res.json({ downloadUrl, fileName });
+      console.log("[PDF Server] Resposta enviada ao cliente com sucesso");
     } catch (error) {
-      console.error("Error generating PDF on server:", error);
+      console.error("[PDF Server] ERRO ao gerar PDF:", error);
+      console.error("[PDF Server] Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({ message: "Failed to generate PDF on server", error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
