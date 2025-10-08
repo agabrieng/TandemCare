@@ -270,7 +270,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
 
             {/* User Profile */}
             <div className="mt-2">
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <div 
                     className={cn(
@@ -296,13 +296,15 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
                         </div>
                       </div>
                     )}
+                    <ChevronUp className="w-4 h-4 ml-auto md:hidden" />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  side="right" 
-                  align="start" 
+                  side="top" 
+                  align="center" 
                   sideOffset={8} 
                   className="w-64 p-2 z-[100]"
+                  alignOffset={0}
                 >
                   <div className="flex items-center gap-3 p-2">
                     <Avatar className="w-10 h-10">
