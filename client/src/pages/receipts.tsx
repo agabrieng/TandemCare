@@ -484,14 +484,14 @@ export default function Receipts() {
         </div>
       </div>
 
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         {/* Search and Filters */}
-        <div className="mb-6 space-y-4">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-md">
+        <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+            <div className="relative flex-1 sm:max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por descrição, filho ou categoria..."
+                placeholder={isMobile ? "Buscar..." : "Buscar por descrição, filho ou categoria..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -500,8 +500,10 @@ export default function Receipts() {
             </div>
             <Button
               variant="outline"
+              size={isMobile ? "sm" : "default"}
               onClick={() => setShowFilters(!showFilters)}
               data-testid="button-toggle-filters"
+              className="flex-shrink-0"
             >
               <Filter className="w-4 h-4 mr-2" />
               Filtros
@@ -747,14 +749,14 @@ export default function Receipts() {
                     </CollapsibleTrigger>
                     
                     <CollapsibleContent>
-                      <CardContent className={`pt-0 ${isMobile ? 'px-4 pb-4' : 'px-6 pb-6'}`}>
+                      <CardContent className={`pt-0 ${isMobile ? 'px-2 pb-4' : 'px-6 pb-6'}`}>
                         <div className={`space-y-3 ${isMobile ? 'sm:space-y-4' : ''}`}>
                           {Object.entries(yearData).map(([year, monthData]) => {
                             const yearKey = `${childKey}-year-${year}`;
                             const isYearOpen = openYears[yearKey];
                             
                             return (
-                              <Card key={yearKey} className={`${isMobile ? 'ml-2 sm:ml-4' : 'ml-4'} shadow-sm`} data-testid={`card-year-${year}`}>
+                              <Card key={yearKey} className={`${isMobile ? 'ml-1 border-l-4 border-l-primary/30' : 'ml-4'} shadow-sm`} data-testid={`card-year-${year}`}>
                                 <Collapsible open={isYearOpen} onOpenChange={() => toggleYear(yearKey)}>
                                   <CollapsibleTrigger className="w-full" asChild>
                                     <CardHeader className={`hover-elevate cursor-pointer select-none ${isMobile ? 'py-3 px-4 min-h-[3.5rem]' : 'py-3'}`}>
@@ -780,14 +782,14 @@ export default function Receipts() {
                                   </CollapsibleTrigger>
                                   
                                   <CollapsibleContent>
-                                    <CardContent className={`pt-0 ${isMobile ? 'px-4 pb-3' : 'px-6 pb-4'}`}>
+                                    <CardContent className={`pt-0 ${isMobile ? 'px-2 pb-3' : 'px-6 pb-4'}`}>
                                       <div className={`space-y-2 ${isMobile ? 'sm:space-y-3' : ''}`}>
                                         {Object.entries(monthData).map(([month, expenses]) => {
                                           const monthKey = `${yearKey}-month-${month}`;
                                           const isMonthOpen = openMonths[monthKey];
                                           
                                           return (
-                                            <Card key={monthKey} className={`${isMobile ? 'ml-2 sm:ml-4' : 'ml-4'} shadow-sm`} data-testid={`card-month-${month}`}>
+                                            <Card key={monthKey} className={`${isMobile ? 'ml-1 border-l-4 border-l-blue-500/30' : 'ml-4'} shadow-sm`} data-testid={`card-month-${month}`}>
                                               <Collapsible open={isMonthOpen} onOpenChange={() => toggleMonth(monthKey)}>
                                                 <CollapsibleTrigger className="w-full" asChild>
                                                   <CardHeader className={`hover-elevate cursor-pointer select-none ${isMobile ? 'py-3 px-4 min-h-[3rem]' : 'py-2'}`}>
@@ -812,11 +814,11 @@ export default function Receipts() {
                                                 </CollapsibleTrigger>
                                                 
                                                 <CollapsibleContent>
-                                                  <CardContent className={`pt-0 ${isMobile ? 'px-4 pb-3' : 'px-6 pb-4'}`}>
+                                                  <CardContent className={`pt-0 ${isMobile ? 'px-2 pb-3' : 'px-6 pb-4'}`}>
                                                     <div className={`space-y-2 ${isMobile ? 'sm:space-y-3' : ''}`}>
                                                       {expenses.map((expense: any) => (
-                                                        <Card key={expense.id} className={`${isMobile ? 'ml-2 sm:ml-4' : 'ml-4'} shadow-sm`} data-testid={`card-expense-${expense.id}`}>
-                                                          <CardHeader className={`${isMobile ? 'p-4 pb-3' : 'pb-3'}`}>
+                                                        <Card key={expense.id} className={`${isMobile ? 'ml-1 border-l-4 border-l-green-500/30' : 'ml-4'} shadow-sm`} data-testid={`card-expense-${expense.id}`}>
+                                                          <CardHeader className={`${isMobile ? 'p-3 pb-2' : 'pb-3'}`}>
                                                             <div className={`${isMobile ? 'block space-y-3' : 'flex items-start justify-between'}`}>
                                                               <div className="flex-1">
                                                                 <CardTitle className={`${isMobile ? 'text-sm sm:text-base' : 'text-base'} font-medium leading-tight`}>{expense.description}</CardTitle>
@@ -853,19 +855,19 @@ export default function Receipts() {
                                                               </div>
                                                             </div>
                                                           </CardHeader>
-                                                          <CardContent>
+                                                          <CardContent className={isMobile ? "px-3 pb-3" : ""}>
                                                             {expense.receipts && expense.receipts.length > 0 ? (
-                                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                              <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-3'}`}>
                                                                 {expense.receipts.map((receipt: any) => (
                                                                   <Card key={receipt.id} className="hover-elevate">
-                                                                    <CardContent className="p-3">
-                                                                      <div className="flex items-start justify-between">
-                                                                        <div className="flex items-center space-x-3">
-                                                                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                                            <FileText className="w-4 h-4 text-blue-600" />
+                                                                    <CardContent className={isMobile ? "p-2" : "p-3"}>
+                                                                      <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-start justify-between'}`}>
+                                                                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                                                          <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                                                                            <FileText className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-blue-600`} />
                                                                           </div>
                                                                           <div className="min-w-0 flex-1">
-                                                                            <p className="text-sm font-medium truncate" data-testid={`text-receipt-name-${receipt.id}`}>
+                                                                            <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium truncate`} data-testid={`text-receipt-name-${receipt.id}`}>
                                                                               {receipt.fileName || 'Comprovante'}
                                                                             </p>
                                                                             <p className="text-xs text-muted-foreground">
@@ -876,7 +878,7 @@ export default function Receipts() {
                                                                             </p>
                                                                           </div>
                                                                         </div>
-                                                                        <div className="flex space-x-1">
+                                                                        <div className={`flex ${isMobile ? 'justify-end' : 'space-x-1'} gap-1`}>
                                                                           <Button
                                                                             variant="ghost"
                                                                             size="sm"
