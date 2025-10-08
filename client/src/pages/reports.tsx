@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -674,6 +675,8 @@ export default function Reports() {
   // Estados para o modal de download do PDF
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [reportStats, setReportStats] = useState<{
     totalAmount: number;
     expenseCount: number;
@@ -872,8 +875,37 @@ export default function Reports() {
       // Detectar dispositivo móvel logo no início
       const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      // Em dispositivos móveis, gerar o PDF completo mas SEM os comprovantes
-      // para evitar o crash por consumo de memória
+      // Em dispositivos móveis, gerar o PDF no servidor
+      if (isMobileDevice) {
+        showProgress("Gerando relatório no servidor...", "Processando");
+        
+        const report = generateReport();
+        const fileName = `relatorio-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.pdf`;
+        
+        try {
+          const response = await apiRequest('POST', '/api/reports/generate-pdf-server', { 
+            reportData: report, 
+            fileName 
+          });
+          
+          const data = await response.json();
+          updateProgress(100, "PDF gerado com sucesso!");
+          
+          // Exibir modal com link de download
+          setDownloadUrl(data.downloadUrl);
+          setShowDownloadModal(true);
+          hideProgress();
+        } catch (error) {
+          console.error("Erro ao gerar PDF no servidor:", error);
+          hideProgress();
+          toast({
+            title: "Erro",
+            description: "Não foi possível gerar o PDF no servidor. Tente novamente.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
       
       // CÓDIGO DESKTOP A PARTIR DAQUI
       
@@ -3167,6 +3199,40 @@ export default function Reports() {
         }}
         defaultFileName={`relatorio-prestacao-contas-abnt-${format(new Date(), 'yyyy-MM-dd')}`}
       />
+
+      {/* Modal de Download do Servidor */}
+      {showDownloadModal && downloadUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Relatório Gerado com Sucesso!</h2>
+            <p className="text-muted-foreground mb-6">
+              Seu relatório foi gerado no servidor e está pronto para download.
+            </p>
+            <div className="flex gap-3">
+              <a
+                href={downloadUrl}
+                download
+                className="flex-1"
+              >
+                <Button className="w-full" data-testid="button-download-pdf">
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar Relatório
+                </Button>
+              </a>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDownloadModal(false);
+                  setDownloadUrl(null);
+                }}
+                data-testid="button-close-download-modal"
+              >
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

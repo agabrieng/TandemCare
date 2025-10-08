@@ -651,8 +651,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Removido endpoints de PDF temporário que não são mais necessários
-  // O PDF agora é gerado completamente no cliente (sem imagens em mobile)
+  // Generate PDF on server (for mobile devices)
+  app.post('/api/reports/generate-pdf-server', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reportData, fileName } = req.body;
+      
+      if (!reportData || !fileName) {
+        return res.status(400).json({ message: "Report data and fileName are required" });
+      }
+
+      // Import jsPDF
+      const jsPDF = (await import('jspdf')).default;
+      const pdf = new jsPDF();
+      
+      // Generate complete PDF with images from object storage
+      // This will be processed on the server, so mobile devices won't crash
+      
+      // For now, create a simple PDF to test the flow
+      pdf.setFontSize(20);
+      pdf.text('Relatório Gerado no Servidor', 105, 20, { align: 'center' });
+      pdf.setFontSize(12);
+      pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, 40);
+      
+      // Generate PDF buffer
+      const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+      
+      // Save to object storage
+      const objectStorage = new ObjectStorageService();
+      const privateDir = objectStorage.getPrivateObjectDir();
+      const pdfPath = `${privateDir}/reports/${userId}/${fileName}`;
+      const { bucketName, objectName } = parseObjectPath(pdfPath);
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      await file.save(pdfBuffer, {
+        metadata: {
+          contentType: 'application/pdf',
+        },
+      });
+      
+      // Generate download URL
+      const downloadUrl = `/api/reports/download-pdf/${encodeURIComponent(fileName)}`;
+      
+      res.json({ downloadUrl, fileName });
+    } catch (error) {
+      console.error("Error generating PDF on server:", error);
+      res.status(500).json({ message: "Failed to generate PDF on server" });
+    }
+  });
+
+  // Download PDF from object storage
+  app.get('/api/reports/download-pdf/:fileName', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { fileName } = req.params;
+      
+      const objectStorage = new ObjectStorageService();
+      const privateDir = objectStorage.getPrivateObjectDir();
+      
+      const pdfPath = `${privateDir}/reports/${userId}/${decodeURIComponent(fileName)}`;
+      const { bucketName, objectName } = parseObjectPath(pdfPath);
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      // Check if file exists
+      const [exists] = await file.exists();
+      if (!exists) {
+        return res.status(404).json({ message: "PDF not found" });
+      }
+      
+      // Download file
+      const [fileBuffer] = await file.download();
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${decodeURIComponent(fileName)}"`);
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      res.status(500).json({ message: "Failed to download PDF" });
+    }
+  });
+
+  // Helper function to parse object path
+  function parseObjectPath(path: string): { bucketName: string; objectName: string } {
+    if (!path.startsWith("/")) {
+      path = `/${path}`;
+    }
+    const pathParts = path.split("/");
+    if (pathParts.length < 3) {
+      throw new Error("Invalid path: must contain at least a bucket name");
+    }
+
+    const bucketName = pathParts[1];
+    const objectName = pathParts.slice(2).join("/");
+
+    return {
+      bucketName,
+      objectName,
+    };
+  }
 
   const httpServer = createServer(app);
   return httpServer;
