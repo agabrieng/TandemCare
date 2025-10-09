@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
@@ -248,25 +249,28 @@ export function ObjectUploader({
   );
 
   return (
-    <div>
+    <>
       <Button type="button" onClick={handleOpenModal} className={buttonClassName}>
         {children}
       </Button>
 
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-        animateOpenClose={true}
-        doneButtonHandler={null}
-        showProgressDetails={true}
-        note="Adicione arquivos PDF ou imagens (máximo 10MB)"
-        metaFields={[]}
-        plugins={['AwsS3']}
-        closeModalOnClickOutside={false}
-        disablePageScrollWhenModalOpen={false}
-      />
-    </div>
+      {showModal && createPortal(
+        <DashboardModal
+          uppy={uppy}
+          open={showModal}
+          onRequestClose={() => setShowModal(false)}
+          proudlyDisplayPoweredByUppy={false}
+          animateOpenClose={true}
+          doneButtonHandler={null}
+          showProgressDetails={true}
+          note="Adicione arquivos PDF ou imagens (máximo 10MB)"
+          metaFields={[]}
+          plugins={['AwsS3']}
+          closeModalOnClickOutside={false}
+          disablePageScrollWhenModalOpen={false}
+        />,
+        document.body
+      )}
+    </>
   );
 }
