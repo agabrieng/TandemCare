@@ -539,22 +539,18 @@ export default function Expenses() {
                   <span className="whitespace-nowrap">Nova{!isMobile && " Despesa"}</span>
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0" data-testid="dialog-add-expense">
-              <div className="p-6">
-                <DialogHeader>
-                  <DialogTitle>Adicionar Nova Despesa</DialogTitle>
-                  <DialogDescription>
-                    Registre uma nova despesa relacionada aos seus filhos.
-                  </DialogDescription>
-                </DialogHeader>
-              </div>
-              <div className="px-6 pb-6">
-                <ExpenseForm
-                  onSubmit={handleCreateExpense}
-                  isLoading={createExpenseMutation.isPending || createReceiptMutation.isPending}
-                  onCancel={() => setIsAddDialogOpen(false)}
-                />
-              </div>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-add-expense">
+              <DialogHeader>
+                <DialogTitle>Adicionar Nova Despesa</DialogTitle>
+                <DialogDescription>
+                  Registre uma nova despesa relacionada aos seus filhos.
+                </DialogDescription>
+              </DialogHeader>
+              <ExpenseForm
+                onSubmit={handleCreateExpense}
+                isLoading={createExpenseMutation.isPending || createReceiptMutation.isPending}
+                onCancel={() => setIsAddDialogOpen(false)}
+              />
             </DialogContent>
             </Dialog>
           </div>
@@ -929,25 +925,21 @@ export default function Expenses() {
         <Dialog open={!!editingExpense} onOpenChange={(open) => {
           if (!open) setEditingExpense(null);
         }}>
-          <DialogContent className={`${isMobile ? 'max-w-[95vw] w-full' : 'max-w-2xl'} max-h-[90vh] overflow-y-auto p-0`} data-testid="dialog-edit-expense">
-            <div className="p-6">
-              <DialogHeader>
-                <DialogTitle className={isMobile ? 'text-base' : 'text-lg'}>Editar Despesa</DialogTitle>
-                <DialogDescription className={isMobile ? 'text-sm' : ''}>
-                  Atualize os dados da despesa.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="px-6 pb-6">
-              {editingExpense && (
-                <ExpenseForm
-                  initialData={editingExpense}
-                  onSubmit={handleUpdateExpense}
-                  isLoading={updateExpenseMutation.isPending}
-                  onCancel={() => setEditingExpense(null)}
-                />
-              )}
-            </div>
+          <DialogContent className={`${isMobile ? 'max-w-[95vw] w-full' : 'max-w-2xl'} max-h-[90vh] overflow-y-auto`} data-testid="dialog-edit-expense">
+            <DialogHeader>
+              <DialogTitle className={isMobile ? 'text-base' : 'text-lg'}>Editar Despesa</DialogTitle>
+              <DialogDescription className={isMobile ? 'text-sm' : ''}>
+                Atualize os dados da despesa.
+              </DialogDescription>
+            </DialogHeader>
+            {editingExpense && (
+              <ExpenseForm
+                initialData={editingExpense}
+                onSubmit={handleUpdateExpense}
+                isLoading={updateExpenseMutation.isPending}
+                onCancel={() => setEditingExpense(null)}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </main>
