@@ -409,15 +409,15 @@
 
 /* Uppy modal z-index fix to appear above dialogs */
 .uppy-Dashboard--modal {
-  z-index: 300 !important;
+  z-index: 9999 !important;
 }
 
-.uppy-Dashboard--modal .uppy-Dashboard-overlay {
-  z-index: 300 !important;
+.uppy-Dashboard-overlay {
+  z-index: 9998 !important;
 }
 
-.uppy-Dashboard--modal .uppy-Dashboard-inner {
-  z-index: 301 !important;
+.uppy-Dashboard-inner {
+  z-index: 9999 !important;
 }
 
 @layer base {
