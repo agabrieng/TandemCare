@@ -159,40 +159,20 @@ export function ObjectUploader({
     organizationParamsRef.current = organizationParams;
   }, [organizationParams]);
 
-  // Handle scroll position for mobile devices
+  // Handle scroll position restoration when modal opens/closes
   useEffect(() => {
     if (showModal) {
-      // Small delay to ensure modal is rendered
-      const timer = setTimeout(() => {
-        // Save current scroll position
-        scrollPositionRef.current = window.scrollY || window.pageYOffset;
+      // Use requestAnimationFrame to restore scroll immediately after modal opens
+      requestAnimationFrame(() => {
+        const savedScroll = scrollPositionRef.current;
+        window.scrollTo(0, savedScroll);
         
-        // Find the modal overlay and inner elements
-        const overlay = document.querySelector('.uppy-Dashboard--modal .uppy-Dashboard-overlay');
-        const inner = document.querySelector('.uppy-Dashboard--modal .uppy-Dashboard-inner');
-        
-        if (overlay && inner) {
-          // Force fixed positioning
-          (overlay as HTMLElement).style.position = 'fixed';
-          (overlay as HTMLElement).style.top = '0';
-          (overlay as HTMLElement).style.left = '0';
-          (overlay as HTMLElement).style.right = '0';
-          (overlay as HTMLElement).style.bottom = '0';
-          
-          (inner as HTMLElement).style.position = 'fixed';
-          (inner as HTMLElement).style.top = '50%';
-          (inner as HTMLElement).style.left = '50%';
-          (inner as HTMLElement).style.transform = 'translate(-50%, -50%)';
-        }
-        
-        // Prevent body scroll and maintain position
+        // Lock body at current position
         document.body.style.overflow = 'hidden';
         document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollPositionRef.current}px`;
+        document.body.style.top = `-${savedScroll}px`;
         document.body.style.width = '100%';
-      }, 50);
-      
-      return () => clearTimeout(timer);
+      });
     } else {
       // Restore scroll position when modal closes
       const scrollY = scrollPositionRef.current;
@@ -203,6 +183,13 @@ export function ObjectUploader({
       window.scrollTo(0, scrollY);
     }
   }, [showModal]);
+  
+  // Handle opening modal - save scroll position before state change
+  const handleOpenModal = () => {
+    // Save scroll position BEFORE opening modal
+    scrollPositionRef.current = window.scrollY || window.pageYOffset;
+    setShowModal(true);
+  };
 
   const [uppy] = useState(() =>
     new Uppy({
@@ -262,7 +249,7 @@ export function ObjectUploader({
 
   return (
     <div>
-      <Button type="button" onClick={() => setShowModal(true)} className={buttonClassName}>
+      <Button type="button" onClick={handleOpenModal} className={buttonClassName}>
         {children}
       </Button>
 
