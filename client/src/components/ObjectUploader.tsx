@@ -152,11 +152,32 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
   const organizationParamsRef = useRef(organizationParams);
+  const scrollPositionRef = useRef(0);
   
   // Update ref when organizationParams change
   useEffect(() => {
     organizationParamsRef.current = organizationParams;
   }, [organizationParams]);
+
+  // Handle scroll position for mobile devices
+  useEffect(() => {
+    if (showModal) {
+      // Save current scroll position
+      scrollPositionRef.current = window.scrollY || window.pageYOffset;
+      
+      // Prevent body scroll and maintain position
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollPositionRef.current}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restore scroll position when modal closes
+      const scrollY = scrollPositionRef.current;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    }
+  }, [showModal]);
 
   const [uppy] = useState(() =>
     new Uppy({
