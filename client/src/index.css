@@ -408,17 +408,24 @@
 }
 
 /* Uppy modal z-index fix to appear above dialogs */
-.uppy-Dashboard--modal {
-  z-index: 9999 !important;
+.uppy-Dashboard--modal,
+.uppy-Dashboard--modal[data-uppy-theme="dark"],
+.uppy-Dashboard--modal[data-uppy-theme="light"] {
+  z-index: 10000 !important;
+  position: fixed !important;
 }
 
-.uppy-Dashboard--modal .uppy-Dashboard-overlay {
-  z-index: 9998 !important;
+.uppy-Dashboard--modal .uppy-Dashboard-overlay,
+.uppy-Dashboard-overlay {
+  z-index: 10000 !important;
   background-color: rgba(0, 0, 0, 0.5) !important;
+  position: fixed !important;
+  inset: 0 !important;
 }
 
-.uppy-Dashboard--modal .uppy-Dashboard-inner {
-  z-index: 9999 !important;
+.uppy-Dashboard--modal .uppy-Dashboard-inner,
+.uppy-Dashboard-inner {
+  z-index: 10001 !important;
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
