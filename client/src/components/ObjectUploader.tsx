@@ -225,6 +225,14 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        animateOpenClose={true}
+        doneButtonHandler={null}
+        showProgressDetails={true}
+        note="Adicione arquivos PDF ou imagens (máximo 10MB)"
+        metaFields={[]}
+        plugins={['AwsS3']}
+        closeModalOnClickOutside={false}
+        disablePageScrollWhenModalOpen={true}
       />
     </div>
   );

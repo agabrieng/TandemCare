@@ -409,15 +409,24 @@
 
 /* Uppy modal z-index fix to appear above dialogs */
 .uppy-Dashboard--modal {
-  z-index: 300 !important;
+  z-index: 9999 !important;
 }
 
 .uppy-Dashboard--modal .uppy-Dashboard-overlay {
-  z-index: 300 !important;
+  z-index: 9999 !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(4px);
 }
 
 .uppy-Dashboard--modal .uppy-Dashboard-inner {
-  z-index: 301 !important;
+  z-index: 10000 !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+}
+
+/* Dark mode adjustments */
+.dark .uppy-Dashboard--modal .uppy-Dashboard-overlay {
+  background-color: rgba(0, 0, 0, 0.90) !important;
 }
 
 @layer base {
