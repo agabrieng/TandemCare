@@ -407,6 +407,19 @@
   }
 }
 
+/* Uppy modal z-index fix to appear above dialogs */
+.uppy-Dashboard--modal {
+  z-index: 300 !important;
+}
+
+.uppy-Dashboard--modal .uppy-Dashboard-overlay {
+  z-index: 300 !important;
+}
+
+.uppy-Dashboard--modal .uppy-Dashboard-inner {
+  z-index: 301 !important;
+}
+
 @layer base {
   * {
     @apply border-border;
