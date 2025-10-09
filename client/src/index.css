@@ -407,18 +407,19 @@
   }
 }
 
-/* Uppy modal z-index fix to appear above dialogs */
+/* Uppy modal z-index fix to appear above dialogs - FULLSCREEN */
 .uppy-Dashboard--modal,
 .uppy-Dashboard--modal[data-uppy-theme="dark"],
 .uppy-Dashboard--modal[data-uppy-theme="light"] {
   z-index: 10000 !important;
   position: fixed !important;
+  inset: 0 !important;
 }
 
 .uppy-Dashboard--modal .uppy-Dashboard-overlay,
 .uppy-Dashboard-overlay {
   z-index: 10000 !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
   position: fixed !important;
   inset: 0 !important;
 }
@@ -427,11 +428,17 @@
 .uppy-Dashboard-inner {
   z-index: 10001 !important;
   position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  max-width: 90vw !important;
-  max-height: 90vh !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
 @layer base {
