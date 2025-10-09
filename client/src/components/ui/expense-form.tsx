@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest } from "@/lib/queryClient";
 import { getTodayInBrazilTimezone, brazilDateToStorage } from "@/lib/date-utils";
@@ -171,9 +170,8 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
   };
 
   return (
-    <Card className="hover-elevate">
-      <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5 sm:space-y-6">
+    <div>
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5 sm:space-y-6">
           <div className="space-y-3">
             <Label htmlFor="description" className="text-sm font-medium">Descrição *</Label>
             <Textarea
@@ -427,7 +425,6 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
