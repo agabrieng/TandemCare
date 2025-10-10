@@ -40,12 +40,9 @@ export function Layout({ children }: LayoutProps) {
         onToggleCollapse={toggleSidebarCollapse}
       />
       
-      {/* Main content area */}
+      {/* Main content area - cada página controla seu próprio scroll */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Main content */}
-        <div className="flex-1 overflow-y-auto">
-          {children}
-        </div>
+        {children}
       </main>
     </div>
   );
