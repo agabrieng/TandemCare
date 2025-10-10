@@ -965,16 +965,16 @@ export default function Receipts() {
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0" data-testid="dialog-view-receipt">
           <DialogHeader className="p-4 sm:p-6 border-b">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 pr-8">
               <div>
                 <DialogTitle>Comprovante</DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="mt-1">
                   {selectedReceipt?.fileName || 'Visualização do comprovante'}
                 </DialogDescription>
               </div>
               <Button
                 variant="outline"
-                size="sm"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   if (selectedReceipt?.filePath) {
                     window.open(`/api/object-storage/image?path=${encodeURIComponent(selectedReceipt.filePath)}`, '_blank');
@@ -983,11 +983,11 @@ export default function Receipts() {
                 data-testid="button-download-receipt"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Baixar
+                Baixar Comprovante
               </Button>
             </div>
           </DialogHeader>
-          <div className="overflow-auto max-h-[calc(90vh-8rem)] p-4 sm:p-6">
+          <div className="overflow-auto max-h-[calc(90vh-10rem)] p-4 sm:p-6">
             {selectedReceipt?.filePath && (
               <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4">
                 <img
