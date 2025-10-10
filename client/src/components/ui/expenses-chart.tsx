@@ -87,6 +87,7 @@ export function ExpensesChart({ data, period = "90", onPeriodChange, userCategor
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="current_month">Mês Atual</SelectItem>
               <SelectItem value="30">Últimos 30 dias</SelectItem>
               <SelectItem value="90">Últimos 90 dias</SelectItem>
               <SelectItem value="365">Este ano</SelectItem>
@@ -96,17 +97,17 @@ export function ExpensesChart({ data, period = "90", onPeriodChange, userCategor
       </CardHeader>
       <CardContent className="px-4 sm:px-6">
         {data.length > 0 ? (
-          <div className="space-y-4">
-            {/* Chart */}
-            <div className="h-56 sm:h-72 md:h-80">
+          <div className="space-y-2 sm:space-y-4">
+            {/* Chart - Altura otimizada para mobile */}
+            <div className="h-48 sm:h-72 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={isMobile ? 45 : 70}
-                    outerRadius={isMobile ? 90 : 120}
+                    innerRadius={isMobile ? 35 : 70}
+                    outerRadius={isMobile ? 70 : 120}
                     paddingAngle={2}
                     dataKey="value"
                   >
@@ -119,19 +120,19 @@ export function ExpensesChart({ data, period = "90", onPeriodChange, userCategor
               </ResponsiveContainer>
             </div>
 
-            {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 pt-2">
+            {/* Legend - Mais compacta em mobile */}
+            <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 pt-1 sm:pt-2">
               {data.map((item) => (
-                <div key={item.category} className="flex items-center gap-1.5 bg-muted/50 hover-elevate rounded-md px-2 py-1.5 text-sm whitespace-nowrap min-w-fit">
+                <div key={item.category} className="flex items-center gap-1 sm:gap-1.5 bg-muted/50 hover-elevate rounded-md px-1.5 sm:px-2 py-1 sm:py-1.5 text-xs sm:text-sm whitespace-nowrap min-w-fit">
                   <div 
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                    className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0" 
                     style={{ backgroundColor: getCategoryColor(item.category) }}
                   />
                   <span className="text-foreground capitalize font-medium">{item.category}</span>
                   <span className="text-foreground font-semibold">
                     {formatCurrency(item.amount)}
                   </span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-[10px] sm:text-xs">
                     {item.percentage.toFixed(1)}%
                   </span>
                 </div>

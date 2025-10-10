@@ -127,9 +127,16 @@ export default function Dashboard() {
     }
 
     const now = new Date();
-    const daysToSubtract = parseInt(chartPeriod);
-    const startDate = new Date(now);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
+    let startDate = new Date(now);
+
+    // Calcular data de início baseado no período selecionado
+    if (chartPeriod === 'current_month') {
+      // Início do mês atual
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else {
+      const daysToSubtract = parseInt(chartPeriod);
+      startDate.setDate(startDate.getDate() - daysToSubtract);
+    }
 
     // Filtrar despesas pelo período
     const filteredExpenses = expenses.filter((expense: Expense) => {
@@ -210,8 +217,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Page Header */}
-      <div className="border-b px-3 sm:px-6 py-3 sm:py-4">
+      {/* Page Header - Sticky em mobile */}
+      <div className="sticky top-0 z-50 bg-background border-b px-3 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" data-testid="title-dashboard">Dashboard</h1>
@@ -235,64 +242,64 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="p-3 sm:p-6 space-y-4 sm:space-y-6">
-        {/* Summary Cards */}
-        <div className="grid gap-2 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
+      <main className="p-3 sm:p-6 space-y-3 sm:space-y-6">
+        {/* Summary Cards - Otimizado para mobile */}
+        <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card className="hover-elevate">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 sm:px-6 pt-3 sm:pt-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Total Gasto</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-lg sm:text-2xl font-bold" data-testid="text-total-spent">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-2xl font-bold" data-testid="text-total-spent">
                 {formatCurrency(stats?.totalSpent || 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                 +12.5% em relação ao mês anterior
               </p>
             </CardContent>
           </Card>
           
           <Card className="hover-elevate">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 sm:px-6 pt-3 sm:pt-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Pendentes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-lg sm:text-2xl font-bold" data-testid="text-pending-amount">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-2xl font-bold" data-testid="text-pending-amount">
                 {formatCurrency(stats?.pendingAmount || 0)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                 {expenses?.filter((e: any) => e.status === 'pendente').length || 0} despesas
               </p>
             </CardContent>
           </Card>
           
           <Card className="hover-elevate">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 sm:px-6 pt-3 sm:pt-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Filhos</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-lg sm:text-2xl font-bold" data-testid="text-children-count">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-2xl font-bold" data-testid="text-children-count">
                 {stats?.childrenCount?.toString() || "0"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                 Cadastrados no sistema
               </p>
             </CardContent>
           </Card>
           
           <Card className="hover-elevate">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 sm:px-6 pt-3 sm:pt-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Comprovantes</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-lg sm:text-2xl font-bold" data-testid="text-receipts-count">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="text-base sm:text-2xl font-bold" data-testid="text-receipts-count">
                 {stats?.receiptsCount?.toString() || "0"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                 100% documentado
               </p>
             </CardContent>
