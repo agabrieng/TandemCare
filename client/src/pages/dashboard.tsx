@@ -216,9 +216,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Page Header - Fixo no topo */}
-      <div className="bg-background border-b px-3 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+    <div className="min-h-full">
+      {/* Page Header - Sticky apenas em mobile */}
+      <div className="sticky top-0 z-50 lg:static bg-background border-b px-3 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" data-testid="title-dashboard">Dashboard</h1>
@@ -242,8 +242,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main content com scroll */}
-      <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-6">
+      {/* Main content */}
+      <main className="p-3 sm:p-6 space-y-3 sm:space-y-6">
         {/* Summary Cards - Otimizado para mobile */}
         <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card className="hover-elevate">
