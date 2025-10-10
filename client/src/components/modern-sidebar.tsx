@@ -131,7 +131,7 @@ export function ModernSidebar({ isOpen, onToggle, isCollapsed = false, onToggleC
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-border z-50 transform transition-all duration-300 ease-in-out shadow-lg",
+        "fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-border z-[60] transform transition-all duration-300 ease-in-out shadow-lg",
         "md:relative md:transform-none md:z-auto",
         // Mobile behavior
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
