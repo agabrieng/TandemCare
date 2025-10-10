@@ -85,6 +85,8 @@ export default function Receipts() {
   const [selectedExpense, setSelectedExpense] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const { progressState, simulateProgress } = useLoadingProgress();
   
   // Filter states
@@ -882,7 +884,10 @@ export default function Receipts() {
                                                                           <Button
                                                                             variant="ghost"
                                                                             size="sm"
-                                                                            onClick={() => window.open(`/api/object-storage/image?path=${encodeURIComponent(receipt.filePath)}`, '_blank')}
+                                                                            onClick={() => {
+                                                                              setSelectedReceipt(receipt);
+                                                                              setIsViewDialogOpen(true);
+                                                                            }}
                                                                             data-testid={`button-view-receipt-${receipt.id}`}
                                                                           >
                                                                             <Eye className="w-4 h-4" />
@@ -955,6 +960,47 @@ export default function Receipts() {
           )}
         </div>
       </main>
+
+      {/* Dialog para visualizar comprovante */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0" data-testid="dialog-view-receipt">
+          <DialogHeader className="p-4 sm:p-6 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle>Comprovante</DialogTitle>
+                <DialogDescription>
+                  {selectedReceipt?.fileName || 'Visualização do comprovante'}
+                </DialogDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedReceipt?.filePath) {
+                    window.open(`/api/object-storage/image?path=${encodeURIComponent(selectedReceipt.filePath)}`, '_blank');
+                  }
+                }}
+                data-testid="button-download-receipt"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Baixar
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[calc(90vh-8rem)] p-4 sm:p-6">
+            {selectedReceipt?.filePath && (
+              <div className="flex items-center justify-center bg-muted/30 rounded-lg p-4">
+                <img
+                  src={`/api/object-storage/image?path=${encodeURIComponent(selectedReceipt.filePath)}`}
+                  alt={selectedReceipt.fileName || 'Comprovante'}
+                  className="max-w-full h-auto rounded-lg shadow-lg"
+                  data-testid="img-receipt-viewer"
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
