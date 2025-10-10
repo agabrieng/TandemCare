@@ -422,7 +422,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
               className="w-full sm:w-auto"
               data-testid="button-save-expense"
             >
-              {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Adicionar"}
+              {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Salvar"}
             </Button>
           </div>
         </form>
