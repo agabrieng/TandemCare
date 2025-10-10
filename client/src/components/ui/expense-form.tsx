@@ -367,6 +367,7 @@ export function ExpenseForm({ onSubmit, onCancel, isLoading = false, initialData
                 onGetUploadParameters={handleGetUploadParameters}
                 onComplete={handleUploadComplete}
                 buttonClassName="w-full sm:w-auto"
+                buttonVariant="outline"
                 organizationParams={organizationParams}
               >
                 <Paperclip className="w-4 h-4 mr-2" />

@@ -106,6 +106,7 @@ interface ObjectUploaderProps {
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
   ) => void;
   buttonClassName?: string;
+  buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost";
   children: ReactNode;
   organizationParams?: {
     userId: string;
@@ -148,6 +149,7 @@ export function ObjectUploader({
   onGetUploadParameters,
   onComplete,
   buttonClassName,
+  buttonVariant = "default",
   children,
   organizationParams,
 }: ObjectUploaderProps) {
@@ -250,7 +252,7 @@ export function ObjectUploader({
 
   return (
     <>
-      <Button type="button" onClick={handleOpenModal} className={buttonClassName}>
+      <Button type="button" variant={buttonVariant} onClick={handleOpenModal} className={buttonClassName}>
         {children}
       </Button>
 
