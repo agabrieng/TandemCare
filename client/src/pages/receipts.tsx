@@ -975,9 +975,30 @@ export default function Receipts() {
               <Button
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={() => {
+                onClick={async () => {
                   if (selectedReceipt?.filePath) {
-                    window.open(`/api/object-storage/image?path=${encodeURIComponent(selectedReceipt.filePath)}`, '_blank');
+                    try {
+                      const response = await fetch(`/api/object-storage/image?path=${encodeURIComponent(selectedReceipt.filePath)}`);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = selectedReceipt.fileName || 'comprovante';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
+                      toast({
+                        title: "Download iniciado",
+                        description: "O comprovante está sendo baixado.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Erro",
+                        description: "Não foi possível baixar o comprovante.",
+                        variant: "destructive",
+                      });
+                    }
                   }
                 }}
                 data-testid="button-download-receipt"
