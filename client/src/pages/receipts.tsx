@@ -979,6 +979,11 @@ export default function Receipts() {
                   if (selectedReceipt?.filePath) {
                     try {
                       const response = await fetch(`/api/object-storage/image?path=${encodeURIComponent(selectedReceipt.filePath)}`);
+                      
+                      if (!response.ok) {
+                        throw new Error('Falha ao buscar o comprovante');
+                      }
+                      
                       const blob = await response.blob();
                       const url = window.URL.createObjectURL(blob);
                       const a = document.createElement('a');
