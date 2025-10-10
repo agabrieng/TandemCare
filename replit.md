@@ -6,6 +6,16 @@ The application serves as a centralized platform where parents can register expe
 
 # Recent Changes
 
+## Date: 2025-10-10
+- **COMPLETED**: Dashboard mobile optimizations for better user experience
+  - **Sticky header on mobile**: Filter and add expense buttons now stay fixed at the top when scrolling on mobile devices
+  - **"Mês Atual" filter**: Added current month option to the pie chart period dropdown for filtering expenses from the current month
+  - **Compact card layout**: Optimized summary cards for mobile with reduced padding, smaller fonts, and 2-column grid layout
+  - **Chart height optimization**: Reduced pie chart height on mobile (192px vs 288px) to show more content without excessive scrolling
+  - **Sidebar z-index fix**: Increased mobile sidebar z-index to z-[60] to prevent overlay issues with sticky header
+  - **Layout architecture**: Modified Layout.tsx to properly support sticky positioning within page content
+  - **Result**: Mobile dashboard now provides better usability with essential controls always accessible and optimized space usage
+
 ## Date: 2025-10-08
 - **COMPLETED**: Mobile PDF reports now have complete parity with desktop version
   - Enhanced child information section with detailed parent contact information (phone, CPF, location)
